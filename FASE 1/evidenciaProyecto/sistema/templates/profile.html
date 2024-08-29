@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block content %}
+            <div class="container mt-4">
+                <h1 class="mb-4">Mi Perfil</h1>
+                
+                <form method="POST" action="/profile">
+                    <div class="mb-3">
+                        <label for="username" class="form-label">Nombre de usuario</label>
+                        <input type="text" id="username" name="username" class="form-control" value="{{ user.username }}" readonly>
+                    </div>
+                    <div class="mb-3">
+                        <label for="email" class="form-label">Correo electrónico</label>
+                        <input type="email" id="email" name="email" class="form-control" value="{{ user.email }}" readonly>
+                    </div>
+                    <button type="button" class="btn btn-secondary" id="editButton">Editar</button>
+                    <button type="submit" class="btn btn-primary d-none" id="saveButton">Guardar</button>
+                </form>
+            </div>
+            
+            <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                var editButton = document.getElementById('editButton');
+                var saveButton = document.getElementById('saveButton');
+                var inputs = document.querySelectorAll('input');
+            
+                editButton.addEventListener('click', function() {
+                    inputs.forEach(function(input) {
+                        input.removeAttribute('readonly');
+                    });
+                    editButton.classList.add('d-none');
+                    saveButton.classList.remove('d-none');
+                });
+            });
+            </script>
+    </body>
+
+{% endblock %}
