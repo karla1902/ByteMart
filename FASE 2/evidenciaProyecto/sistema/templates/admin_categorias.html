@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container">
+    <div class="form-group">
+        <h1 class="my-4">Administración de Categorias</h1>
+        <div class="text-right">
+            <a href="configuracion">
+                <button class="button-3" role="button">Volver</button>
+            </a>
+        </div>
+
+
+    <div class="row justify-content-center">
+        <div class="section">
+            <!-- Primer Div -->
+            <div class="my-card mb-4" style="padding: 20px; box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1); border-radius: 5px; background-color: #fff;">
+                <form method="POST" action="/admin/categorias">
+                    <div class="form-group">
+                        <label for="name">Nombre de la categoría</label>
+                        <input type="text" class="form-control" id="name" name="name" required>
+                    </div>
+                    <div class="text-right">
+                        <button type="submit" class="btn btn-primary">Agregar Categoría</button>
+                    </div>
+                </form>
+            </div>
+
+            <div>
+                <!-- Listado de productos existentes -->
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th class="text-end">ID Cateogoría</th>
+                            <th class="text-end">Nombre Categoría</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for categoria in categorias %}
+                            <tr>
+                                <td class="text-end">{{ categoria.id }}</td>
+                                <td class="text-end">{{ categoria.name }}</td>
+                                <td class="text-end">                
+                                    <form method="POST" action="{{ url_for('eliminar_categoria', id=categoria.id) }}" class="d-inline-block eliminar-form text-right">
+                                    <button type="submit" class="btn btn-danger btn-sm">Eliminar</button>
+                                </form></td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+$(document).ready(function() {
+    $('.eliminar-form').on('submit', function(e) {
+        e.preventDefault(); // Evita el envío normal del formulario
+
+        var form = $(this);
+        $.ajax({
+            url: form.attr('action'),
+            type: 'POST',
+            data: form.serialize(), // Serializa los datos del formulario
+            success: function(response) {
+                // Elimina el elemento del DOM
+                form.closest('li').remove();
+            },
+            error: function(xhr, status, error) {
+                console.error('Error al eliminar:', error);
+            }
+        });
+    });
+});
+</script>
+

@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block content %}
+        <div class="login-container">
+            <div class="container" id="container">
+                <div class="form-container sign-up-container">
+                    <form method="POST" action="/register">
+                        <h1>Crear Cuenta</h1>
+                        <input type="text" id="name" placeholder="Nombre" required/>
+                        <input type="email" id="email" placeholder="Email" required/>
+                        <input type="password" id="password" placeholder="Contraseña" required/>
+                        <button type="submit">Registrar</button>
+                    </form>
+                </div>
+                <div class="form-container sign-in-container">
+                    <form method="POST" action="/login">
+                        <h1>Iniciar Sesion</h1>
+                        <input type="text" id="username" name="username" placeholder="Usuario" required />
+                        <input type="password" id="password" name="password" placeholder="Contraseña" required />
+                        <a href="/resetPassword">Olvidaste tu contraseña?</a>
+                        <button type="submit">Ingresar</button>
+                    </form>
+                </div>
+                <div class="overlay-container">
+                    <div class="overlay">
+                        <div class="overlay-panel overlay-left">
+                            <h1>Bienvenido!</h1>
+                            <p>Para mantenerse conectado con nosotros, inicie sesión con su información personal</p>
+                            <button type="submit" class="ghost" id="signIn">Iniciar Sesion</button>
+                        </div>
+                        <div class="overlay-panel overlay-right">
+                            <h1 class="h1">Hola!</h1>
+                            <p>Si no tienes cuenta, registrate</p>
+                            <button type="submit" class="ghost" id="signUp">Registrate</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+</body>
+{% endblock %}
+</html>
