@@ -19,7 +19,7 @@ from sqlalchemy import Sequence
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'mi_clave_secreta'  # Necesario para las sesiones
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+mysqlconnector://root:Mysql123.@localhost/proyecto'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+mysqlconnector://root:system@localhost/proyecto'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 
