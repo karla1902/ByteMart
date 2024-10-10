@@ -257,6 +257,148 @@ Table OF Contents
 
 
 
+.custom-search-container {
+  padding: 20px;
+}
+
+.product-card {
+  border: 1px solid #ddd; /* Borde sutil */
+  border-radius: 8px; /* Bordes redondeados */
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); /* Sombra para efecto de elevación */
+  transition: transform 0.2s; /* Transición suave para el hover */
+  overflow: hidden; /* Oculta desbordamiento */
+  height: 400px; /* Altura fija para la tarjeta */
+  display: flex; /* Usar flexbox para la tarjeta */
+  flex-direction: column; /* Colocar los elementos en columna */
+  justify-content: space-between; /* Espaciar los elementos de manera uniforme */
+}
+
+.product-card:hover {
+  transform: translateY(-5px); /* Efecto de elevación al pasar el mouse */
+}
+
+.product-image {
+  width: 100%; /* Asegura que la imagen ocupe todo el ancho */
+  height: 200px; /* Altura fija para la imagen */
+  object-fit: cover; /* Mantiene la relación de aspecto y recorta si es necesario */
+  border-top-left-radius: 8px; /* Bordes redondeados en la imagen */
+  border-top-right-radius: 8px; /* Bordes redondeados en la imagen */
+}
+
+.product-card-body {
+  padding: 15px; /* Espaciado interno */
+  background-color: #f9f9f9; /* Fondo claro para la tarjeta */
+  flex-grow: 1; /* Permitir que el cuerpo de la tarjeta crezca para llenar el espacio */
+}
+
+.product-title {
+  font-size: 1.2em; /* Tamaño de fuente más grande */
+  margin: 0.5em 0; /* Margen entre el título y el precio */
+  color: #333; /* Color del texto */
+}
+
+.product-description {
+  font-size: 0.9em; /* Tamaño de fuente para la descripción */
+  color: #666; /* Color gris para la descripción */
+  margin-bottom: 10px; /* Espacio inferior */
+  overflow: hidden; /* Oculta el desbordamiento */
+  text-overflow: ellipsis; /* Agrega puntos suspensivos */
+  white-space: nowrap; /* Evita que el texto se envuelva */
+}
+
+.product-price {
+  font-size: 1.1em; /* Tamaño de fuente para el precio */
+  color: #226151; /* Color distintivo para el precio */
+  font-weight: bold; /* Negrita para el precio */
+}
+
+.product-detail-btn {
+  background-color: #226151; /* Color de fondo para el botón */
+  border: none; /* Sin borde */
+  border-radius: 5px; /* Bordes redondeados */
+  padding: 10px; /* Espaciado interno */
+  color: white; /* Color del texto */
+  transition: background-color 0.3s; /* Transición suave */
+}
+
+.product-detail-btn:hover {
+  background-color: #1a4a3b; /* Color más oscuro al pasar el mouse */
+}
+
+
+
+body {
+  font-family: Arial, sans-serif;
+  background-color: #f9f9f9; /* Fondo suave */
+  margin: 0;
+  padding: 20px;
+}
+
+h2 {
+  color: #333; /* Color de encabezados */
+}
+
+.profile-container {
+  max-width: 800px; /* Ancho máximo para el perfil */
+  margin: 0 auto; /* Centra el perfil */
+  background-color: white; /* Fondo blanco para la card */
+  border-radius: 8px; /* Bordes redondeados */
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1); /* Sombra para efecto de elevación */
+  padding: 20px; /* Espaciado interno */
+}
+
+.btn-custom {
+  background-color: #226151; /* Color de fondo */
+  color: white; /* Color del texto */
+  border: none; /* Sin borde */
+  border-radius: 5px; /* Bordes redondeados */
+  padding: 10px 15px; /* Espaciado interno */
+  text-decoration: none; /* Sin subrayado */
+  transition: background-color 0.3s; /* Transición suave */
+}
+
+.btn-custom:hover {
+  background-color: #1f5c4f; /* Color al pasar el mouse */
+}
+
+.flash-message, .success-message {
+  padding: 10px;
+  margin-bottom: 20px;
+  border-radius: 5px;
+  font-weight: bold;
+}
+
+.flash-message {
+  background-color: #f44336; /* Rojo para errores */
+  color: white;
+}
+
+.success-message {
+  background-color: #226151; /* Verde para éxito */
+  color: white;
+}
+
+
+
+.custom-td {
+  padding: 10px; /* Espaciado interno de la celda */
+}
+
+.custom-form-container {
+  display: flex; /* Usar flexbox para alinear los elementos */
+  justify-content: flex-end; /* Alinear a la derecha */
+  align-items: center; /* Alinear verticalmente al centro */
+}
+
+.custom-edit-form {
+  margin-right: 10px; /* Espaciado entre formularios */
+}
+
+.custom-input {
+  display: inline-block; /* Asegura que el input y el botón estén en la misma línea */
+}
+
+
 
 
 

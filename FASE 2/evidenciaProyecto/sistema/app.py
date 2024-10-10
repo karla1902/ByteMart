@@ -19,7 +19,7 @@ from sqlalchemy import Sequence
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'mi_clave_secreta'  # Necesario para las sesiones
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+mysqlconnector://root:Mysql123.@localhost/proyecto'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+mysqlconnector://root:system@localhost/proyecto'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 
@@ -57,7 +57,7 @@ def create_default_admin():
         admin_user = Usuario.query.filter_by(username='admin').first()
         if not admin_user:
             hashed_password = bcrypt.generate_password_hash('admin123').decode('utf-8')
-            admin_user = Usuario(username='admin', password=hashed_password, is_admin=True)
+            admin_user = Usuario(username='admin', password=hashed_password, email='email@email.com', is_admin=True)
             db.session.add(admin_user)
             db.session.commit()
             app.logger.info('Usuario administrador creado con éxito.')
@@ -97,12 +97,13 @@ class Categoria(db.Model):
 class Producto(db.Model):
     __table_args__ = {'extend_existing': True}
     id = db.Column(db.Integer, product_sequence, primary_key=True)
-    name = db.Column(db.String(50), unique=True, nullable=False)
-    price = db.Column(db.String(100), nullable=False)
+    name = db.Column(db.String(155), unique=True, nullable=False)
+    price = db.Column(db.Integer, nullable=False)
     marca = db.Column(db.String(100), nullable=False)
     descripcion = db.Column(db.String(1000), nullable=False)
     stock = db.Column(db.Integer, nullable=False)
     category_id = db.Column(db.Integer, db.ForeignKey('categoria.id'), nullable=False)
+    en_oferta = db.Column(db.Boolean, default=False)  # Nuevo atributo para indicar si el producto está en oferta
 
     # Relación con Categoria
     categoria = db.relationship('Categoria', backref=db.backref('productos', lazy=True))
@@ -113,6 +114,7 @@ class Producto(db.Model):
     def __repr__(self):
         return f'<Producto {self.name}>'
 
+
 # Modelo de Imagen
 class Imagen(db.Model):
     __table_args__ = {'extend_existing': True}
@@ -122,6 +124,47 @@ class Imagen(db.Model):
 
     def __repr__(self):
         return f'<Imagen {self.image_url}>'
+
+
+# Modelo de Carrito
+class Carrito(db.Model):
+    __table_args__ = {'extend_existing': True}
+    id = db.Column(db.Integer, primary_key=True)
+    usuario_id = db.Column(db.Integer, db.ForeignKey('usuario.id'), nullable=False)
+    usuario = db.relationship('Usuario', backref=db.backref('carrito', lazy=True))
+
+# Modelo de ItemCarrito
+class ItemCarrito(db.Model):
+    __table_args__ = {'extend_existing': True}
+    id = db.Column(db.Integer, primary_key=True)
+    carrito_id = db.Column(db.Integer, db.ForeignKey('carrito.id'), nullable=False)
+    producto_id = db.Column(db.Integer, db.ForeignKey('producto.id'), nullable=False)
+    cantidad = db.Column(db.Integer, nullable=False, default=1)
+    
+    # Relaciones
+    carrito = db.relationship('Carrito', backref=db.backref('items', lazy=True))
+    producto = db.relationship('Producto', backref=db.backref('items', lazy=True))
+
+
+
+@app.before_request
+def calcular_subtotal():
+    carrito = session.get('carrito', [])
+    # Sumar los precios como enteros sin usar replace
+    subtotal = sum([producto['precio'] for producto in carrito])  # Asegúrate de que 'precio' sea un entero
+
+    # Almacena el subtotal y el carrito en el contexto de la plantilla
+    app.jinja_env.globals['subtotal'] = subtotal
+    app.jinja_env.globals['carrito'] = carrito  # También almacena el carrito en el contexto global
+
+
+@app.route('/')
+def index():
+    categorias = Categoria.query.all()
+    productos = Producto.query.all()  # Obtén todos los productos de la base de datos
+    # lógica de la vista
+    return render_template('index.html',categorias=categorias,productos=productos)
+
 
 
 # Rutas de la página
@@ -141,12 +184,20 @@ def login():
         
         if user and bcrypt.check_password_hash(user.password, password):
             session['user_id'] = user.id
+            
+            # Crear un carrito si no existe
+            if not Carrito.query.filter_by(usuario_id=user.id).first():
+                nuevo_carrito = Carrito(usuario_id=user.id)
+                db.session.add(nuevo_carrito)
+                db.session.commit()
+            
             flash('Login exitoso', 'success')
             return redirect(url_for('home'))
         else:
             flash('Usuario o contraseña incorrectos', 'danger')
     
-    return render_template('login.html', categorias = categorias)
+    return render_template('login.html', categorias=categorias)
+
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
@@ -250,20 +301,21 @@ def reset_password_get():
 
 @app.route('/profile', methods=['GET', 'POST'])
 def profile():
-    categorias = Categoria.query.all()
+    categorias = Categoria.query.all()  # Obtener categorías si son necesarias para el perfil
     if 'user_id' not in session:
-        return redirect(url_for('login'))
+        return redirect(url_for('login'))  # Redirigir si el usuario no está logueado
 
-    user = Usuario.query.get(session['user_id'])
+    user = Usuario.query.get(session['user_id'])  # Obtener el usuario actual desde la sesión
     
     if request.method == 'POST':
+        # Actualizar el nombre de usuario y el correo electrónico desde el formulario
         user.email = request.form['email']
         user.username = request.form['username']
-        db.session.commit()
+        db.session.commit()  # Guardar los cambios en la base de datos
         flash('Datos actualizados correctamente', 'success')
         return redirect(url_for('profile'))
 
-    return render_template('profile.html', user=user, categorias = categorias)
+    return render_template('profile.html', user=user, categorias=categorias)
 
 @app.route('/logout')
 def logout():
@@ -283,13 +335,23 @@ def configuracion():
 @app.route('/admin/categorias', methods=['GET', 'POST'])
 def gestionar_categorias():
     if request.method == 'POST':
-        nombre_categoria = request.form['name']
-        nueva_categoria = Categoria(name=nombre_categoria)
-        db.session.add(nueva_categoria)
-        db.session.commit()
-        flash('Categoría creada con éxito', 'success')
-        return redirect(url_for('gestionar_categorias'))
-    
+        if 'name' in request.form:  # Crear categoría
+            nombre_categoria = request.form['name']
+            nueva_categoria = Categoria(name=nombre_categoria)
+            db.session.add(nueva_categoria)
+            db.session.commit()
+            flash('Categoría creada con éxito', 'success')
+            return redirect(url_for('gestionar_categorias'))
+
+        # Lógica para actualización de categoría
+        elif 'id' in request.form:  # Actualizar categoría
+            categoria_id = request.form['id']
+            categoria = Categoria.query.get(categoria_id)
+            categoria.name = request.form['name']
+            db.session.commit()
+            flash('Categoría actualizada con éxito', 'success')
+            return redirect(url_for('gestionar_categorias'))
+
     categorias = Categoria.query.all()
     return render_template('admin_categorias.html', categorias=categorias)
 
@@ -299,43 +361,85 @@ def eliminar_categoria(id):
     if categoria:
         db.session.delete(categoria)
         db.session.commit()
-        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':  # Verifica si es una solicitud AJAX
-            return '', 204  # Respuesta vacía con código de estado 204 (No Content)
+        flash('Categoría eliminada con éxito', 'success')
+    return redirect(url_for('gestionar_categorias'))
+
+@app.route('/admin/categorias/<int:id>/update', methods=['POST'])
+def actualizar_categoria(id):
+    categoria = Categoria.query.get(id)
+    if categoria:
+        categoria.name = request.form['name']
+        db.session.commit()
+        flash('Categoría actualizada con éxito', 'success')
     return redirect(url_for('gestionar_categorias'))
 
 
 
-@app.route('/admin/productos', methods=['GET', 'POST'])
-def gestionar_productos():
-    categorias = Categoria.query.all()
-    if request.method == 'POST':
-        nombre_producto = request.form['name']
-        precio_producto = request.form['price']
-        marca = request.form['marca']
-        descripcion = request.form['descripcion']
-        stock = request.form['stock']
-        categoria_id = request.form['category_id']
-        files = request.files.getlist('images')
-        
-        nuevo_producto = Producto(name=nombre_producto, price=precio_producto, marca=marca,stock=stock, descripcion=descripcion, category_id=categoria_id)
-        db.session.add(nuevo_producto)
-        db.session.commit()  # Primero guarda el producto para tener el ID
 
+@app.route('/admin/productos', methods=['GET', 'POST'])
+@app.route('/admin/productos/<int:id>', methods=['GET', 'POST'])
+def gestionar_productos(id=None):
+    categorias = Categoria.query.all()
+    producto = None  # Inicializamos como None por si estamos creando un producto nuevo
+    
+    if id:
+        # Si hay un ID, obtenemos el producto de la base de datos
+        producto = Producto.query.get_or_404(id)
+
+    if request.method == 'POST':
+        # Si estamos editando un producto existente, usamos ese producto
+        if producto:
+            producto.name = request.form['name']
+            producto.price = request.form['price']
+            producto.marca = request.form['marca']
+            producto.descripcion = request.form['descripcion']
+            producto.stock = request.form['stock']
+            producto.category_id = request.form['category_id']
+            en_oferta = 'en_oferta' in request.form
+            producto.en_oferta = en_oferta
+        else:
+            # Si no hay producto, estamos creando uno nuevo
+            nombre_producto = request.form['name']
+            precio_producto = request.form['price']
+            marca = request.form['marca']
+            descripcion = request.form['descripcion']
+            stock = request.form['stock']
+            categoria_id = request.form['category_id']
+            en_oferta = 'en_oferta' in request.form
+
+            # Validar precios y stock
+            try:
+                precio_producto = int(precio_producto.replace('$', '').replace('.', '').strip())
+                stock = int(stock)
+            except ValueError:
+                flash('El precio o el stock no son válidos', 'danger')
+                return redirect(url_for('gestionar_productos', id=id))
+
+            producto = Producto(name=nombre_producto, price=precio_producto, marca=marca, stock=stock, descripcion=descripcion, category_id=categoria_id, en_oferta=en_oferta)
+            db.session.add(producto)
+            db.session.commit()  # Guardar el producto primero para obtener el ID
+
+        # Manejo de imágenes, tanto para nuevos como para productos editados
+        files = request.files.getlist('images')
         for file in files:
             if file:
                 filename = secure_filename(file.filename)
                 file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
                 file.save(file_path)
                 
-                nueva_imagen = Imagen(image_url=file_path, producto_id=nuevo_producto.id)
+                nueva_imagen = Imagen(image_url=file_path, producto_id=producto.id)
                 db.session.add(nueva_imagen)
 
         db.session.commit()
-        flash('Producto creado con éxito y imágenes cargadas', 'success')
+        flash(f'Producto {"editado" if id else "creado"} con éxito', 'success')
         return redirect(url_for('gestionar_productos'))
 
+    # Obtener todos los productos para mostrarlos en la tabla
     productos = Producto.query.all()
-    return render_template('admin_productos.html', productos=productos, categorias=categorias)
+    
+    return render_template('admin_productos.html', productos=productos, categorias=categorias, producto=producto)
+
+
 
 @app.route('/admin/productos/eliminar/<int:id>', methods=['POST'])
 def eliminar_producto(id):
@@ -402,6 +506,185 @@ def buscar_productos():
 def detalle_producto(id):
     producto = Producto.query.get_or_404(id)
     return render_template('detalle_producto.html', producto=producto)
+
+
+from flask import jsonify
+
+@app.route('/agregar_carrito/<int:product_id>', methods=['POST'])
+def agregar_carrito(product_id):
+    producto = Producto.query.get_or_404(product_id)
+
+    # Obtén el carrito existente del usuario en la base de datos
+    carrito = Carrito.query.filter_by(usuario_id=session['user_id']).first()
+    
+    if carrito is None:
+        # Si no existe un carrito, crea uno nuevo
+        carrito = Carrito(usuario_id=session['user_id'])
+        db.session.add(carrito)
+        db.session.commit()
+
+    # Verifica si el producto ya existe en el carrito
+    item = ItemCarrito.query.filter_by(carrito_id=carrito.id, producto_id=producto.id).first()
+    
+    if item:
+        # Verifica si al agregar uno más, se excede el stock
+        if item.cantidad + 1 > producto.stock:
+            flash('Sin stock disponible.', 'error')
+            return redirect(url_for('ver_carrito'))
+        
+        # Incrementa la cantidad si no se excede el stock
+        item.cantidad += 1
+    else:
+        # Si el producto no está en el carrito, lo agrega
+        nuevo_item = ItemCarrito(carrito_id=carrito.id, producto_id=producto.id, cantidad=1)
+        db.session.add(nuevo_item)
+
+    db.session.commit()  # Guardar cambios en la base de datos
+    flash(f'{producto.name} fue añadido al carrito.')
+    return redirect(url_for('ver_carrito'))
+
+
+
+
+
+
+@app.route('/editar_producto/<int:id>', methods=['GET', 'POST'])
+def editar_producto(id):
+    producto = Producto.query.get(id)
+    if request.method == 'POST':
+        # Obtener datos del formulario
+        producto.name = request.form['name']
+        producto.price = int(request.form['price'])
+        producto.marca = request.form['marca']
+        producto.stock = int(request.form['stock'])
+        producto.descripcion = request.form['descripcion']
+        producto.category_id = request.form['category_id']
+        producto.en_oferta = 'en_oferta' in request.form  # Si está marcado, será True
+
+        # Guardar los cambios en la base de datos
+        db.session.commit()
+        flash('Producto actualizado exitosamente', 'success')
+        return redirect(url_for('tu_funcion_para_listar_productos'))  # Cambia esto por la ruta adecuada
+
+    # En caso de que sea un GET, renderiza el formulario con los datos actuales
+    categorias = Categoria.query.all()  # Obtén todas las categorías
+    return render_template('tu_template_para_editar_producto.html', producto=producto, categorias=categorias)
+
+
+
+
+
+@app.route('/carrito')
+def ver_carrito():
+    categorias = Categoria.query.all()
+    
+    # Asegúrate de que el usuario esté autenticado
+    carrito = Carrito.query.filter_by(usuario_id=session['user_id']).first()
+    items = []
+
+    if carrito:
+        items = ItemCarrito.query.filter_by(carrito_id=carrito.id).all()
+
+    subtotal = sum(item.producto.price * item.cantidad for item in items)  # Total por cantidad
+    
+    # Agregar la URL de la imagen al carrito
+    for item in items:
+        item.image_url = item.producto.imagenes[0].image_url if item.producto.imagenes else None
+
+    return render_template('carrito.html', carrito=items, subtotal=subtotal, categorias=categorias)
+
+
+
+
+@app.route('/checkout', methods=['POST'])
+def checkout():
+    carrito = session.get('carrito', [])
+    if not carrito:
+        flash('Tu carrito está vacío', 'warning')
+        return redirect(url_for('ver_carrito'))
+
+    # Aquí debes agregar la lógica de pago y generación de órdenes
+
+    # Limpiar el carrito después de un pago exitoso
+    session.pop('carrito', None)
+    flash('Compra realizada con éxito', 'success')
+    return redirect(url_for('home'))  # O a otra página que desees
+
+@app.route('/remove_from_cart/<int:item_id>', methods=['POST'])
+def remove_from_cart(item_id):
+    carrito = session.get('carrito', [])
+    
+    for item in carrito:
+        if item['id'] == item_id:
+            item['cantidad'] -= 1  # Reducir la cantidad en lugar de eliminarlo
+            if item['cantidad'] <= 0:
+                carrito.remove(item)  # Eliminar el item si la cantidad es 0 o menos
+            break
+
+    session['carrito'] = carrito  # Actualizar la sesión con el carrito modificado
+    flash('Ítem eliminado del carrito.' if item['cantidad'] > 0 else 'Ítem eliminado completamente del carrito.')
+    return redirect(url_for('ver_carrito'))
+
+
+
+@app.route('/update_cart/<int:item_id>', methods=['POST'])
+def update_cart(item_id):
+    carrito = session.get('carrito', [])
+    new_quantity = request.form.get('quantity', type=int)
+
+    # Obtener el producto desde la base de datos para verificar el stock
+    producto = Producto.query.get(item_id)
+    
+    # Verificar si el item está en el carrito y si la nueva cantidad no excede el stock
+    for item in carrito:
+        if item['id'] == item_id:
+            if new_quantity > 0 and new_quantity <= producto.stock:
+                item['cantidad'] = new_quantity
+                flash('Cantidad actualizada.', 'success')  # Mensaje de éxito
+            elif new_quantity > producto.stock:
+                flash(f'Solo hay {producto.stock} unidades disponibles.', 'error')  # Mensaje de error
+            else:
+                carrito.remove(item)  # Eliminar el item si la cantidad es 0 o menos
+            break
+
+    session['carrito'] = carrito  # Actualizar la sesión con el carrito modificado
+    return redirect(url_for('ver_carrito'))  # Asegúrate de redirigir correctamente
+
+
+
+@app.route('/eliminar_item/<int:item_id>', methods=['POST'])
+def eliminar_item(item_id):
+    carrito = session.get('carrito', [])
+    
+    # Buscar el item en el carrito
+    for item in carrito:
+        if item['id'] == item_id:
+            carrito.remove(item)  # Eliminar el item del carrito
+            flash(f'{item["nombre"]} fue eliminado del carrito.', 'success')  # Mensaje de éxito
+            break
+    
+    session['carrito'] = carrito  # Actualizar la sesión con el carrito modificado
+    return redirect(url_for('ver_carrito'))  # Redirigir a la vista del carrito
+
+
+@app.route('/vaciar_carrito', methods=['POST'])
+def vaciar_carrito():
+    # Asegúrate de que el usuario esté autenticado
+    carrito = Carrito.query.filter_by(usuario_id=session['user_id']).first()
+    
+    if carrito:
+        # Eliminar todos los ítems del carrito
+        ItemCarrito.query.filter_by(carrito_id=carrito.id).delete()
+        
+        # Opcional: puedes eliminar el carrito si también lo deseas
+        # db.session.delete(carrito)
+        
+        db.session.commit()  # Confirmar los cambios en la base de datos
+    
+    flash("El carrito ha sido vaciado.", "success")  # Mensaje de éxito
+    return redirect(url_for('ver_carrito'))  # Redirigir a la vista del carrito
+
+
 
 
 if __name__ == '__main__':

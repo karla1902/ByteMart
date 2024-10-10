@@ -99,15 +99,20 @@
             </div>
         </div>
 
-        <!-- Sección de detalles del producto -->
-        <div class="product-details">
-            <h2>{{ producto.name }}</h2>
-            <h3>{{ producto.price }}</h3>
-            <p>{{ producto.descripcion }}</p>
-            <h5> Stock disponible: {{ producto.stock }}</h5>
-            <br>
-            <a href="#" class="btn-primary">Añadir al carrito</a>
-        </div>
+    <!-- Sección de detalles del producto -->
+    <div class="product-details">
+        <h2>{{ producto.name }}</h2>
+        <h3>${{ producto.price }} CLP</h3>
+        <p>{{ producto.descripcion }}</p>
+        <h5> Stock disponible: {{ producto.stock }}</h5>
+        <br>
+
+        <!-- Formulario para agregar producto al carrito -->
+        <form action="{{ url_for('agregar_carrito', product_id=producto.id) }}" method="POST">
+            <button type="submit" class="btn-primary">Añadir al carrito</button>
+        </form>
+    </div>
+
     </div>
 </div>
 

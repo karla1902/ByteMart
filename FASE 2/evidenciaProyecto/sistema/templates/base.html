@@ -46,9 +46,9 @@
         <div id="top-header">
             <div class="container">
                 <ul class="header-links pull-left">
-                    <li><a href="#"><i class="fa fa-phone"></i> +569 1213 1231</a></li>
-                    <li><a href="#"><i class="fa fa-envelope-o"></i> correo@correo.com</a></li>
-                    <li><a href="#"><i class="fa fa-map-marker"></i> Providencia 1531</a></li>
+                    <li><a href="https://wa.me/56966672676?text=Hola"><i class="fa fa-whatsapp"></i>+569 6667 2676</a></li>
+					<li><a href="mailto:vicentelaguna@hotmail.com"><i class="fa fa-envelope-o"></i>vicentelaguna@hotmail.com</a></li>
+					<li><a href="https://www.google.com/maps?q=Avenida+Concha+Y+Toro+,+Av+.+San+Carlos+1340+,+Puente+Alto+,+Región+Metropolitana" target="_blank"><i class="fa fa-map-marker"></i>Avenida Concha y Toro 1340</a></li>
                 </ul>
 				<ul class="header-links pull-right">
 					{% if g.user %}
@@ -111,48 +111,43 @@
 								</div>
 								<!-- /Wishlist -->
 
-								<!-- Cart -->
-								<div class="dropdown">
-									<a class="dropdown-toggle" data-toggle="dropdown" aria-expanded="true">
-										<i class="fa fa-shopping-cart"></i>
-										<span>Carrito</span>
-										<div class="qty">3</div>
-									</a>
-									<div class="cart-dropdown">
-										<div class="cart-list">
-											<div class="product-widget">
-												<div class="product-img">
-													<img src="static/img/product01.png" alt="">
-												</div>
-												<div class="product-body">
-													<h3 class="product-name"><a href="#">product name goes here</a></h3>
-													<h4 class="product-price"><span class="qty">1x</span>$980.00</h4>
-												</div>
-												<button class="delete"><i class="fa fa-close"></i></button>
-											</div>
+<!-- En tu plantilla de navegación -->
+<div class="dropdown">
+    <a class="dropdown-toggle" data-toggle="dropdown" aria-expanded="true">
+        <i class="fa fa-shopping-cart"></i>
+        <span>Carrito</span>
+        <div class="qty">{{ carrito|length }}</div>
+    </a>
+    <div class="cart-dropdown">
+        <div class="cart-list">
+            {% for producto in carrito %}
+            <div class="product-widget">
+                <div class="product-img">
+                    {% if producto.image_url %}  <!-- Verificar si hay una URL de imagen -->
+                        <img src="{{ producto.image_url }}" alt="{{ producto.nombre }}" style="width: 50px; height: auto;"> <!-- Usar la URL de la imagen del producto -->
+                    {% else %}
+                        <img src="{{ url_for('static', filename='img/product_default.png') }}" alt="producto">  <!-- Imagen por defecto -->
+                    {% endif %}
+                </div>
+                <div class="product-body">
+                    <h3 class="product-name"><a href="#">{{ producto.name }}</a></h3>
+                    <h4 class="product-price"><span class="qty">1x</span>${{ producto.price }}</h4>
+                </div>
+                <button class="delete"><i class="fa fa-close"></i></button>
+            </div>
+            {% endfor %}
+        </div>
+        <div class="cart-summary">
+            <small>{{ carrito|length }} Item(s) selected</small>
+            <h5>SUBTOTAL: ${{ subtotal }}</h5>
+        </div>
+        <div class="cart-btns">
+            <a href="{{ url_for('ver_carrito') }}">Ver Carrito</a>
+            <a href="{{ url_for('checkout') }}">Checkout <i class="fa fa-arrow-circle-right"></i></a>
+        </div>
+    </div>
+</div>
 
-											<div class="product-widget">
-												<div class="product-img">
-													<img src="static/img/product02.png" alt="">
-												</div>
-												<div class="product-body">
-													<h3 class="product-name"><a href="#">product name goes here</a></h3>
-													<h4 class="product-price"><span class="qty">3x</span>$980.00</h4>
-												</div>
-												<button class="delete"><i class="fa fa-close"></i></button>
-											</div>
-										</div>
-										<div class="cart-summary">
-											<small>3 Item(s) selected</small>
-											<h5>SUBTOTAL: $2940.00</h5>
-										</div>
-										<div class="cart-btns">
-											<a href="#">View Cart</a>
-											<a href="#">Checkout  <i class="fa fa-arrow-circle-right"></i></a>
-										</div>
-									</div>
-								</div>
-								<!-- /Cart -->
 
 								<!-- Menu Toogle -->
 								<div class="menu-toggle">
@@ -194,10 +189,10 @@
 								{% endfor %}
 							</ul>
 						</li>
-						<li><a href="{{ url_for('buscar_por_categoria', categoria_id=14) }}">Computadores</a></li>
-						<li><a href="{{ url_for('buscar_por_categoria', categoria_id=18) }}">Celulares</a></li>
-						<li><a href="{{ url_for('buscar_por_categoria', categoria_id=19) }}">Cámaras</a></li>
-						<li><a href="{{ url_for('buscar_por_categoria', categoria_id=21) }}">Accesorios</a></li>
+						<li><a href="{{ url_for('buscar_por_categoria', categoria_id=3) }}">Computadores</a></li>
+						<li><a href="{{ url_for('buscar_por_categoria', categoria_id=4) }}">Celulares</a></li>
+						<li><a href="{{ url_for('buscar_por_categoria', categoria_id=5) }}">Cámaras</a></li>
+						<li><a href="{{ url_for('buscar_por_categoria', categoria_id=6) }}">Accesorios</a></li>
 					</ul>
 					<!-- /NAV -->
 				</div>
@@ -222,25 +217,25 @@
 						<div class="row">
 							<div class="col-md-3 col-xs-6">
 								<div class="footer">
-									<h3 class="footer-title">About Us</h3>
-									<p>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut.</p>
+									<h3 class="footer-title">Sobre nosotros</h3>
+									<p>Somos una pequeña empresa muy dedicada a nuestros clientes, donde entregar un producto es como entregar una caja, sin una caja no hay pedido ni producto</p>
 									<ul class="footer-links">
-										<li><a href="#"><i class="fa fa-map-marker"></i>1734 Stonecoal Road</a></li>
-										<li><a href="#"><i class="fa fa-phone"></i>+021-95-51-84</a></li>
-										<li><a href="#"><i class="fa fa-envelope-o"></i>email@email.com</a></li>
+										<li><a href="https://www.google.com/maps?q=Avenida+Concha+Y+Toro+,+Av+.+San+Carlos+1340+,+Puente+Alto+,+Región+Metropolitana" target="_blank"><i class="fa fa-map-marker"></i>Avenida Concha y Toro 1340</a></li>
+										<li><a href="https://wa.me/56966672676?text=Hola"><i class="fa fa-whatsapp"></i>+569 6667 2676</a></li>
+										<li><a href="mailto:vicentelaguna@hotmail.com"><i class="fa fa-envelope-o"></i>vicentelaguna@hotmail.com</a></li>
 									</ul>
 								</div>
 							</div>
 	
 							<div class="col-md-3 col-xs-6">
 								<div class="footer">
-									<h3 class="footer-title">Categories</h3>
+									<h3 class="footer-title">Categorias</h3>
 									<ul class="footer-links">
-										<li><a href="#">Hot deals</a></li>
-										<li><a href="#">Laptops</a></li>
-										<li><a href="#">Smartphones</a></li>
-										<li><a href="#">Cameras</a></li>
-										<li><a href="#">Accessories</a></li>
+										<li><a href="#">Ofertas especiales</a></li>
+										<li><a href="{{ url_for('buscar_por_categoria', categoria_id=3) }}">Computadores</a></li>
+										<li><a href="{{ url_for('buscar_por_categoria', categoria_id=4) }}">Celulares</a></li>
+										<li><a href="{{ url_for('buscar_por_categoria', categoria_id=5) }}">Cámaras</a></li>
+										<li><a href="{{ url_for('buscar_por_categoria', categoria_id=6) }}">Accesorios</a></li>
 									</ul>
 								</div>
 							</div>
@@ -262,13 +257,13 @@
 	
 							<div class="col-md-3 col-xs-6">
 								<div class="footer">
-									<h3 class="footer-title">Service</h3>
+									<h3 class="footer-title">Servicios</h3>
 									<ul class="footer-links">
-										<li><a href="#">My Account</a></li>
-										<li><a href="#">View Cart</a></li>
-										<li><a href="#">Wishlist</a></li>
-										<li><a href="#">Track My Order</a></li>
-										<li><a href="#">Help</a></li>
+										<li><a href="{{url_for('profile')}}">Mi Perfil</a></li>
+										<li><a href="{{ url_for('ver_carrito') }}">Ver Carrito</a></li>
+										<li><a href="#">Lista de deseados</a></li>
+										<li><a href="#">Seguir mi pedido</a></li>
+										<li><a href="#">Ayuda</a></li>
 									</ul>
 								</div>
 							</div>
