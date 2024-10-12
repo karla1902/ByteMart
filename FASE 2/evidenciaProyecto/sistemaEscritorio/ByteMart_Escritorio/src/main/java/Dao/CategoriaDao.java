@@ -4,10 +4,6 @@
  */
 package Dao;
 
-/**
- *
- * @author Karla
- */
 public class CategoriaDao {
     
 }

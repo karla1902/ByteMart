@@ -25,9 +25,6 @@ public class ProductosController {
             return false;
         }
     }
-
-
-
     // Leer un producto
     public ProductosModelo leerProducto(int id) {
         try {
