@@ -15,6 +15,7 @@ from flask_bcrypt import Bcrypt
 import logging, random, string
 from datetime import datetime, timedelta
 from sqlalchemy import Sequence
+import requests
 
 
 app = Flask(__name__)
@@ -104,6 +105,7 @@ class Producto(db.Model):
     stock = db.Column(db.Integer, nullable=False)
     category_id = db.Column(db.Integer, db.ForeignKey('categoria.id'), nullable=False)
     en_oferta = db.Column(db.Boolean, default=False)  # Nuevo atributo para indicar si el producto está en oferta
+    destacado = db.Column(db.Boolean, default=False) 
 
     # Relación con Categoria
     categoria = db.relationship('Categoria', backref=db.backref('productos', lazy=True))
@@ -387,18 +389,17 @@ def gestionar_productos(id=None):
         producto = Producto.query.get_or_404(id)
 
     if request.method == 'POST':
-        # Si estamos editando un producto existente, usamos ese producto
-        if producto:
+        if producto:  # Editar producto existente
             producto.name = request.form['name']
             producto.price = request.form['price']
             producto.marca = request.form['marca']
             producto.descripcion = request.form['descripcion']
             producto.stock = request.form['stock']
             producto.category_id = request.form['category_id']
-            en_oferta = 'en_oferta' in request.form
-            producto.en_oferta = en_oferta
-        else:
-            # Si no hay producto, estamos creando uno nuevo
+            producto.en_oferta = 'en_oferta' in request.form
+            producto.destacado = 'destacado' in request.form  # Convertir 'on' a True
+
+        else:  # Crear un nuevo producto
             nombre_producto = request.form['name']
             precio_producto = request.form['price']
             marca = request.form['marca']
@@ -406,6 +407,7 @@ def gestionar_productos(id=None):
             stock = request.form['stock']
             categoria_id = request.form['category_id']
             en_oferta = 'en_oferta' in request.form
+            destacado = 'destacado' in request.form  # Convertir 'on' a True
 
             # Validar precios y stock
             try:
@@ -415,7 +417,10 @@ def gestionar_productos(id=None):
                 flash('El precio o el stock no son válidos', 'danger')
                 return redirect(url_for('gestionar_productos', id=id))
 
-            producto = Producto(name=nombre_producto, price=precio_producto, marca=marca, stock=stock, descripcion=descripcion, category_id=categoria_id, en_oferta=en_oferta)
+            producto = Producto(name=nombre_producto, price=precio_producto, marca=marca, 
+                                stock=stock, descripcion=descripcion, 
+                                category_id=categoria_id, en_oferta=en_oferta, 
+                                destacado=destacado)  # Agrega el nuevo campo al crear el producto
             db.session.add(producto)
             db.session.commit()  # Guardar el producto primero para obtener el ID
 
@@ -434,10 +439,10 @@ def gestionar_productos(id=None):
         flash(f'Producto {"editado" if id else "creado"} con éxito', 'success')
         return redirect(url_for('gestionar_productos'))
 
-    # Obtener todos los productos para mostrarlos en la tabla
     productos = Producto.query.all()
-    
     return render_template('admin_productos.html', productos=productos, categorias=categorias, producto=producto)
+
+
 
 
 
@@ -683,6 +688,20 @@ def vaciar_carrito():
     
     flash("El carrito ha sido vaciado.", "success")  # Mensaje de éxito
     return redirect(url_for('ver_carrito'))  # Redirigir a la vista del carrito
+
+
+@app.route('/destacados')
+def destacados():
+    try:
+        response = requests.get('http://localhost:5002/api/productos_destacados')
+        response.raise_for_status()
+        productos_destacados = response.json()
+        print(productos_destacados)  # Añadir esta línea para verificar la estructura de los datos
+    except requests.exceptions.RequestException as e:
+        flash('Error al obtener los productos destacados', 'danger')
+        productos_destacados = []
+
+    return render_template('destacados.html', productos=productos_destacados)
 
 
 
