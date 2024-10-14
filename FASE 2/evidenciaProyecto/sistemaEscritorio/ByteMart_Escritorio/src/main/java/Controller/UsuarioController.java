@@ -10,8 +10,8 @@ public class UsuarioController {
         usuarioDAO = new UsuarioDao();
     }
     // Crear un nuevo usuario
-    public boolean crearUsuario(String nombre, String apellido, String contrasena, String email) {
-        UsuarioModelo nuevoUsuario = new UsuarioModelo(0, nombre, apellido, contrasena, email);
+    public boolean crearUsuario(String username, String password, String email) {
+        UsuarioModelo nuevoUsuario = new UsuarioModelo(0, username, password, email);
         return usuarioDAO.crearUsuario(nuevoUsuario); 
     }
 
@@ -26,8 +26,8 @@ public class UsuarioController {
     }
 
     // Actualizar un usuario
-    public boolean actualizarUsuario(int id, String nombre, String apellido, String contrasena, String email) {
-        UsuarioModelo usuarioActualizado = new UsuarioModelo(id, nombre, apellido, contrasena, email);
+    public boolean actualizarUsuario(int id, String username, String password, String email) {
+        UsuarioModelo usuarioActualizado = new UsuarioModelo(id, username, password, email);
         return usuarioDAO.actualizarUsuario(usuarioActualizado); // Llama al método del DAO correctamente
     }
 

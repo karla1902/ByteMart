@@ -1,6 +1,7 @@
 package View;
 
 import Controller.UsuarioController;
+import Modelo.UsuarioModelo;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -8,27 +9,49 @@ import java.awt.event.ActionListener;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.DefaultTableModel;
+import java.util.List;
 
 public class UsuarioVista extends JPanel {
+    private JTextField txtNombreUsuario;
+    private JTextField txtPasswordUsuario;
+    private JTextField txtEmailUsuario;
+    private JTable tableUsuarios;
+    private DefaultTableModel modelUsuarios;
+    private UsuarioController usuarioController;
+
     public UsuarioVista() {
+        usuarioController = new UsuarioController();
         setLayout(new BorderLayout());
 
         // Panel superior para los campos de entrada
-        JPanel inputPanel = new JPanel(new GridLayout(2, 2, 10, 10));
+        JPanel inputPanel = new JPanel(new GridLayout(4, 2, 10, 10));
         inputPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
         inputPanel.add(new JLabel("Nombre de Usuario:"));
-        JTextField txtNombreUsuario = new JTextField();
+        txtNombreUsuario = new JTextField();
         inputPanel.add(txtNombreUsuario);
 
         inputPanel.add(new JLabel("Contraseña:"));
-        JTextField txtPasswordUsuario = new JTextField();
+        txtPasswordUsuario = new JPasswordField();
         inputPanel.add(txtPasswordUsuario);
+
+        inputPanel.add(new JLabel("Email:"));
+        txtEmailUsuario = new JTextField();
+        inputPanel.add(txtEmailUsuario);
 
         add(inputPanel, BorderLayout.NORTH);
 
         // Tabla de usuarios
-        JTable tableUsuarios = new JTable(new DefaultTableModel(new Object[]{"ID", "Nombre", "Rol"}, 0));
+        modelUsuarios = new DefaultTableModel(new Object[]{"ID", "Nombre", "Email"}, 0);
+          
+        JTable tableUsuarios = new JTable(modelUsuarios) {
+            @Override
+            // Hacer que ninguna celda sea editable
+            public boolean isCellEditable(int row, int column) {
+                return false; 
+            }
+        };
+        
         JScrollPane scrollPane = new JScrollPane(tableUsuarios);
         add(scrollPane, BorderLayout.CENTER);
 
@@ -52,31 +75,34 @@ public class UsuarioVista extends JPanel {
         btnNuevo.addActionListener(e -> {
             txtNombreUsuario.setText("");
             txtPasswordUsuario.setText("");
+            txtEmailUsuario.setText("");
         });
 
         btnGrabar.addActionListener(e -> {
-            String nombreUsuario = txtNombreUsuario.getText().trim();
+            String usernameUsuario = txtNombreUsuario.getText().trim();
             String passwordUsuario = txtPasswordUsuario.getText().trim();
-            if (!nombreUsuario.isEmpty() && !passwordUsuario.isEmpty()) {
-                // Aquí puedes agregar lógica para guardar el usuario en la base de datos
-                ((DefaultTableModel) tableUsuarios.getModel()).addRow(new Object[]{
-                    ((DefaultTableModel) tableUsuarios.getModel()).getRowCount() + 1,
-                    nombreUsuario,
-                    "Usuario" // Asigna un rol por defecto o según tu lógica
-                });
-                txtNombreUsuario.setText("");
-                txtPasswordUsuario.setText("");
+            String emailUsuario = txtEmailUsuario.getText().trim();
+            if (!usernameUsuario.isEmpty() && !passwordUsuario.isEmpty() && !emailUsuario.isEmpty()) {
+                // Crear nuevo usuario en la base de datos
+                boolean resultado = usuarioController.crearUsuario(usernameUsuario, passwordUsuario, emailUsuario);
+                if (resultado) {
+                    cargarDatosUsuarios(); // Refrescar la tabla
+                    JOptionPane.showMessageDialog(this, "Usuario creado con éxito.");
+                } else {
+                    JOptionPane.showMessageDialog(this, "Error al crear el usuario.", "Error", JOptionPane.ERROR_MESSAGE);
+                }
+                limpiarCampos();
             } else {
-                JOptionPane.showMessageDialog(this, "Los campos no pueden estar vacíos.", "Error", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(this, "Todos los campos son obligatorios.", "Error", JOptionPane.ERROR_MESSAGE);
             }
         });
 
         btnModificar.addActionListener(e -> {
             int selectedRow = tableUsuarios.getSelectedRow();
             if (selectedRow != -1) {
-                // Actualiza el modelo de tabla
-                ((DefaultTableModel) tableUsuarios.getModel()).setValueAt(txtNombreUsuario.getText().trim(), selectedRow, 1);
-                ((DefaultTableModel) tableUsuarios.getModel()).setValueAt(txtPasswordUsuario.getText().trim(), selectedRow, 2);
+                txtNombreUsuario.setText((String) modelUsuarios.getValueAt(selectedRow, 1));
+                txtPasswordUsuario.setText((String) modelUsuarios.getValueAt(selectedRow, 2));
+                txtEmailUsuario.setText((String)modelUsuarios.getValueAt(selectedRow, 3));
             } else {
                 JOptionPane.showMessageDialog(this, "Selecciona un usuario para modificar.", "Advertencia", JOptionPane.WARNING_MESSAGE);
             }
@@ -85,9 +111,15 @@ public class UsuarioVista extends JPanel {
         btnEliminar.addActionListener(e -> {
             int selectedRow = tableUsuarios.getSelectedRow();
             if (selectedRow != -1) {
-                ((DefaultTableModel) tableUsuarios.getModel()).removeRow(selectedRow);
-                txtNombreUsuario.setText("");
-                txtPasswordUsuario.setText("");
+                int id = (int) modelUsuarios.getValueAt(selectedRow, 0);
+                boolean resultado = usuarioController.eliminarUsuario(id);
+                if (resultado) {
+                    cargarDatosUsuarios(); // Refrescar la tabla
+                    JOptionPane.showMessageDialog(this, "Usuario eliminado con éxito.");
+                } else {
+                    JOptionPane.showMessageDialog(this, "Error al eliminar el usuario.", "Error", JOptionPane.ERROR_MESSAGE);
+                }
+                limpiarCampos();
             } else {
                 JOptionPane.showMessageDialog(this, "Selecciona un usuario para eliminar.", "Advertencia", JOptionPane.WARNING_MESSAGE);
             }
@@ -99,11 +131,28 @@ public class UsuarioVista extends JPanel {
             public void valueChanged(ListSelectionEvent e) {
                 int selectedRow = tableUsuarios.getSelectedRow();
                 if (selectedRow != -1) {
-                    String nombreUsuario = (String) ((DefaultTableModel) tableUsuarios.getModel()).getValueAt(selectedRow, 1);
+                    String nombreUsuario = (String) modelUsuarios.getValueAt(selectedRow, 1);
+                    String emailUsuario = (String) modelUsuarios.getValueAt(selectedRow, 3);
                     txtNombreUsuario.setText(nombreUsuario);
-                    // Aquí puedes cargar el rol y otros datos si es necesario
+                    txtEmailUsuario.setText(emailUsuario);
                 }
             }
         });
+
+        cargarDatosUsuarios(); // Cargar datos iniciales
+    }
+
+    private void cargarDatosUsuarios() {
+        modelUsuarios.setRowCount(0); // Limpiar la tabla
+        List<UsuarioModelo> usuarios = usuarioController.listarUsuarios();
+        for (UsuarioModelo usuario : usuarios) {
+            modelUsuarios.addRow(new Object[]{usuario.getId(), usuario.getUsername(), usuario.getEmail()});
+        }
+    }
+
+    private void limpiarCampos() {
+        txtNombreUsuario.setText("");
+        txtPasswordUsuario.setText("");
+        txtEmailUsuario.setText("");
     }
 }

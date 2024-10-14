@@ -11,6 +11,7 @@ Dao\UsuarioDao.class
 Dao\Conexion.class
 com\mycompany\bytemart_escritorio\ByteMart_Escritorio.class
 Controller\CategoriaController.class
+View\UsuarioVista$2.class
 View\Vista.class
 Modelo\CategoriaModelo.class
 View\OrdenesVista.class
