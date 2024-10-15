@@ -378,6 +378,81 @@ def configuracion():
     categorias = Categoria.query.all()
     return render_template('configuracion.html', categorias = categorias)
 
+#Administración de Usuarios
+#manejo de la ruta admin usuarios
+# Ruta para administrar usuarios
+@app.route('/admin/usuarios', methods=['GET'])
+def administrar_usuarios():
+    if 'user_id' not in session or not Usuario.query.get(session['user_id']).is_admin:
+        flash('Acceso denegado. No tienes permisos para acceder a esta página.', 'danger')
+        return redirect(url_for('login'))
+
+    usuarios = Usuario.query.all()  # Obtener todos los usuarios
+    return render_template('admin_usuarios.html', usuarios=usuarios)
+
+
+@app.route('/admin/usuarios', methods=['GET', 'POST'])
+def gestionar_usuarios():
+    if request.method == 'POST':
+        if request.form.get('action') == 'guardar':
+            return guardar_usuario()
+        elif request.form.get('action') == 'actualizar':
+            return actualizar_usuario()
+
+    usuarios = Usuario.query.all()  # Obtener todos los usuarios
+    return render_template('admin_usuarios.html', usuarios=usuarios)
+
+@app.route('/admin/usuarios/guardar', methods=['POST'])
+def guardar_usuario():
+    nuevo_usuario = Usuario(
+        username=request.form['username'],
+        password=request.form['password'],  # No cifrando la contraseña
+        nombre=request.form['nombre'],
+        apellido=request.form['apellido'],
+        email=request.form['email'],
+        direccion=request.form['direccion'],
+        is_admin='is_admin' in request.form
+    )
+    db.session.add(nuevo_usuario)
+    db.session.commit()
+    flash('Usuario creado con éxito', 'success')
+    return redirect(url_for('gestionar_usuarios'))
+
+@app.route('/admin/usuarios/actualizar', methods=['POST'])
+def actualizar_usuario():
+    usuario_id = request.form['id']
+    usuario = Usuario.query.get(usuario_id)
+
+    if usuario:
+        usuario.nombre = request.form['nombre']
+        usuario.apellido = request.form['apellido']
+        usuario.username = request.form['username']
+        if request.form['password']:  # Solo actualizar si hay una nueva contraseña
+            usuario.password = request.form['password']
+        usuario.email = request.form['email']
+        usuario.direccion = request.form['direccion']
+        usuario.is_admin = 'is_admin' in request.form
+
+        db.session.commit()
+        flash('Usuario actualizado con éxito.', 'success')
+
+    return redirect(url_for('gestionar_usuarios'))
+
+@app.route('/admin/usuarios/<int:id>/eliminar', methods=['POST'])
+def eliminar_usuario(id):
+    usuario = Usuario.query.get(id)
+    if usuario:
+        db.session.delete(usuario)
+        db.session.commit()
+        flash('Usuario eliminado con éxito.', 'success')
+    return redirect(url_for('gestionar_usuarios'))
+
+
+
+
+
+
+#Administración de categorias
 @app.route('/admin/categorias', methods=['GET', 'POST'])
 def gestionar_categorias():
     if request.method == 'POST':
