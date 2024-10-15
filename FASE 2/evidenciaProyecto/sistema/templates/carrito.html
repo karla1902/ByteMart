@@ -123,10 +123,11 @@
                 <th>Cantidad</th>
                 <th>Imagen</th>
                 <th>Valor</th>
+                <th></th>
             </tr>
             {% for item in carrito %}
             <tr>
-                <td>{{ item.producto.name }}</td>  <!-- Asegúrate de acceder al nombre del producto -->
+                <td>{{ item.producto.name }}</td>
                 <td>{{ item.cantidad }}</td>
                 <td>
                     {% if item.image_url %}
@@ -134,11 +135,16 @@
                     {% endif %}
                 </td>
                 <td>${{ item.producto.price * item.cantidad }}</td>
+                <td>
+                    <!-- Botón "X" para eliminar el producto -->
+                    <form action="{{ url_for('eliminar_item', item_id=item.producto.id) }}" method="POST" style="display:inline;">
+                        <button type="submit" class="btn-custom" style="background-color: red; padding: 5px 10px;">X</button>
+                    </form>
+                </td>
             </tr>
-            
-            
             {% endfor %}
         </table>
+        
 
         <div class="button-container">
             <p>Subtotal: ${{ subtotal }}</p>
@@ -146,7 +152,10 @@
                 <button type="submit" class="btn-custom">Vaciar Carrito</button>
             </form>
             <a href="{{ url_for('index') }}" class="btn-custom">Seguir comprando</a>
-            <a href="{{ url_for('checkout') }}" class="btn-custom">Ir a pagar</a>
+            <form action="{{ url_for('checkout') }}" method="POST" style="display:inline;"> <!-- Formulario para checkout -->
+                <button type="submit" class="btn-custom">Ir a pagar</button>
+            </form>
+            
         </div>
         
     </div>

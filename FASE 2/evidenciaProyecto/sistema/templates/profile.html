@@ -1,70 +1,29 @@
 {% extends "base.html" %}
 
 {% block content %}
-
 <style>
-    body {
-        font-family: Arial, sans-serif;
-        background-color: #f9f9f9; /* Fondo suave */
-        margin: 0;
-        padding: 20px;
-    }
+    .card-list .list-group-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center; /* Alinea el contenido verticalmente */
+}
 
-    h2 {
-        color: #333; /* Color de encabezados */
-    }
-
-    .profile-container {
-        max-width: 800px; /* Ancho máximo para el perfil */
-        margin: 0 auto; /* Centra el perfil */
-        background-color: white; /* Fondo blanco para la card */
-        border-radius: 8px; /* Bordes redondeados */
-        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1); /* Sombra para efecto de elevación */
-        padding: 20px; /* Espaciado interno */
-    }
-
-    .btn-custom {
-        background-color: #226151; /* Color de fondo */
-        color: white; /* Color del texto */
-        border: none; /* Sin borde */
-        border-radius: 5px; /* Bordes redondeados */
-        padding: 10px 15px; /* Espaciado interno */
-        text-decoration: none; /* Sin subrayado */
-        transition: background-color 0.3s; /* Transición suave */
-    }
-
-    .btn-custom:hover {
-        background-color: #1f5c4f; /* Color al pasar el mouse */
-    }
-
-    .flash-message, .success-message {
-        padding: 10px;
-        margin-bottom: 20px;
-        border-radius: 5px;
-        font-weight: bold;
-    }
-
-    .flash-message {
-        background-color: #f44336; /* Rojo para errores */
-        color: white;
-    }
-
-    .success-message {
-        background-color: #226151; /* Verde para éxito */
-        color: white;
-    }
+.card-list button {
+    margin-left: 10px; /* Espacio entre el texto de la tarjeta y el botón */
+}
 </style>
-
 <div class="profile-container">
     <h2>Mi Perfil</h2>
 
     {% with messages = get_flashed_messages(with_categories=True) %}
     {% if messages %}
-        <ul>
-        {% for category, message in messages %}
-            <li class="{{ category }}">{{ message }}</li>  <!-- Usar la categoría para el estilo -->
-        {% endfor %}
-        </ul>
+        <div class="alert-container">
+            <ul>
+            {% for category, message in messages %}
+                <li class="{{ category }}">{{ message }}</li>
+            {% endfor %}
+            </ul>
+        </div>
     {% endif %}
     {% endwith %}
 
@@ -73,40 +32,72 @@
             <!-- Nombre de usuario -->
             <div class="mb-3 col-md-6">
                 <label for="username" class="form-label">Nombre de usuario</label>
-                <input type="text" id="username" name="username" class="form-control" value="{{ user.username }}" readonly>
+                <input type="text" id="username" name="username" class="form-control" value="{{ user.username }}" required>
             </div>
             
             <!-- Correo electrónico -->
             <div class="mb-3 col-md-6">
                 <label for="email" class="form-label">Correo electrónico</label>
-                <input type="email" id="email" name="email" class="form-control" value="{{ user.email }}" readonly>
+                <input type="email" id="email" name="email" class="form-control" value="{{ user.email }}" required>
             </div>
         </div>
 
-        <!-- Botones de acción -->
+        <!-- Botones de acción para el perfil -->
         <div class="d-flex justify-content-end mt-4">
             <button type="button" class="btn btn-secondary me-2" id="editButton">Editar</button>
-            <button type="submit" class="btn-custom d-none" id="saveButton">Guardar</button>
+            <button type="submit" class="btn-custom">Guardar</button>
+        </div>
+    </form>
+
+    <!-- Espaciado entre secciones -->
+    <hr class="my-4">
+
+    <h3 class="mt-5">Mis Tarjetas</h3>
+    <div class="card-list">
+        {% if tarjetas %}
+            <ul class="list-group">
+                {% for tarjeta in tarjetas %}
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <div>
+                            <strong>Número de Tarjeta:</strong> {{ tarjeta.numero_tarjeta }} | 
+                            <strong>Código de Verificación:</strong> {{ tarjeta.codigo_verificacion }} | 
+                            <strong>Saldo:</strong> ${{ tarjeta.saldo }}
+                        </div>
+                        <form method="POST" action="/delete_card/{{ tarjeta.id }}" class="d-inline">
+                            <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('¿Estás seguro de que deseas eliminar esta tarjeta?');">X</button>
+                        </form>
+                    </li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p>No tienes tarjetas agregadas.</p>
+        {% endif %}
+    </div>
+    
+    <!-- Formulario para agregar tarjeta -->
+    <h3 class="mt-5">Agregar Tarjeta</h3>
+    <form method="POST" action="/add_card">
+        <div class="row">
+            <div class="mb-3 col-md-6">
+                <label for="numero_tarjeta" class="form-label">Número de Tarjeta</label>
+                <input type="text" id="numero_tarjeta" name="numero_tarjeta" 
+                       class="form-control" required 
+                       pattern="\d{16}" maxlength="16" minlength="16" 
+                       title="El número de tarjeta debe tener 16 dígitos.">
+            </div>
+            <div class="mb-3 col-md-6">
+                <label for="codigo_verificacion" class="form-label">Código de Verificación</label>
+                <input type="text" id="codigo_verificacion" name="codigo_verificacion" 
+                       class="form-control" required 
+                       pattern="\d{3}" maxlength="3" minlength="3" 
+                       title="El código de verificación debe tener 3 dígitos.">
+            </div>
+        </div>
+        <!-- Botón para agregar tarjeta -->
+        <div class="d-flex justify-content-end" style="margin: 10px;">
+            <button type="submit" class="btn-custom">Agregar Tarjeta</button>
         </div>
     </form>
 </div>
-
-<!-- Script para habilitar la edición -->
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    var editButton = document.getElementById('editButton');
-    var saveButton = document.getElementById('saveButton');
-    var inputs = document.querySelectorAll('input');
-    
-    // Habilitar edición de campos
-    editButton.addEventListener('click', function() {
-        inputs.forEach(function(input) {
-            input.removeAttribute('readonly');  // Permitir edición
-        });
-        editButton.classList.add('d-none');  // Ocultar botón de "Editar"
-        saveButton.classList.remove('d-none');  // Mostrar botón de "Guardar"
-    });
-});
-</script>
 
 {% endblock %}

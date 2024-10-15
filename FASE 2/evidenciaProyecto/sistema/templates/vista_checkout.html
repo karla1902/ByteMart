@@ -1,0 +1,168 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <!-- BREADCRUMB -->
+    <div id="breadcrumb" class="section">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-12">
+                    <h3 class="breadcrumb-header">Pedido</h3>
+                    <ul class="breadcrumb-tree">
+                        <li><a href="{{ url_for('index') }}">Inicio</a></li>
+                        <li class="active">Pedido</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- /BREADCRUMB -->
+
+    <!-- SECTION -->
+    <div class="section">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-7">
+                    <!-- Billing Details -->
+                    <div class="billing-details">
+                        <div class="section-title">
+                            <h3 class="title">Datos de compra</h3>
+                        </div>
+                        <form action="{{ url_for('process_checkout') }}" method="POST">
+                            <div class="form-group">
+                                <input class="input" type="text" name="first-name" placeholder="First Name" required>
+                            </div>
+                            <div class="form-group">
+                                <input class="input" type="text" name="last-name" placeholder="Last Name" required>
+                            </div>
+                            <div class="form-group">
+                                <input class="input" type="email" name="email" placeholder="Email" required>
+                            </div>
+                            <div class="form-group">
+                                <input class="input" type="text" name="address" placeholder="Address" required>
+                            </div>
+                            <div class="form-group">
+                                <select class="input" name="region" id="region" required onchange="loadProvincias()">
+                                    <option value="">Seleccione una región</option>
+                                    {% for region in regiones %}
+                                        <option value="{{ region.codigo }}">{{ region.nombre }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <select class="input" name="provincia" id="provincia" required onchange="loadComunass()">
+                                    <option value="">Seleccione una provincia</option>
+                                    <!-- Las opciones se llenarán dinámicamente -->
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <select class="input" name="comuna" id="comuna" required>
+                                    <option value="">Seleccione una comuna</option>
+                                    <!-- Las opciones se llenarán dinámicamente -->
+                                </select>
+                            </div>
+                            
+                            <div class="form-group">
+                                <input class="input" type="tel" name="tel" placeholder="Telephone" required>
+                            </div>
+                            <div class="order-notes">
+                                <textarea class="input" placeholder="Order Notes" name="order_notes"></textarea>
+                            </div>
+                            <button type="submit" class="primary-btn order-submit">Realizar Pedido</button>
+                        </form>
+                    </div>
+                    <!-- /Billing Details -->
+                </div>
+
+                <!-- Order Details -->
+                <div class="col-md-5 order-details">
+                    <div class="section-title text-center">
+                        <h3 class="title">TU PEDIDO</h3>
+                    </div>
+                    <div class="order-summary">
+                        <div class="order-col">
+                            <div><strong>PRODUCTO</strong></div>
+                            <div><strong>TOTAL</strong></div>
+                        </div>
+                        {% for item in checkout_items %}
+                        <div class="order-col">
+                            <div>
+                                <img src="{{ item.imagen }}" alt="{{ item.nombre }}" style="width: 50px; height: auto;">
+                                {{ item.name }} x{{ item.cantidad }}
+                            </div>
+                            <div>${{ item.precio * item.cantidad }}</div>
+                        </div>
+                        {% endfor %}
+                        <div class="order-col">
+                            <div>Envío</div>
+                            <div><strong>GRATIS</strong></div>
+                        </div>
+                        <div class="order-col">
+                            <div><strong>TOTAL</strong></div>
+                            <div><strong class="order-total">${{ total_price }}</strong></div>
+                        </div>
+                    </div>
+                    <form action="{{ url_for('process_checkout') }}" method="POST" id="payment-form">
+                        <input type="hidden" name="tarjeta_id" value="{{ tarjeta_id }}">
+                        <input type="hidden" name="total_compra" value="{{ total_price }}">
+                        <button type="submit" class="primary-btn order-submit">Realizar Pago</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- /SECTION -->
+
+
+    <script>
+        function loadProvincias() {
+            const regionSelect = document.getElementById('region');
+            const provinciaSelect = document.getElementById('provincia');
+            const comunaSelect = document.getElementById('comuna');
+            
+            const selectedRegionId = regionSelect.value;
+            
+            // Limpiar provincias y comunas al cambiar de región
+            provinciaSelect.innerHTML = '<option value="">Seleccione una provincia</option>';
+            comunaSelect.innerHTML = '<option value="">Seleccione una comuna</option>';
+    
+            if (selectedRegionId) {
+                // Hacer una solicitud para obtener provincias basadas en la región seleccionada
+                fetch(`http://127.0.0.1:5005/provincias/${selectedRegionId}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        data.provincias.forEach(provincia => {
+                            const option = document.createElement('option');
+                            option.value = provincia.codigo;
+                            option.textContent = provincia.nombre;
+                            provinciaSelect.appendChild(option);
+                        });
+                    });
+            }
+        }
+    
+        function loadComunass() {
+            const provinciaSelect = document.getElementById('provincia');
+            const comunaSelect = document.getElementById('comuna');
+    
+            const selectedProvinciaId = provinciaSelect.value;
+    
+            // Limpiar comunas al cambiar de provincia
+            comunaSelect.innerHTML = '<option value="">Seleccione una comuna</option>';
+    
+            if (selectedProvinciaId) {
+                // Hacer una solicitud para obtener comunas basadas en la provincia seleccionada
+                fetch(`http://127.0.0.1:5005/comunas/${selectedProvinciaId}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        data.comunas.forEach(comuna => {
+                            const option = document.createElement('option');
+                            option.value = comuna.codigo;
+                            option.textContent = comuna.nombre;
+                            comunaSelect.appendChild(option);
+                        });
+                    });
+            }
+        }
+    </script>
+    
+{% endblock %}

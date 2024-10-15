@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container">
+    <h1 class="my-4">Administrar Tarjetas</h1>
+
+    {% if tarjetas %}
+        <ul class="list-group">
+            {% for tarjeta in tarjetas %}
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                    <div class="flex-grow-1 me-2">
+                        <strong>Tarjeta:</strong> {{ tarjeta.numero_tarjeta }}<br>
+                        <strong>Saldo Actual:</strong>
+                        <span id="saldo_actual_{{ tarjeta.id }}">$ {{ tarjeta.saldo }}</span> <!-- Muestra el saldo actual -->
+                        <br>
+                        <strong>Monto a Aumentar:</strong>
+                        <input type="number" 
+                        id="monto_aumentar_{{ tarjeta.id }}" 
+                        class="form-control" 
+                        min="0" 
+                        placeholder="$0" 
+                        oninput="formatearMoneda(this)" 
+                        style="width: 80%;">
+                    </div>
+                    <div class="d-flex flex-column align-items-end">
+                        <strong>Propietario:</strong> {{ tarjeta.usuario.username }}<br>
+                        <strong>Correo:</strong> {{ tarjeta.usuario.email }}
+                        <button class="btn btn-primary btn-sm mt-2" onclick="guardarSaldo({{ tarjeta.id }})">Guardar Saldo</button>
+                    </div>
+                </li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>No tienes tarjetas registradas.</p>
+    {% endif %}
+</div>
+
+<script>
+    function guardarSaldo(tarjetaId) {
+        const montoAumentar = parseInt(document.getElementById(`monto_aumentar_${tarjetaId}`).value) || 0; // Obtener el monto a aumentar
+        const saldoActual = parseInt(document.getElementById(`saldo_actual_${tarjetaId}`).textContent); // Obtener el saldo actual
+
+        const nuevoSaldo = saldoActual + montoAumentar; // Calcular el nuevo saldo
+
+        // Hacer una petición AJAX para guardar el nuevo saldo
+        fetch(`/update_saldo/${tarjetaId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                
+            },
+            body: JSON.stringify({ saldo: nuevoSaldo }) // Enviar el nuevo saldo calculado
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('Saldo actualizado exitosamente.');
+                location.reload();  // Recargar la página para mostrar los nuevos saldos
+            } else {
+                alert('Error al actualizar el saldo: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Ocurrió un error al actualizar el saldo.');
+        });
+    }
+</script>
+
+
+{% endblock %}

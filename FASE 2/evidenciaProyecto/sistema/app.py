@@ -16,9 +16,16 @@ import logging, random, string
 from datetime import datetime, timedelta
 from sqlalchemy import Sequence
 import requests
+import urllib.request
+import json
+from flask_cors import CORS
+from flask_wtf.csrf import CSRFProtect  
+
 
 
 app = Flask(__name__)
+CORS(app)
+# csrf = CSRFProtect(app)
 app.config['SECRET_KEY'] = 'mi_clave_secreta'  # Necesario para las sesiones
 app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+mysqlconnector://root:system@localhost/proyecto'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
@@ -52,13 +59,16 @@ category_sequence = Sequence('category_id_seq', start=1, increment=1)
 # Configuración del registro
 logging.basicConfig(level=logging.INFO)
 
+
+
+
 def create_default_admin():
     # Crear un usuario admin por defecto si no existe
     with app.app_context():  # Asegúrate de que el contexto de la aplicación esté disponible
         admin_user = Usuario.query.filter_by(username='admin').first()
         if not admin_user:
-            hashed_password = bcrypt.generate_password_hash('admin123').decode('utf-8')
-            admin_user = Usuario(username='admin', password=hashed_password, email='email@email.com', is_admin=True)
+            # hashed_password = bcrypt.generate_password_hash('admin123').decode('utf-8')
+            admin_user = Usuario(username='admin', password='admin1234', email='email@email.com', is_admin=True)
             db.session.add(admin_user)
             db.session.commit()
             app.logger.info('Usuario administrador creado con éxito.')
@@ -78,12 +88,18 @@ class Usuario(db.Model):
     id = db.Column(db.Integer, user_sequence, primary_key=True)
     username = db.Column(db.String(50), unique=True, nullable=False)
     password = db.Column(db.String(100), nullable=False)
+    nombre = db.Column(db.String(100), nullable=False)
+    apellido = db.Column(db.String(100), nullable=False)
     email = db.Column(db.String(120), nullable=False)
-    is_admin = db.Column(db.Boolean, default=False)  # Añadido para diferenciar entre admin y usuario normal
-    reset_code = db.Column(db.String(6), nullable=True)  # Código de restablecimiento
-    reset_code_expiration = db.Column(db.DateTime, nullable=True)  # Expiración del código
+    direccion = db.Column(db.String(50), unique=True, nullable=True)
+    is_admin = db.Column(db.Boolean, default=False)  
+    reset_code = db.Column(db.String(6), nullable=True)
+    reset_code_expiration = db.Column(db.DateTime, nullable=True)
+    
+
     def __repr__(self):
         return f'<Usuario {self.username}>'
+
 
 # Modelo de Categoria
 class Categoria(db.Model):
@@ -147,6 +163,22 @@ class ItemCarrito(db.Model):
     carrito = db.relationship('Carrito', backref=db.backref('items', lazy=True))
     producto = db.relationship('Producto', backref=db.backref('items', lazy=True))
 
+# Modelo de Tarjeta
+class Tarjeta(db.Model):
+    __tablename__ = 'tarjetas'
+    __table_args__ = {'extend_existing': True}
+    
+    id = db.Column(db.Integer, primary_key=True)
+    usuario_id = db.Column(db.Integer, db.ForeignKey('usuario.id'), nullable=False)
+    saldo = db.Column(db.Integer, nullable=False)  
+    numero_tarjeta = db.Column(db.String(16), nullable=False)  # Cambiar a String para manejar ceros a la izquierda
+    codigo_verificacion = db.Column(db.String(3), nullable=False)  # Cambiar a String
+
+    # Relación con Usuario
+    usuario = db.relationship('Usuario', backref='tarjetas')  # Opcional, para acceder a las tarjetas desde el usuario
+
+    def __repr__(self):
+        return f'<Tarjeta {self.numero_tarjeta}, Saldo: {self.saldo}>'
 
 
 @app.before_request
@@ -184,9 +216,8 @@ def login():
         
         user = Usuario.query.filter_by(username=username).first()
         
-        if user and bcrypt.check_password_hash(user.password, password):
+        if user and user.password == password:
             session['user_id'] = user.id
-            
             # Crear un carrito si no existe
             if not Carrito.query.filter_by(usuario_id=user.id).first():
                 nuevo_carrito = Carrito(usuario_id=user.id)
@@ -197,6 +228,7 @@ def login():
             return redirect(url_for('home'))
         else:
             flash('Usuario o contraseña incorrectos', 'danger')
+
     
     return render_template('login.html', categorias=categorias)
 
@@ -205,24 +237,35 @@ def login():
 def register():
     if request.method == 'POST':
         username = request.form['username']
+        nombre = request.form['nombre']
+        apellido = request.form['apellido']
         email = request.form['email']
+        direccion = request.form.get('direccion', None)  # Opcional
         password = request.form['password']
-        hashed_password = bcrypt.generate_password_hash(password).decode('utf-8')
-        
-        # Determinar si el usuario es admin
-        is_admin = 'is_admin' in request.form  # Por ejemplo, si hay un campo en el formulario para esto
+        # hashed_password = bcrypt.generate_password_hash(password).decode('utf-8')
 
-        # Verificar si el usuario ya existe
+        # Verificar si el nombre de usuario ya existe
         if Usuario.query.filter_by(username=username).first():
             flash('El nombre de usuario ya existe', 'warning')
-        else:
-            new_user = Usuario(username=username, email=email, password=hashed_password, is_admin=is_admin)
-            db.session.add(new_user)
-            db.session.commit()
-            flash('Usuario registrado exitosamente', 'success')
-            return redirect(url_for('login'))
-    
+            return render_template('register.html')
+
+        # Verificar si el correo ya existe
+        if Usuario.query.filter_by(email=email).first():
+            flash('El correo electrónico ya está en uso', 'warning')
+            return render_template('register.html')
+
+        # Crear un nuevo usuario
+        new_user = Usuario(username=username, nombre=nombre, apellido=apellido,
+                           email=email, direccion=direccion, password=password)
+        db.session.add(new_user)
+        db.session.commit()
+        flash('Usuario registrado exitosamente', 'success')
+        return redirect(url_for('login'))
+
     return render_template('register.html')
+
+
+
 
 # Restablecer Contraseña
 def generate_reset_code(length=6):
@@ -303,12 +346,12 @@ def reset_password_get():
 
 @app.route('/profile', methods=['GET', 'POST'])
 def profile():
-    categorias = Categoria.query.all()  # Obtener categorías si son necesarias para el perfil
     if 'user_id' not in session:
         return redirect(url_for('login'))  # Redirigir si el usuario no está logueado
 
     user = Usuario.query.get(session['user_id'])  # Obtener el usuario actual desde la sesión
-    
+    tarjetas = Tarjeta.query.filter_by(usuario_id=user.id).all()  # Obtener las tarjetas del usuario
+
     if request.method == 'POST':
         # Actualizar el nombre de usuario y el correo electrónico desde el formulario
         user.email = request.form['email']
@@ -317,7 +360,8 @@ def profile():
         flash('Datos actualizados correctamente', 'success')
         return redirect(url_for('profile'))
 
-    return render_template('profile.html', user=user, categorias=categorias)
+    return render_template('profile.html', user=user, tarjetas=tarjetas)  # Pasa las tarjetas a la plantilla
+
 
 @app.route('/logout')
 def logout():
@@ -603,17 +647,134 @@ def ver_carrito():
 
 @app.route('/checkout', methods=['POST'])
 def checkout():
-    carrito = session.get('carrito', [])
+    carrito = Carrito.query.filter_by(usuario_id=session['user_id']).first()
+
+    # Validar si hay un carrito
     if not carrito:
         flash('Tu carrito está vacío', 'warning')
         return redirect(url_for('ver_carrito'))
 
-    # Aquí debes agregar la lógica de pago y generación de órdenes
+    # Obtener los ítems del carrito
+    items = ItemCarrito.query.filter_by(carrito_id=carrito.id).all()
 
-    # Limpiar el carrito después de un pago exitoso
-    session.pop('carrito', None)
-    flash('Compra realizada con éxito', 'success')
-    return redirect(url_for('home'))  # O a otra página que desees
+    # Validar si hay ítems en el carrito
+    if not items:
+        flash('Tu carrito está vacío', 'warning')
+        return redirect(url_for('ver_carrito'))
+
+    # Preparar datos para el checkout
+    checkout_items = []
+    total = calcular_total(items)  # Calcular el total usando la función ajustada
+
+    for item in items:
+        # Obtener la primera imagen del producto, si existe
+        imagen = item.producto.imagenes[0].image_url if item.producto.imagenes else None
+
+        checkout_items.append({
+            'id': item.producto.id,
+            'name': item.producto.name,  # Asegúrate de usar el atributo correcto
+            'cantidad': item.cantidad,
+            'precio': item.producto.price,  # Asegúrate de que el precio está en el formato adecuado
+            'imagen': imagen  # Usar la imagen si existe
+        })
+
+
+
+    # Almacenar datos en la sesión para usarlo en la página de checkout
+    session['checkout_items'] = checkout_items
+    session['checkout_total'] = total
+
+    return redirect(url_for('checkout_view'))  # Redirigir a la vista de checkout
+
+
+@app.route('/checkout', methods=['GET'])
+def checkout_view():
+    try:
+        # Obtén todos los datos (regiones, provincias, comunas) de una sola vez
+        response = requests.get('http://localhost:5005/datos_completos')
+        response.raise_for_status()  # Lanza un error para códigos de estado HTTP 4xx o 5xx
+        
+        data = response.json()  # Obtiene los datos JSON de la respuesta
+
+        # Asigna las regiones, provincias y comunas desde los datos obtenidos
+        regiones = data.get('regiones', [])
+        provincias = data.get('provincias', [])
+        comunas = data.get('comunas', [])
+
+        # Obtén el total y los ítems del checkout de la sesión
+        total = session.get('checkout_total', 0)
+        checkout_items = session.get('checkout_items', [])
+
+        return render_template(
+            'vista_checkout.html',
+            total_price=total,
+            checkout_items=checkout_items,
+            regiones=regiones,
+            provincias=provincias,
+            comunas=comunas
+        )
+    
+    except requests.exceptions.RequestException as e:
+        print(f"Error en la solicitud: {e}")
+        return "Error al obtener datos. Por favor, inténtelo más tarde.", 500
+    except ValueError as e:
+        print(f"Error al procesar JSON: {e}")
+        return "Error al procesar datos. Por favor, inténtelo más tarde.", 500
+
+
+
+
+
+
+
+@app.route('/process_checkout', methods=['POST'])
+def process_checkout():
+    # Aquí va la lógica para procesar la compra
+    # Asegúrate de que el usuario esté autenticado
+    carrito = Carrito.query.filter_by(usuario_id=session['user_id']).first()
+    
+    if not carrito:
+        flash('Tu carrito está vacío', 'warning')
+        return redirect(url_for('ver_carrito'))
+
+    items = ItemCarrito.query.filter_by(carrito_id=carrito.id).all()
+    if not items:
+        flash('Tu carrito está vacío', 'warning')
+        return redirect(url_for('ver_carrito'))
+
+    total = calcular_total(items)  # Calcular el total
+    tarjeta_id = request.form.get('tarjeta_id')  # Asegúrate de obtener el ID de la tarjeta del formulario
+
+    # Realizar la solicitud de pago a la API de pago
+    try:
+        response = requests.post('http://localhost:5003/api/pagar', json={
+            'tarjeta_id': tarjeta_id,
+            'total_compra': total
+        })
+        response.raise_for_status()  # Esto lanzará un error si la respuesta no es 200
+
+        # Aquí puedes manejar la respuesta de la API, como confirmar la transacción
+        flash('Pago realizado con éxito', 'success')
+        
+        # Aquí podrías guardar la orden en tu base de datos
+        # (esto es solo un ejemplo, deberías ajustar según tu lógica de negocio)
+        
+    except requests.exceptions.RequestException as e:
+        flash('Error al procesar el pago: {}'.format(e), 'danger')
+        return redirect(url_for('ver_carrito'))
+
+    return redirect(url_for('success_page'))  # Redirigir a una página de éxito
+
+
+
+
+def calcular_total(items):
+    total = 0
+    for item in items:
+        total += item.producto.price * item.cantidad  # Usa item.producto.price para acceder al precio
+    return total
+
+
 
 @app.route('/remove_from_cart/<int:item_id>', methods=['POST'])
 def remove_from_cart(item_id):
@@ -659,17 +820,31 @@ def update_cart(item_id):
 
 @app.route('/eliminar_item/<int:item_id>', methods=['POST'])
 def eliminar_item(item_id):
-    carrito = session.get('carrito', [])
+    # Verificar si el usuario está autenticado
+    if 'user_id' not in session:
+        flash('Debes iniciar sesión para realizar esta acción.', 'error')
+        return redirect(url_for('login'))  # Redirigir a la página de login si no está autenticado
+
+    # Obtener el carrito del usuario actual
+    carrito = Carrito.query.filter_by(usuario_id=session['user_id']).first()
     
-    # Buscar el item en el carrito
-    for item in carrito:
-        if item['id'] == item_id:
-            carrito.remove(item)  # Eliminar el item del carrito
-            flash(f'{item["nombre"]} fue eliminado del carrito.', 'success')  # Mensaje de éxito
-            break
-    
-    session['carrito'] = carrito  # Actualizar la sesión con el carrito modificado
+    if carrito:
+        # Buscar el ítem en la tabla ItemCarrito
+        item_carrito = ItemCarrito.query.filter_by(carrito_id=carrito.id, producto_id=item_id).first()
+        
+        if item_carrito:
+            # Eliminar el ítem del carrito
+            db.session.delete(item_carrito)
+            db.session.commit()
+            flash(f'El ítem fue eliminado del carrito.', 'success')
+        else:
+            flash('El ítem no se encuentra en el carrito.', 'error')
+    else:
+        flash('No hay carrito asociado al usuario.', 'error')
+
     return redirect(url_for('ver_carrito'))  # Redirigir a la vista del carrito
+
+
 
 
 @app.route('/vaciar_carrito', methods=['POST'])
@@ -693,7 +868,7 @@ def vaciar_carrito():
 @app.route('/destacados')
 def destacados():
     try:
-        response = requests.get('http://localhost:5002/api/productos_destacados')
+        response = requests.get('http://localhost:5001/api/productos_destacados')
         response.raise_for_status()
         productos_destacados = response.json()
         print(productos_destacados)  # Añadir esta línea para verificar la estructura de los datos
@@ -706,10 +881,124 @@ def destacados():
 
 
 
+
+
+@app.route('/admin/tarjetas')
+def administrar_tarjetas():
+    if 'user_id' not in session:
+        flash('Por favor, inicie sesión para acceder a esta página.', 'danger')
+        return redirect(url_for('login'))
+
+    user_id = session['user_id']
+    usuario_actual = Usuario.query.get(user_id)
+
+    # Verifica si el usuario actual es administrador
+    if not usuario_actual.is_admin:
+        flash('No tienes permisos para acceder a esta página.', 'danger')
+        return redirect(url_for('home'))  # Redirige al home o donde prefieras
+
+    # Si es administrador, obtiene todas las tarjetas
+    tarjetas = Tarjeta.query.all()
+
+    return render_template('admin_tarjetas.html', tarjetas=tarjetas)
+
+
+@app.route('/add_card', methods=['POST'])
+def add_card():
+    # Obtén los datos del formulario
+    numero_tarjeta = request.form['numero_tarjeta']
+    codigo_verificacion = request.form['codigo_verificacion']
+
+    # Validar el número de tarjeta y el código de verificación
+    if len(numero_tarjeta) != 16 or not numero_tarjeta.isdigit():
+        flash('El número de tarjeta debe tener 16 dígitos y solo contener números.', 'danger')
+        return redirect(url_for('profile'))  # Redirige al perfil del usuario
+    
+    if len(codigo_verificacion) != 3 or not codigo_verificacion.isdigit():
+        flash('El código de verificación debe tener 3 dígitos y solo contener números.', 'danger')
+        return redirect(url_for('profile'))  # Redirige al perfil del usuario
+
+    # Obtén el ID del usuario de la sesión
+    user_id = session['user_id']
+
+    # Verificar si la tarjeta ya existe
+    tarjeta_existente = Tarjeta.query.filter_by(numero_tarjeta=numero_tarjeta, usuario_id=user_id).first()
+    if tarjeta_existente:
+        flash('Ya existe una tarjeta con ese número para este usuario.', 'danger')
+        return redirect(url_for('profile'))  # Redirige al perfil del usuario
+
+    # Crea una nueva instancia de la tarjeta con saldo 0
+    nueva_tarjeta = Tarjeta(usuario_id=user_id, 
+                             numero_tarjeta=numero_tarjeta, 
+                             codigo_verificacion=codigo_verificacion, 
+                             saldo=0)  # Asigna un saldo inicial de 0
+
+    # Agrega la tarjeta a la base de datos
+    db.session.add(nueva_tarjeta)
+    db.session.commit()
+
+    flash('Tarjeta agregada exitosamente.', 'success')
+    return redirect(url_for('perfil'))  # Redirige al perfil del usuario
+
+@app.route('/delete_card/<int:card_id>', methods=['POST'])
+def delete_card(card_id):
+    if 'user_id' not in session:
+        return redirect(url_for('login'))  # Redirigir si el usuario no está logueado
+
+    # Obtener la tarjeta a eliminar
+    tarjeta = Tarjeta.query.get(card_id)
+
+    if tarjeta:
+        db.session.delete(tarjeta)  # Eliminar la tarjeta de la base de datos
+        db.session.commit()  # Guardar cambios
+        flash('Tarjeta eliminada correctamente.', 'success')
+    else:
+        flash('Tarjeta no encontrada.', 'danger')
+
+    return redirect(url_for('profile'))  # Redirigir al perfil
+
+
+@app.route('/update_saldo/<int:tarjeta_id>', methods=['POST'])
+def update_saldo(tarjeta_id):
+    if 'user_id' not in session:
+        return jsonify({'success': False, 'message': 'Debe iniciar sesión'}), 403
+
+    user_id = session['user_id']
+    usuario_actual = Usuario.query.get(user_id)
+
+    # Verificar si el usuario es administrador
+    if not usuario_actual.is_admin:
+        return jsonify({'success': False, 'message': 'No tienes permisos para realizar esta acción'}), 403
+
+    tarjeta = Tarjeta.query.get(tarjeta_id)
+    
+    if not tarjeta:
+        return jsonify({'success': False, 'message': 'Tarjeta no encontrada'}), 404
+
+    # Leer el nuevo saldo desde el cuerpo de la solicitud
+    data = request.get_json()
+    nuevo_saldo = data.get('saldo')
+
+    if nuevo_saldo is None or nuevo_saldo < 0:
+        return jsonify({'success': False, 'message': 'Saldo inválido'}), 400
+
+    # Actualizar el saldo de la tarjeta
+    tarjeta.saldo = nuevo_saldo
+    db.session.commit()
+
+    return jsonify({'success': True, 'message': 'Saldo actualizado correctamente'})
+
+
+
+
+
+
+
 if __name__ == '__main__':
     # Verificar la conexión antes de iniciar el servidor
     test_connection()
     # Crear el usuario admin por defecto
     create_default_admin()
+    
     app.run(debug=True)
 
