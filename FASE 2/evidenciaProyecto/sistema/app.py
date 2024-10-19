@@ -9,17 +9,12 @@ from werkzeug.utils import secure_filename
 from sqlalchemy.orm import joinedload
 from sqlalchemy import or_
 from flask_mail import Mail, Message
-from flask_sqlalchemy import SQLAlchemy
-from flask_migrate import Migrate
-from flask_bcrypt import Bcrypt
 import logging, random, string
 from datetime import datetime, timedelta
 from sqlalchemy import Sequence
 import requests
-import urllib.request
-import json
 from flask_cors import CORS
-from flask_wtf.csrf import CSRFProtect  
+from sqlalchemy import text
 
 
 
@@ -43,62 +38,93 @@ app.config['MAIL_USERNAME'] = 'kar.v.prueba@gmail.com'
 app.config['MAIL_PASSWORD'] = 'dgnh jefs dgxu dqwx'
 app.config['MAIL_DEFAULT_SENDER'] = 'kar.v.prueba@gmail.com' 
 
-mail = Mail(app)
-
-
 # Inicializar SQLAlchemy y Bcrypt
+mail = Mail(app)
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
 bcrypt = Bcrypt(app)
+
+
+# Configuración del registro
+logging.basicConfig(level=logging.INFO)
 
 # Definir secuencia
 user_sequence = Sequence('user_id_seq', start=1, increment=1)
 product_sequence = Sequence('product_id_seq', start=1, increment=1)
 category_sequence = Sequence('category_id_seq', start=1, increment=1)
 
-# Configuración del registro
-logging.basicConfig(level=logging.INFO)
-
-
-
-
+# Funciones
 def create_default_admin():
     # Crear un usuario admin por defecto si no existe
     with app.app_context():  # Asegúrate de que el contexto de la aplicación esté disponible
+        # Verificar si ya existe el rol de Administrador
+        admin_rol = Rol.query.filter_by(nombre='Administrador').first()
+        if not admin_rol:
+            # Si no existe, crearlo
+            admin_rol = Rol(nombre='Administrador')
+            db.session.add(admin_rol)
+            db.session.commit()
+        
+        # Verificar si ya existe el usuario administrador
         admin_user = Usuario.query.filter_by(username='admin').first()
         if not admin_user:
-            # hashed_password = bcrypt.generate_password_hash('admin123').decode('utf-8')
-            admin_user = Usuario(username='admin', password='admin1234', email='email@email.com', is_admin=True)
+            # Crear el usuario administrador con valores completos
+            admin_user = Usuario(
+                username='admin', 
+                password='admin1234', 
+                nombre='Admin',  # Valor por defecto para nombre
+                apellido='Administrador',  # Valor por defecto para apellido
+                email='email@email.com', 
+                direccion='Dirección de administrador',  # Puedes cambiar o dejar en None si es opcional
+                is_admin=True
+            )
+
+            # Asignar el rol de Administrador al usuario
+            admin_user.roles = [admin_rol]
+
+            # Guardar en la base de datos
             db.session.add(admin_user)
             db.session.commit()
             app.logger.info('Usuario administrador creado con éxito.')
+
+
 
 def test_connection():
     try:
         with app.app_context():
             # Intenta ejecutar una consulta simple para verificar la conexión
-            db.session.execute('SELECT 1')
+            db.session.execute(text('SELECT 1'))
             app.logger.info('Conexión a la base de datos exitosa!')
     except Exception as e:
         app.logger.error(f'Error en la conexión a la base de datos: {e}')
 
 # Modelo de Usuario
+
+
 class Usuario(db.Model):
     __table_args__ = {'extend_existing': True}
-    id = db.Column(db.Integer, user_sequence, primary_key=True)
+    id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(50), unique=True, nullable=False)
     password = db.Column(db.String(100), nullable=False)
     nombre = db.Column(db.String(100), nullable=False)
     apellido = db.Column(db.String(100), nullable=False)
     email = db.Column(db.String(120), nullable=False)
-    direccion = db.Column(db.String(50), unique=True, nullable=True)
-    is_admin = db.Column(db.Boolean, default=False)  
+    direccion = db.Column(db.String(50), nullable=True)
     reset_code = db.Column(db.String(6), nullable=True)
     reset_code_expiration = db.Column(db.DateTime, nullable=True)
-    
+    is_admin = db.Column(db.Boolean, default=False)  # Cambiar el valor por defecto a False
+
+    # Relación many-to-many con Rol a través de la tabla Usuario_Rol
+    roles = db.relationship('Rol', secondary='usuario_rol', backref='usuarios')
 
     def __repr__(self):
         return f'<Usuario {self.username}>'
+
+    def set_reset_code(self, code):
+        self.reset_code = code
+        self.reset_code_expiration = datetime.utcnow() + timedelta(hours=1)  # Expira en 1 hora
+
+
 
 
 # Modelo de Categoria
@@ -163,6 +189,7 @@ class ItemCarrito(db.Model):
     carrito = db.relationship('Carrito', backref=db.backref('items', lazy=True))
     producto = db.relationship('Producto', backref=db.backref('items', lazy=True))
 
+
 # Modelo de Tarjeta
 class Tarjeta(db.Model):
     __tablename__ = 'tarjetas'
@@ -181,7 +208,115 @@ class Tarjeta(db.Model):
         return f'<Tarjeta {self.numero_tarjeta}, Saldo: {self.saldo}>'
 
 
+# Modelo de Rol
+class Rol(db.Model):
+    __table_args__ = {'extend_existing': True}
+    id = db.Column(db.Integer, primary_key=True)
+    nombre = db.Column(db.String(50), unique=True, nullable=False)
+
+    def __repr__(self):
+        return f'<Rol {self.nombre}>'
+
+
+
+
+# Tabla intermedia para la relación muchos a muchos entre Usuario y Rol
+class Usuario_Rol(db.Model):
+    __tablename__ = 'usuario_rol'
+    id = db.Column(db.Integer, primary_key=True)
+    usuario_id = db.Column(db.Integer, db.ForeignKey('usuario.id'), nullable=False)
+    rol_id = db.Column(db.Integer, db.ForeignKey('rol.id'), nullable=False)
+
+    def __repr__(self):
+        return f'<Usuario_Rol usuario_id={self.usuario_id}, rol_id={self.rol_id}>'
+
+
+
+class ProcesoPago(db.Model):
+    __table_args__ = {'extend_existing': True}
+    id = db.Column(db.Integer, primary_key=True)
+    usuario_id = db.Column(db.Integer, db.ForeignKey('usuario.id'), nullable=False)
+    total = db.Column(db.Float, nullable=False)
+    fecha_pago = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    estado_id = db.Column(db.Integer, db.ForeignKey('estado_orden.id'), nullable=False)
+
+    usuario = db.relationship('Usuario', backref='pagos', lazy=True)
+    estado = db.relationship('EstadoOrden', backref='pagos', lazy=True)
+
+    def __repr__(self):
+        return f'<ProcesoPago {self.id}, Total: {self.total}>'
+
+
+class EstadoOrden(db.Model):
+    __table_args__ = {'extend_existing': True}
+    id = db.Column(db.Integer, primary_key=True)
+    nombre = db.Column(db.String(50), nullable=False)
+
+    def __repr__(self):
+        return f'<EstadoOrden {self.nombre}>'
+
+
+class Orden(db.Model):
+    __table_args__ = {'extend_existing': True}
+    id = db.Column(db.Integer, primary_key=True)
+    usuario_id = db.Column(db.Integer, db.ForeignKey('usuario.id'), nullable=False)
+    fecha_orden = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    total = db.Column(db.Float, nullable=False)
+    estado_id = db.Column(db.Integer, db.ForeignKey('estado_orden.id'), nullable=False)
+
+    usuario = db.relationship('Usuario', backref='ordenes', lazy=True)
+    estado = db.relationship('EstadoOrden', backref='ordenes', lazy=True)
+
+    def __repr__(self):
+        return f'<Orden {self.id}, Total: {self.total}>'
+
+
+
+class OrdenItem(db.Model):
+    __table_args__ = {'extend_existing': True}
+    id = db.Column(db.Integer, primary_key=True)
+    orden_id = db.Column(db.Integer, db.ForeignKey('orden.id'), nullable=False)
+    producto_id = db.Column(db.Integer, db.ForeignKey('producto.id'), nullable=False)
+    cantidad = db.Column(db.Integer, nullable=False)
+    precio = db.Column(db.Float, nullable=False)
+
+    orden = db.relationship('Orden', backref='items', lazy=True)
+    producto = db.relationship('Producto', backref='orden_items', lazy=True)
+
+    def __repr__(self):
+        return f'<OrdenItem {self.producto_id}, Cantidad: {self.cantidad}>'
+
+
+class Direccion(db.Model):
+    __table_args__ = {'extend_existing': True}
+    id = db.Column(db.Integer, primary_key=True)
+    usuario_id = db.Column(db.Integer, db.ForeignKey('usuario.id'), nullable=False)
+    calle = db.Column(db.String(100), nullable=False)
+    ciudad = db.Column(db.String(50), nullable=False)
+    estado = db.Column(db.String(50), nullable=False)
+    codigo_postal = db.Column(db.String(10), nullable=False)
+
+    usuario = db.relationship('Usuario', backref='direcciones', lazy=True)
+
+    def __repr__(self):
+        return f'<Direccion {self.calle}, {self.ciudad}>'
+
+
+class Factura(db.Model):
+    __table_args__ = {'extend_existing': True}
+    id = db.Column(db.Integer, primary_key=True)
+    orden_id = db.Column(db.Integer, db.ForeignKey('orden.id'), nullable=False)
+    fecha_emision = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    total = db.Column(db.Float, nullable=False)
+
+    orden = db.relationship('Orden', backref='factura', lazy=True)
+
+    def __repr__(self):
+        return f'<Factura {self.id}, Total: {self.total}>'
+
+
 @app.before_request
+
 def calcular_subtotal():
     carrito = session.get('carrito', [])
     # Sumar los precios como enteros sin usar replace
@@ -190,6 +325,15 @@ def calcular_subtotal():
     # Almacena el subtotal y el carrito en el contexto de la plantilla
     app.jinja_env.globals['subtotal'] = subtotal
     app.jinja_env.globals['carrito'] = carrito  # También almacena el carrito en el contexto global
+
+def crear_roles():
+    # Verifica si los roles ya existen para no duplicarlos
+    roles = ['Administrador', 'Jefe de tienda', 'Vendedor', 'Cliente']
+    for rol_nombre in roles:
+        if not Rol.query.filter_by(nombre=rol_nombre).first():
+            rol = Rol(nombre=rol_nombre)
+            db.session.add(rol)
+    db.session.commit()
 
 
 @app.route('/')
@@ -378,65 +522,69 @@ def configuracion():
     categorias = Categoria.query.all()
     return render_template('configuracion.html', categorias = categorias)
 
-#Administración de Usuarios
-#manejo de la ruta admin usuarios
 # Ruta para administrar usuarios
-@app.route('/admin/usuarios', methods=['GET'])
-def administrar_usuarios():
+@app.route('/admin/usuarios', methods=['GET', 'POST'])
+def gestionar_usuarios():
     if 'user_id' not in session or not Usuario.query.get(session['user_id']).is_admin:
         flash('Acceso denegado. No tienes permisos para acceder a esta página.', 'danger')
         return redirect(url_for('login'))
 
-    usuarios = Usuario.query.all()  # Obtener todos los usuarios
-    return render_template('admin_usuarios.html', usuarios=usuarios)
+    roles = Rol.query.all()  
+    app.logger.info("ROLES: %s", roles)  # Imprimir roles para depuración
+    
+    if not roles:
+        flash('No hay roles disponibles en la base de datos.', 'error')
 
+    # Inicializar la variable usuario como None
+    usuario = None  
 
-@app.route('/admin/usuarios', methods=['GET', 'POST'])
-def gestionar_usuarios():
     if request.method == 'POST':
-        if request.form.get('action') == 'guardar':
-            return guardar_usuario()
-        elif request.form.get('action') == 'actualizar':
-            return actualizar_usuario()
+        # Lógica para agregar o actualizar usuarios
+        usuario_id = request.form.get('id')
+        usuario = Usuario.query.get(usuario_id) if usuario_id else Usuario()
 
-    usuarios = Usuario.query.all()  # Obtener todos los usuarios
-    return render_template('admin_usuarios.html', usuarios=usuarios)
-
-@app.route('/admin/usuarios/guardar', methods=['POST'])
-def guardar_usuario():
-    nuevo_usuario = Usuario(
-        username=request.form['username'],
-        password=request.form['password'],  # No cifrando la contraseña
-        nombre=request.form['nombre'],
-        apellido=request.form['apellido'],
-        email=request.form['email'],
-        direccion=request.form['direccion'],
-        is_admin='is_admin' in request.form
-    )
-    db.session.add(nuevo_usuario)
-    db.session.commit()
-    flash('Usuario creado con éxito', 'success')
-    return redirect(url_for('gestionar_usuarios'))
-
-@app.route('/admin/usuarios/actualizar', methods=['POST'])
-def actualizar_usuario():
-    usuario_id = request.form['id']
-    usuario = Usuario.query.get(usuario_id)
-
-    if usuario:
+        # Asignación de campos del formulario a la instancia de usuario
         usuario.nombre = request.form['nombre']
         usuario.apellido = request.form['apellido']
         usuario.username = request.form['username']
-        if request.form['password']:  # Solo actualizar si hay una nueva contraseña
-            usuario.password = request.form['password']
         usuario.email = request.form['email']
         usuario.direccion = request.form['direccion']
-        usuario.is_admin = 'is_admin' in request.form
 
+        if request.form['password']:
+            usuario.password = request.form['password']
+
+        # Manejo de roles
+        rol_id = request.form['rol_id']
+        if rol_id:
+            rol = Rol.query.get(rol_id)
+            if rol:
+                usuario.roles.clear()  # Limpiar roles anteriores
+                usuario.roles.append(rol)  # Asigna el nuevo rol
+            else:
+                flash('Rol no encontrado', 'error')
+                return redirect(url_for('gestionar_usuarios'))
+        else:
+            flash('No se seleccionó un rol', 'error')
+            return redirect(url_for('gestionar_usuarios'))
+
+        db.session.add(usuario)
         db.session.commit()
-        flash('Usuario actualizado con éxito.', 'success')
 
-    return redirect(url_for('gestionar_usuarios'))
+        flash('Usuario {} con éxito'.format('actualizado' if usuario_id else 'creado'), 'success')
+        return redirect(url_for('gestionar_usuarios'))
+
+    # Filtrar usuarios por rol si se proporciona un filtro
+    filtro_rol = request.args.get('filtro_rol')
+    usuarios = Usuario.query.filter(Usuario.roles.any(id=filtro_rol)).all() if filtro_rol else Usuario.query.all()
+
+    # Si se está editando un usuario, cargar el usuario correspondiente
+    usuario_id = request.args.get('id')
+    if usuario_id:
+        usuario = Usuario.query.get(usuario_id)
+
+    # Renderizar la plantilla, asegurando que la variable usuario siempre tenga un valor
+    return render_template('admin_usuarios.html', usuarios=usuarios, roles=roles, usuario=usuario)
+
 
 @app.route('/admin/usuarios/<int:id>/eliminar', methods=['POST'])
 def eliminar_usuario(id):
@@ -445,6 +593,8 @@ def eliminar_usuario(id):
         db.session.delete(usuario)
         db.session.commit()
         flash('Usuario eliminado con éxito.', 'success')
+    else:
+        flash('Usuario no encontrado.', 'error')
     return redirect(url_for('gestionar_usuarios'))
 
 
@@ -1065,15 +1215,17 @@ def update_saldo(tarjeta_id):
 
 
 
-
-
-
-
 if __name__ == '__main__':
-    # Verificar la conexión antes de iniciar el servidor
-    test_connection()
-    # Crear el usuario admin por defecto
-    create_default_admin()
+    logging.basicConfig(level=logging.INFO)
+    with app.app_context():
+        
+        # Verificar la conexión antes de iniciar el servidor
+        test_connection()
+        #crear rol por defecto
+        crear_roles()
+        # Crear el usuario admin por defecto
+        create_default_admin()
+  
     
     app.run(debug=True)
 
