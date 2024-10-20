@@ -101,6 +101,7 @@ def test_connection():
 # Modelo de Usuario
 
 
+# Modelo de Usuario
 class Usuario(db.Model):
     __table_args__ = {'extend_existing': True}
     id = db.Column(db.Integer, primary_key=True)
@@ -109,54 +110,55 @@ class Usuario(db.Model):
     nombre = db.Column(db.String(100), nullable=False)
     apellido = db.Column(db.String(100), nullable=False)
     email = db.Column(db.String(120), nullable=False)
-    direccion = db.Column(db.String(50), nullable=True)
+    direccion = db.Column(db.String(100), nullable=True)
     reset_code = db.Column(db.String(6), nullable=True)
     reset_code_expiration = db.Column(db.DateTime, nullable=True)
-    is_admin = db.Column(db.Boolean, default=False)  # Cambiar el valor por defecto a False
+    is_admin = db.Column(db.Boolean, default=False)
 
-    # Relación many-to-many con Rol a través de la tabla Usuario_Rol
     roles = db.relationship('Rol', secondary='usuario_rol', backref='usuarios')
+    tarjetas = db.relationship('Tarjeta', backref='usuario', lazy=True)
+    carrito = db.relationship('Carrito', backref='usuario_carrito', lazy=True, uselist=False)
+    ordenes = db.relationship('Orden', backref='usuario_orden', lazy=True)
 
     def __repr__(self):
         return f'<Usuario {self.username}>'
 
     def set_reset_code(self, code):
         self.reset_code = code
-        self.reset_code_expiration = datetime.utcnow() + timedelta(hours=1)  # Expira en 1 hora
+        self.reset_code_expiration = datetime.utcnow() + timedelta(hours=1)
 
 
 
 
-# Modelo de Categoria
 class Categoria(db.Model):
     __table_args__ = {'extend_existing': True}
-    id = db.Column(db.Integer, category_sequence, primary_key=True)
+    id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(50), unique=True, nullable=False)
+    fecha_creacion = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
 
     def __repr__(self):
         return f'<Categoria {self.name}>'
+
         
-# Modelo de Producto
 class Producto(db.Model):
     __table_args__ = {'extend_existing': True}
-    id = db.Column(db.Integer, product_sequence, primary_key=True)
+    id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(155), unique=True, nullable=False)
     price = db.Column(db.Integer, nullable=False)
     marca = db.Column(db.String(100), nullable=False)
     descripcion = db.Column(db.String(1000), nullable=False)
     stock = db.Column(db.Integer, nullable=False)
     category_id = db.Column(db.Integer, db.ForeignKey('categoria.id'), nullable=False)
-    en_oferta = db.Column(db.Boolean, default=False)  # Nuevo atributo para indicar si el producto está en oferta
-    destacado = db.Column(db.Boolean, default=False) 
+    en_oferta = db.Column(db.Boolean, default=False)
+    destacado = db.Column(db.Boolean, default=False)
+    fecha_creacion = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
 
-    # Relación con Categoria
     categoria = db.relationship('Categoria', backref=db.backref('productos', lazy=True))
-
-    # Relación con Imagen con eliminación en cascada
     imagenes = db.relationship('Imagen', backref='producto', lazy=True, cascade="all, delete-orphan")
 
     def __repr__(self):
         return f'<Producto {self.name}>'
+
 
 
 # Modelo de Imagen
@@ -175,7 +177,9 @@ class Carrito(db.Model):
     __table_args__ = {'extend_existing': True}
     id = db.Column(db.Integer, primary_key=True)
     usuario_id = db.Column(db.Integer, db.ForeignKey('usuario.id'), nullable=False)
-    usuario = db.relationship('Usuario', backref=db.backref('carrito', lazy=True))
+
+    def __repr__(self):
+        return f'<Carrito {self.id}>'
 
 # Modelo de ItemCarrito
 class ItemCarrito(db.Model):
@@ -185,28 +189,26 @@ class ItemCarrito(db.Model):
     producto_id = db.Column(db.Integer, db.ForeignKey('producto.id'), nullable=False)
     cantidad = db.Column(db.Integer, nullable=False, default=1)
     
-    # Relaciones
     carrito = db.relationship('Carrito', backref=db.backref('items', lazy=True))
-    producto = db.relationship('Producto', backref=db.backref('items', lazy=True))
+    producto = db.relationship('Producto', backref='item_carrito', lazy=True)
 
 
-# Modelo de Tarjeta
+# Modelo de Tarjeta ajustado
 class Tarjeta(db.Model):
     __tablename__ = 'tarjetas'
     __table_args__ = {'extend_existing': True}
     
     id = db.Column(db.Integer, primary_key=True)
     usuario_id = db.Column(db.Integer, db.ForeignKey('usuario.id'), nullable=False)
-    saldo = db.Column(db.Integer, nullable=False)  
-    numero_tarjeta = db.Column(db.String(16), nullable=False)  # Cambiar a String para manejar ceros a la izquierda
-    codigo_verificacion = db.Column(db.String(3), nullable=False)  # Cambiar a String
+    numero_tarjeta = db.Column(db.String(16), nullable=False)
+    fecha_vencimiento = db.Column(db.String(5), nullable=False)
+    codigo_verificacion = db.Column(db.String(3), nullable=False)
+    saldo = db.Column(db.Integer, nullable=True)
 
-    # Relación con Usuario
-    usuario = db.relationship('Usuario', backref='tarjetas')  # Opcional, para acceder a las tarjetas desde el usuario
+    proceso_pagos = db.relationship('ProcesoPago', backref='tarjeta_rel', lazy=True)
 
     def __repr__(self):
         return f'<Tarjeta {self.numero_tarjeta}, Saldo: {self.saldo}>'
-
 
 # Modelo de Rol
 class Rol(db.Model):
@@ -216,8 +218,6 @@ class Rol(db.Model):
 
     def __repr__(self):
         return f'<Rol {self.nombre}>'
-
-
 
 
 # Tabla intermedia para la relación muchos a muchos entre Usuario y Rol
@@ -232,88 +232,90 @@ class Usuario_Rol(db.Model):
 
 
 
-class ProcesoPago(db.Model):
-    __table_args__ = {'extend_existing': True}
-    id = db.Column(db.Integer, primary_key=True)
-    usuario_id = db.Column(db.Integer, db.ForeignKey('usuario.id'), nullable=False)
-    total = db.Column(db.Float, nullable=False)
-    fecha_pago = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
-    estado_id = db.Column(db.Integer, db.ForeignKey('estado_orden.id'), nullable=False)
-
-    usuario = db.relationship('Usuario', backref='pagos', lazy=True)
-    estado = db.relationship('EstadoOrden', backref='pagos', lazy=True)
-
-    def __repr__(self):
-        return f'<ProcesoPago {self.id}, Total: {self.total}>'
-
-
-class EstadoOrden(db.Model):
-    __table_args__ = {'extend_existing': True}
-    id = db.Column(db.Integer, primary_key=True)
-    nombre = db.Column(db.String(50), nullable=False)
-
-    def __repr__(self):
-        return f'<EstadoOrden {self.nombre}>'
-
-
-class Orden(db.Model):
-    __table_args__ = {'extend_existing': True}
-    id = db.Column(db.Integer, primary_key=True)
-    usuario_id = db.Column(db.Integer, db.ForeignKey('usuario.id'), nullable=False)
-    fecha_orden = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
-    total = db.Column(db.Float, nullable=False)
-    estado_id = db.Column(db.Integer, db.ForeignKey('estado_orden.id'), nullable=False)
-
-    usuario = db.relationship('Usuario', backref='ordenes', lazy=True)
-    estado = db.relationship('EstadoOrden', backref='ordenes', lazy=True)
-
-    def __repr__(self):
-        return f'<Orden {self.id}, Total: {self.total}>'
-
-
-
 class OrdenItem(db.Model):
     __table_args__ = {'extend_existing': True}
     id = db.Column(db.Integer, primary_key=True)
     orden_id = db.Column(db.Integer, db.ForeignKey('orden.id'), nullable=False)
     producto_id = db.Column(db.Integer, db.ForeignKey('producto.id'), nullable=False)
     cantidad = db.Column(db.Integer, nullable=False)
-    precio = db.Column(db.Float, nullable=False)
+    fecha_creacion = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
 
     orden = db.relationship('Orden', backref='items', lazy=True)
     producto = db.relationship('Producto', backref='orden_items', lazy=True)
 
     def __repr__(self):
-        return f'<OrdenItem {self.producto_id}, Cantidad: {self.cantidad}>'
+        return f'<OrdenItem producto_id={self.producto_id}, cantidad={self.cantidad}, fecha_creacion={self.fecha_creacion}>'
+
+
+class EstadoOrden(db.Model):
+    __table_args__ = {'extend_existing': True}
+    id = db.Column(db.Integer, primary_key=True)
+    nombre = db.Column(db.String(50), unique=True, nullable=False)
+
+    def __repr__(self):
+        return f'<EstadoOrden {self.nombre}>'
 
 
 class Direccion(db.Model):
     __table_args__ = {'extend_existing': True}
     id = db.Column(db.Integer, primary_key=True)
+    
+    # Relación con Usuario
     usuario_id = db.Column(db.Integer, db.ForeignKey('usuario.id'), nullable=False)
-    calle = db.Column(db.String(100), nullable=False)
-    ciudad = db.Column(db.String(50), nullable=False)
-    estado = db.Column(db.String(50), nullable=False)
-    codigo_postal = db.Column(db.String(10), nullable=False)
-
+    
+    # Campos del modelo
+    nombre = db.Column(db.String(100), nullable=False)  # Nombre del destinatario o usuario
+    numero_domicilio = db.Column(db.String(10), nullable=False)  # Número de la vivienda
+    
+    # Campo para almacenar el ID de comuna
+    comuna_id = db.Column(db.Integer, nullable=False)  # Solo almacenamos el ID, sin relación directa
+    
+    # Relación con Usuario
     usuario = db.relationship('Usuario', backref='direcciones', lazy=True)
+    
+    def __repr__(self):
+        return f'<Direccion {self.nombre}, Número: {self.numero_domicilio}>'
+    
+    
+class Orden(db.Model):
+    __table_args__ = {'extend_existing': True}
+    id = db.Column(db.Integer, primary_key=True)
+    usuario_id = db.Column(db.Integer, db.ForeignKey('usuario.id'), nullable=False)
+    estado_id = db.Column(db.Integer, db.ForeignKey('estado_orden.id'), nullable=False)
+    fecha_creacion = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+
+    usuario = db.relationship('Usuario', backref='ordenes_usuario', lazy=True)
+    estado = db.relationship('EstadoOrden', backref='ordenes', lazy=True)
 
     def __repr__(self):
-        return f'<Direccion {self.calle}, {self.ciudad}>'
+        return f'<Orden id={self.id}, usuario_id={self.usuario_id}>'
 
 
+
+# Factura actualizada a modelo de base de datos
 class Factura(db.Model):
+    __tablename__ = 'factura'
     __table_args__ = {'extend_existing': True}
     id = db.Column(db.Integer, primary_key=True)
     orden_id = db.Column(db.Integer, db.ForeignKey('orden.id'), nullable=False)
-    fecha_emision = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
-    total = db.Column(db.Float, nullable=False)
+    monto = db.Column(db.Float, nullable=False)
+    fecha_creacion = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
 
     orden = db.relationship('Orden', backref='factura', lazy=True)
 
     def __repr__(self):
-        return f'<Factura {self.id}, Total: {self.total}>'
+        return f'<Factura id={self.id}, orden_id={self.orden_id}>'
 
+class ProcesoPago(db.Model):
+    __tablename__ = 'proceso_pago'
+    __table_args__ = {'extend_existing': True}
+    id = db.Column(db.Integer, primary_key=True)
+    tarjeta_id = db.Column(db.Integer, db.ForeignKey('tarjetas.id'), nullable=False)
+    fecha_pago = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    monto = db.Column(db.Integer, nullable=False)
+
+    def __repr__(self):
+        return f'<ProcesoPago tarjeta_id={self.tarjeta_id}, monto={self.monto}>'
 
 @app.before_request
 
@@ -1163,7 +1165,7 @@ def add_card():
     db.session.commit()
 
     flash('Tarjeta agregada exitosamente.', 'success')
-    return redirect(url_for('perfil'))  # Redirige al perfil del usuario
+    return redirect(url_for('profile'))  # Redirige al perfil del usuario
 
 @app.route('/delete_card/<int:card_id>', methods=['POST'])
 def delete_card(card_id):
@@ -1218,7 +1220,7 @@ def update_saldo(tarjeta_id):
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO)
     with app.app_context():
-        
+        db.create_all()
         # Verificar la conexión antes de iniciar el servidor
         test_connection()
         #crear rol por defecto
