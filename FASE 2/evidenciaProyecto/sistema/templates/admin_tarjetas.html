@@ -25,7 +25,7 @@
                     <div class="d-flex flex-column align-items-end">
                         <strong>Propietario:</strong> {{ tarjeta.usuario.username }}<br>
                         <strong>Correo:</strong> {{ tarjeta.usuario.email }}
-                        <button class="btn btn-primary btn-sm mt-2" onclick="guardarSaldo({{ tarjeta.id }})">Guardar Saldo</button>
+                        <button class="btn btn-primary btn-sm mt-2" onclick="guardarSaldo('{{ tarjeta.id }}')">Guardar Saldo</button>
                     </div>
                 </li>
             {% endfor %}
@@ -36,35 +36,40 @@
 </div>
 
 <script>
-    function guardarSaldo(tarjetaId) {
-        const montoAumentar = parseInt(document.getElementById(`monto_aumentar_${tarjetaId}`).value) || 0; // Obtener el monto a aumentar
-        const saldoActual = parseInt(document.getElementById(`saldo_actual_${tarjetaId}`).textContent); // Obtener el saldo actual
+function guardarSaldo(tarjetaId) {
+    const montoAumentar = parseFloat(document.getElementById(`monto_aumentar_${tarjetaId}`).value) || 0; // Asegurarte de que sea un número
+    const saldoActual = parseFloat(document.getElementById(`saldo_actual_${tarjetaId}`).textContent.replace('$', '').trim()) || 0; // Elimina el símbolo de dólar y conviértelo en número
 
-        const nuevoSaldo = saldoActual + montoAumentar; // Calcular el nuevo saldo
+    const nuevoSaldo = saldoActual + montoAumentar; // Calcular el nuevo saldo
 
-        // Hacer una petición AJAX para guardar el nuevo saldo
-        fetch(`/update_saldo/${tarjetaId}`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                
-            },
-            body: JSON.stringify({ saldo: nuevoSaldo }) // Enviar el nuevo saldo calculado
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                alert('Saldo actualizado exitosamente.');
-                location.reload();  // Recargar la página para mostrar los nuevos saldos
-            } else {
-                alert('Error al actualizar el saldo: ' + data.message);
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            alert('Ocurrió un error al actualizar el saldo.');
-        });
+    if (montoAumentar <= 0) {
+        alert("El monto a aumentar debe ser mayor a 0.");
+        return;
     }
+
+    // Hacer una petición AJAX para guardar el nuevo saldo
+    fetch(`/update_saldo/${tarjetaId}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ saldo: montoAumentar }) // Enviar solo el monto a aumentar
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Saldo actualizado exitosamente.');
+            location.reload();  // Recargar la página para mostrar los nuevos saldos
+        } else {
+            alert('Error al actualizar el saldo: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Ocurrió un error al actualizar el saldo.');
+    });
+}
+
 </script>
 
 

@@ -1225,18 +1225,19 @@ def update_saldo(tarjeta_id):
     if not tarjeta:
         return jsonify({'success': False, 'message': 'Tarjeta no encontrada'}), 404
 
-    # Leer el nuevo saldo desde el cuerpo de la solicitud
+    # Leer el monto a aumentar desde el cuerpo de la solicitud
     data = request.get_json()
-    nuevo_saldo = data.get('saldo')
+    monto_aumentar = data.get('saldo')
 
-    if nuevo_saldo is None or nuevo_saldo < 0:
-        return jsonify({'success': False, 'message': 'Saldo inválido'}), 400
+    if monto_aumentar is None or monto_aumentar < 0:
+        return jsonify({'success': False, 'message': 'Monto inválido'}), 400
 
-    # Actualizar el saldo de la tarjeta
-    tarjeta.saldo = nuevo_saldo
+    # Sumar el monto al saldo actual
+    tarjeta.saldo += monto_aumentar
     db.session.commit()
 
     return jsonify({'success': True, 'message': 'Saldo actualizado correctamente'})
+
 
 
 
