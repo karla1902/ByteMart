@@ -196,19 +196,22 @@ class ItemCarrito(db.Model):
 # Modelo de Tarjeta ajustado
 class Tarjeta(db.Model):
     __tablename__ = 'tarjetas'
-    __table_args__ = {'extend_existing': True}
+    __table_args__ = (db.UniqueConstraint('numero_tarjeta', 'usuario_id', name='unique_tarjeta_usuario'),)
     
     id = db.Column(db.Integer, primary_key=True)
     usuario_id = db.Column(db.Integer, db.ForeignKey('usuario.id'), nullable=False)
     numero_tarjeta = db.Column(db.String(16), nullable=False)
-    fecha_vencimiento = db.Column(db.String(5), nullable=False)
+    mes_vencimiento = db.Column(db.Integer, nullable=False)
+    anio_vencimiento = db.Column(db.Integer, nullable=False)
     codigo_verificacion = db.Column(db.String(3), nullable=False)
     saldo = db.Column(db.Integer, nullable=True)
 
     proceso_pagos = db.relationship('ProcesoPago', backref='tarjeta_rel', lazy=True)
 
     def __repr__(self):
-        return f'<Tarjeta {self.numero_tarjeta}, Saldo: {self.saldo}>'
+        return f'<Tarjeta {self.numero_tarjeta}, Saldo: {self.saldo}, Vencimiento: {self.mes_vencimiento}/{self.anio_vencimiento}>'
+
+
 
 # Modelo de Rol
 class Rol(db.Model):
@@ -720,13 +723,17 @@ def gestionar_productos(id=None):
 @app.route('/admin/productos/eliminar/<int:id>', methods=['POST'])
 def eliminar_producto(id):
     producto = Producto.query.get_or_404(id)
-    
+
+    # Eliminar ítems del carrito relacionados
+    item_carritos = ItemCarrito.query.filter_by(producto_id=producto.id).all()
+    for item in item_carritos:
+        db.session.delete(item)
+
     # Eliminar archivos de imagen físicos
     for imagen in producto.imagenes:
         try:
             os.remove(imagen.image_url)
         except OSError as e:
-            # Si ocurre un error, podrías manejarlo aquí, como registrar un mensaje de error
             print(f"Error al eliminar la imagen: {e}")
 
     # Luego, eliminar el producto de la base de datos
@@ -734,6 +741,7 @@ def eliminar_producto(id):
     db.session.commit()
     flash('Producto e imágenes eliminados con éxito', 'success')
     return redirect(url_for('gestionar_productos'))
+
 
 @app.route('/buscar/<int:categoria_id>')
 def buscar_por_categoria(categoria_id):
@@ -1130,59 +1138,74 @@ def administrar_tarjetas():
     return render_template('admin_tarjetas.html', tarjetas=tarjetas)
 
 
+
+
 @app.route('/add_card', methods=['POST'])
 def add_card():
-    # Obtén los datos del formulario
-    numero_tarjeta = request.form['numero_tarjeta']
-    codigo_verificacion = request.form['codigo_verificacion']
-
-    # Validar el número de tarjeta y el código de verificación
-    if len(numero_tarjeta) != 16 or not numero_tarjeta.isdigit():
-        flash('El número de tarjeta debe tener 16 dígitos y solo contener números.', 'danger')
-        return redirect(url_for('profile'))  # Redirige al perfil del usuario
-    
-    if len(codigo_verificacion) != 3 or not codigo_verificacion.isdigit():
-        flash('El código de verificación debe tener 3 dígitos y solo contener números.', 'danger')
-        return redirect(url_for('profile'))  # Redirige al perfil del usuario
-
-    # Obtén el ID del usuario de la sesión
-    user_id = session['user_id']
-
-    # Verificar si la tarjeta ya existe
-    tarjeta_existente = Tarjeta.query.filter_by(numero_tarjeta=numero_tarjeta, usuario_id=user_id).first()
-    if tarjeta_existente:
-        flash('Ya existe una tarjeta con ese número para este usuario.', 'danger')
-        return redirect(url_for('profile'))  # Redirige al perfil del usuario
-
-    # Crea una nueva instancia de la tarjeta con saldo 0
-    nueva_tarjeta = Tarjeta(usuario_id=user_id, 
-                             numero_tarjeta=numero_tarjeta, 
-                             codigo_verificacion=codigo_verificacion, 
-                             saldo=0)  # Asigna un saldo inicial de 0
-
-    # Agrega la tarjeta a la base de datos
-    db.session.add(nueva_tarjeta)
-    db.session.commit()
-
-    flash('Tarjeta agregada exitosamente.', 'success')
-    return redirect(url_for('profile'))  # Redirige al perfil del usuario
-
-@app.route('/delete_card/<int:card_id>', methods=['POST'])
-def delete_card(card_id):
     if 'user_id' not in session:
         return redirect(url_for('login'))  # Redirigir si el usuario no está logueado
 
-    # Obtener la tarjeta a eliminar
-    tarjeta = Tarjeta.query.get(card_id)
+    # Obtener el ID del usuario de la sesión
+    usuario_id = session['user_id']
+    
+    numero_tarjeta = request.form['numero_tarjeta']
+    codigo_verificacion = request.form['codigo_verificacion']
+    fecha_vencimiento = request.form['fecha_vencimiento']
 
-    if tarjeta:
-        db.session.delete(tarjeta)  # Eliminar la tarjeta de la base de datos
-        db.session.commit()  # Guardar cambios
-        flash('Tarjeta eliminada correctamente.', 'success')
-    else:
-        flash('Tarjeta no encontrada.', 'danger')
+    # Separar mes y año
+    mes_vencimiento, anio_vencimiento = map(int, fecha_vencimiento.split('/'))
+    anio_vencimiento += 2000  # Convertir el año a cuatro dígitos (asumiendo que es del 2000 en adelante)
 
-    return redirect(url_for('profile'))  # Redirigir al perfil
+    # Validar mes de vencimiento
+    if mes_vencimiento < 1 or mes_vencimiento > 12:
+        flash('El mes de vencimiento debe estar entre 1 y 12.', 'danger')
+        return redirect('/ruta_deseada')  # O redirigir a la página de donde vino
+
+    # Verificar si la tarjeta ya existe
+    tarjeta_existente = Tarjeta.query.filter_by(usuario_id=usuario_id, numero_tarjeta=numero_tarjeta).first()
+    if tarjeta_existente:
+        flash('La tarjeta ya está registrada.', 'danger')
+        return redirect('/ruta_deseada')  # O redirigir a la página de donde vino
+
+    # Crear la tarjeta en la base de datos
+    nueva_tarjeta = Tarjeta(
+        usuario_id=usuario_id,  # Agregar el usuario_id aquí
+        numero_tarjeta=numero_tarjeta,
+        codigo_verificacion=codigo_verificacion,
+        mes_vencimiento=mes_vencimiento,
+        anio_vencimiento=anio_vencimiento,
+        saldo=0  # O el valor que desees para el saldo inicial
+    )
+    db.session.add(nueva_tarjeta)
+    db.session.commit()
+
+    return redirect('/profile')  # Redirige a donde quieras después de agregar la tarjeta
+
+
+@app.route('/delete_card/<int:tarjeta_id>', methods=['POST'])
+def delete_card(tarjeta_id):
+    if 'user_id' not in session:
+        return redirect(url_for('login'))  # Redirigir si el usuario no está logueado
+
+    # Verificar si la tarjeta existe
+    tarjeta = Tarjeta.query.get_or_404(tarjeta_id)
+    
+    # Verificar si el usuario es el propietario de la tarjeta o administrador
+    usuario_id = session['user_id']
+    usuario_actual = Usuario.query.get(usuario_id)
+    
+    if tarjeta.usuario_id != usuario_id and not usuario_actual.is_admin:
+        flash('No tienes permiso para eliminar esta tarjeta.', 'danger')
+        return redirect('/profile')  # O redirigir a donde prefieras
+    
+    # Eliminar la tarjeta
+    db.session.delete(tarjeta)
+    db.session.commit()
+
+    flash('Tarjeta eliminada con éxito.', 'success')
+    return redirect('/profile')  # O redirigir a la página de administración o perfil
+
+
 
 
 @app.route('/update_saldo/<int:tarjeta_id>', methods=['POST'])

@@ -73,7 +73,7 @@
             <p>No tienes tarjetas agregadas.</p>
         {% endif %}
     </div>
-    
+
     <!-- Formulario para agregar tarjeta -->
     <h3 class="mt-5">Agregar Tarjeta</h3>
     <form method="POST" action="/add_card">
@@ -81,23 +81,61 @@
             <div class="mb-3 col-md-6">
                 <label for="numero_tarjeta" class="form-label">Número de Tarjeta</label>
                 <input type="text" id="numero_tarjeta" name="numero_tarjeta" 
-                       class="form-control" required 
-                       pattern="\d{16}" maxlength="16" minlength="16" 
-                       title="El número de tarjeta debe tener 16 dígitos.">
+                    class="form-control" required 
+                    pattern="\d{16}" maxlength="16" minlength="16" 
+                    title="El número de tarjeta debe tener 16 dígitos.">
             </div>
             <div class="mb-3 col-md-6">
                 <label for="codigo_verificacion" class="form-label">Código de Verificación</label>
                 <input type="text" id="codigo_verificacion" name="codigo_verificacion" 
-                       class="form-control" required 
-                       pattern="\d{3}" maxlength="3" minlength="3" 
-                       title="El código de verificación debe tener 3 dígitos.">
+                    class="form-control" required 
+                    pattern="\d{3}" maxlength="3" minlength="3" 
+                    title="El código de verificación debe tener 3 dígitos.">
             </div>
+        </div>
+        <div class="mb-3">
+            <label for="fecha_vencimiento" class="form-label">Fecha de Vencimiento (MM/YY)</label>
+            <input type="text" id="fecha_vencimiento" name="fecha_vencimiento" 
+                class="form-control" required 
+                pattern="^(0[1-9]|1[0-2])\/\d{2}$" 
+                title="Ingrese la fecha en el formato MM/YY (por ejemplo, 12/24)." 
+                placeholder="MM/YY" maxlength="5" 
+                onkeypress="return event.charCode >= 48 && event.charCode <= 57 || event.charCode === 47" 
+                oninput="addSlash(this)">
         </div>
         <!-- Botón para agregar tarjeta -->
         <div class="d-flex justify-content-end" style="margin: 10px;">
             <button type="submit" class="btn-custom">Agregar Tarjeta</button>
         </div>
     </form>
-</div>
 
+
+
+</div>
+<script>
+    function addSlash(input) {
+        // Remover el carácter '/' si ya existe
+        let value = input.value.replace('/', '');
+    
+        // Agregar '/' después de dos caracteres
+        if (value.length >= 2) {
+            value = value.slice(0, 2) + '/' + value.slice(2);
+        }
+    
+        // Limitar la longitud a 5 caracteres
+        if (value.length > 5) {
+            value = value.slice(0, 5);
+        }
+    
+        // Validar que el mes no sea mayor a 12
+        if (value.length >= 2) {
+            const month = parseInt(value.slice(0, 2), 10);
+            if (month > 12) {
+                value = '12' + value.slice(2); // Cambiar el mes a 12 si es mayor
+            }
+        }
+    
+        input.value = value;
+    }
+    </script>
 {% endblock %}
