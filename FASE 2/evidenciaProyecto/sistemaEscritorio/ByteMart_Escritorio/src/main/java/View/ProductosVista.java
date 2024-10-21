@@ -1,5 +1,9 @@
 package View;
 
+import Controller.ProductosController;
+import Modelo.CategoriaModelo;
+import Modelo.ProductosModelo;
+
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
@@ -10,8 +14,12 @@ import java.sql.SQLException;
 
 public class ProductosVista extends JPanel {
     private DefaultTableModel modelProductos;
+    private ProductosController productosController;
+    private ProductosModelo productosModelo;
 
     public ProductosVista(Connection connection) {
+        // Inicializar ProductosController con el Connection
+        productosController = new ProductosController(connection);
         setLayout(new BorderLayout());
 
         // Panel superior para los campos de entrada
@@ -19,7 +27,7 @@ public class ProductosVista extends JPanel {
         inputPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
         inputPanel.add(new JLabel("Categoría:"));
-        JComboBox<String> cmbCategoria = new JComboBox<>(new String[]{});
+        JComboBox<CategoriaModelo> cmbCategoria = new JComboBox<>();
         inputPanel.add(cmbCategoria);
 
         inputPanel.add(new JLabel("Oferta:"));
@@ -45,20 +53,20 @@ public class ProductosVista extends JPanel {
         add(inputPanel, BorderLayout.NORTH);
 
         // Tabla de inventario
-        modelProductos = new DefaultTableModel(); // Inicializar aquí
+        modelProductos = new DefaultTableModel();
         modelProductos.addColumn("Id");
         modelProductos.addColumn("Nombre");
-        modelProductos.addColumn("Descripcion");
+        modelProductos.addColumn("Descripción");
         modelProductos.addColumn("Oferta");
         modelProductos.addColumn("Precio");
         modelProductos.addColumn("Stock Máximo");
-        modelProductos.addColumn("Categoria");
-        
+        modelProductos.addColumn("Categoría");
+
         JTable tableProductos = new JTable(modelProductos) {
             @Override
             // Hacer que ninguna celda sea editable
             public boolean isCellEditable(int row, int column) {
-                return false; 
+                return false;
             }
         };
 
@@ -68,14 +76,14 @@ public class ProductosVista extends JPanel {
         // Panel inferior para los botones
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
 
-        JButton btnNuevo = new JButton("Nuevo");
+        JButton btnLimpiar = new JButton("Limpiar");
         JButton btnGrabar = new JButton("Grabar");
         JButton btnModificar = new JButton("Modificar");
         JButton btnEliminar = new JButton("Eliminar");
         JButton btnSalir = new JButton("Salir");
 
         // Agregar botones al panel
-        buttonPanel.add(btnNuevo);
+        buttonPanel.add(btnLimpiar);
         buttonPanel.add(btnGrabar);
         buttonPanel.add(btnModificar);
         buttonPanel.add(btnEliminar);
@@ -86,7 +94,7 @@ public class ProductosVista extends JPanel {
         add(buttonPanel, BorderLayout.SOUTH);
 
         // Agregar funcionalidad a los botones
-        btnNuevo.addActionListener(e -> {
+        btnLimpiar.addActionListener(e -> {
             txtNombreProducto.setText("");
             txtDescripcion.setText("");
             txtStockMaximo.setText("");
@@ -94,52 +102,38 @@ public class ProductosVista extends JPanel {
             cmbCategoria.setSelectedIndex(0);
             cmbOferta.setSelectedIndex(0);
         });
-        
+
         btnGrabar.addActionListener(e -> {
-            int selectedRow = tableProductos.getSelectedRow();
-            if (selectedRow != -1) {
-                String nuevoNombre = txtNombreProducto.getText().trim();
-                String nuevaDescripcion = txtDescripcion.getText().trim();
-                int nuevoPrecio = Integer.parseInt(txtPrecio.getText().trim());
-                int nuevoStock = Integer.parseInt(txtStockMaximo.getText().trim());
-                boolean enOferta = cmbOferta.getSelectedItem().equals("Sí");
-                String nuevaCategoria = (String) cmbCategoria.getSelectedItem();
+            String nuevoNombre = txtNombreProducto.getText().trim();
+            String nuevaDescripcion = txtDescripcion.getText().trim();
+            String precioText = txtPrecio.getText().trim(); // Guardamos como String para verificar si está vacío
+            String stockText = txtStockMaximo.getText().trim(); // Guardamos como String para verificar si está vacío
+            boolean enOferta = cmbOferta.getSelectedItem().equals("Sí");
+            CategoriaModelo nuevaCategoria = (CategoriaModelo) cmbCategoria.getSelectedItem();
 
-                if (!nuevoNombre.isEmpty()) {
-                    try {
-                        // Actualizar en la base de datos
-                        String query = "UPDATE proyecto.producto SET name = ?, descripcion = ?, price = ?, stock = ?, en_oferta = ?, category_id = (SELECT id FROM proyecto.categoria WHERE name = ?) WHERE id = ?";
-                        PreparedStatement stmt = connection.prepareStatement(query);
-                        stmt.setString(1, nuevoNombre);
-                        stmt.setString(2, nuevaDescripcion);
-                        stmt.setInt(3, nuevoPrecio);
-                        stmt.setInt(4, nuevoStock);
-                        stmt.setBoolean(5, enOferta);
-                        stmt.setString(6, nuevaCategoria);
-                        stmt.setInt(7, (Integer) modelProductos.getValueAt(selectedRow, 0)); // ID del producto
+            // Validación de campos vacíos
+            if (!nuevoNombre.isEmpty() && !nuevaDescripcion.isEmpty() && !precioText.isEmpty() && !stockText.isEmpty() && nuevaCategoria != null) {
+                // Convertimos el texto en enteros
+                int nuevoPrecio = Integer.parseInt(precioText);
+                int nuevoStock = Integer.parseInt(stockText);
+                int categoriaId = nuevaCategoria.getId(); 
 
-                        stmt.executeUpdate();
-                        stmt.close();
+                // Crear el objeto de productosModelo con todos los parámetros necesarios
+                productosModelo = new ProductosModelo(0, nuevoNombre, nuevoPrecio, categoriaId, nuevaCategoria.getNombre(), nuevaDescripcion, nuevoStock, enOferta);
 
-                        // Refrescar la tabla sin agregar una nueva fila
-                        modelProductos.setValueAt(nuevoNombre, selectedRow, 1);
-                        modelProductos.setValueAt(nuevaDescripcion, selectedRow, 2);
-                        modelProductos.setValueAt(enOferta ? "Sí" : "No", selectedRow, 3); 
-                        modelProductos.setValueAt(nuevoPrecio, selectedRow, 4);
-                        modelProductos.setValueAt(nuevoStock, selectedRow, 5);
-                        modelProductos.setValueAt(nuevaCategoria, selectedRow, 6);
-
-                        JOptionPane.showMessageDialog(this, "Producto modificado con éxito.");
-                    } catch (SQLException ex) {
-                        ex.printStackTrace();
-                        JOptionPane.showMessageDialog(this, "Error al actualizar el producto: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
-                    }
+                boolean resultado = productosController.crearProducto(productosModelo);
+                if (resultado) {
+                    // Actualizar en la base de datos
+                    cargarDatosProducto();
+                    JOptionPane.showMessageDialog(this, "Producto grabado con éxito.");
                 } else {
-                    JOptionPane.showMessageDialog(this, "El nombre del producto no puede estar vacío.", "Error", JOptionPane.ERROR_MESSAGE);
+                    JOptionPane.showMessageDialog(this, "Error al grabar el producto.", "Error", JOptionPane.ERROR_MESSAGE);
                 }
+            } else {
+                JOptionPane.showMessageDialog(this, "Todos los campos son obligatorios.", "Error", JOptionPane.ERROR_MESSAGE);
             }
         });
-        
+
         btnModificar.addActionListener(e -> {
             int selectedRow = tableProductos.getSelectedRow();
             if (selectedRow != -1) {
@@ -149,7 +143,7 @@ public class ProductosVista extends JPanel {
                 txtPrecio.setText(modelProductos.getValueAt(selectedRow, 4).toString());
                 txtStockMaximo.setText(modelProductos.getValueAt(selectedRow, 5).toString());
                 cmbOferta.setSelectedItem((Boolean) modelProductos.getValueAt(selectedRow, 3) ? "Sí" : "No");
-                cmbCategoria.setSelectedItem((String) modelProductos.getValueAt(selectedRow, 6));
+                cmbCategoria.setSelectedItem((CategoriaModelo) modelProductos.getValueAt(selectedRow, 6));
             } else {
                 JOptionPane.showMessageDialog(this, "Selecciona un producto para modificar.", "Advertencia", JOptionPane.WARNING_MESSAGE);
             }
@@ -174,7 +168,7 @@ public class ProductosVista extends JPanel {
                         if (rowsAffected > 0) {
                             modelProductos.removeRow(selectedRow);
                             JOptionPane.showMessageDialog(this, "Producto eliminado correctamente.", "Eliminación exitosa", JOptionPane.INFORMATION_MESSAGE);
-                            
+
                             // Limpiar los campos de entrada
                             txtNombreProducto.setText("");
                             txtDescripcion.setText("");
@@ -195,53 +189,42 @@ public class ProductosVista extends JPanel {
             }
         });
 
-        cargarDatos(connection, cmbCategoria);
-        cargarDatos(connection);
+        cargarDatosCategoria(connection, cmbCategoria);
+        cargarDatosProducto();
     }
-    
-    private void cargarDatos(Connection connection, JComboBox<String> cmbCategoria) {
+
+    private void cargarDatosCategoria(Connection connection, JComboBox<CategoriaModelo> cmbCategoria) {
         try {
-            String query = "SELECT name FROM proyecto.categoria"; // Obtener solo los nombres de las categorías
-            PreparedStatement stmt = connection.prepareStatement(query);
-            ResultSet rs = stmt.executeQuery();
+            String query = "SELECT id, name FROM proyecto.categoria";  // Obtener id y nombre
+            try (PreparedStatement stmt = connection.prepareStatement(query)) {
+                ResultSet rs = stmt.executeQuery();
 
-            while (rs.next()) {
-                cmbCategoria.addItem(rs.getString("name")); // Agregar cada categoría al JComboBox
+                while (rs.next()) {
+                    CategoriaModelo categoria = new CategoriaModelo(rs.getInt("id"), rs.getString("name"));
+                    cmbCategoria.addItem(categoria); // Agregar el objeto CategoriaModelo
+                }
+
+                rs.close();
             }
-
-            rs.close();
-            stmt.close();
         } catch (SQLException e) {
             e.printStackTrace();
             JOptionPane.showMessageDialog(this, "Error al cargar las categorías de la base de datos: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
         }
     }
 
-    private void cargarDatos(Connection connection) {
-        try {
-            String query = "SELECT p.id, p.name, p.descripcion, p.stock, p.price, p.en_oferta, c.name AS categoria " +
-                       "FROM proyecto.producto p " +
-                       "JOIN proyecto.categoria c ON p.category_id = c.id"; 
-            PreparedStatement stmt = connection.prepareStatement(query);
-            ResultSet rs = stmt.executeQuery();
-
-            while (rs.next()) {
-                modelProductos.addRow(new Object[]{
-                        rs.getInt("id"),
-                        rs.getString("name"),
-                        rs.getString("descripcion"),
-                        rs.getBoolean("en_oferta") ? "Si":"No",
-                        rs.getInt("price"),
-                        rs.getInt("stock"),
-                        rs.getString("categoria") 
-                });
-            }
-
-            rs.close();
-            stmt.close();
-        } catch (SQLException e) {
-            e.printStackTrace();
-            JOptionPane.showMessageDialog(this, "Error al cargar datos de la base de datos: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+    private void cargarDatosProducto() {
+        modelProductos.setRowCount(0); // Limpiar la tabla
+        var productos = productosController.listarProductos();
+        for (ProductosModelo producto : productos) {
+            modelProductos.addRow(new Object[]{
+                producto.getId(),
+                producto.getName(),
+                producto.getDescripcion(),
+                producto.getEnOferta(),
+                producto.getPrice(),
+                producto.getStock(),
+                producto.getCategoryId()// Asumimos que getCategoria devuelve el nombre
+            });
         }
     }
 }

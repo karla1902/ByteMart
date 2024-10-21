@@ -28,7 +28,9 @@ public class UsuarioController {
     // Actualizar un usuario
     public boolean actualizarUsuario(int id, String username, String password, String email) {
         UsuarioModelo usuarioActualizado = new UsuarioModelo(id, username, password, email);
-        return usuarioDAO.actualizarUsuario(usuarioActualizado); // Llama al método del DAO correctamente
+        // Llama al método del DAO
+        return usuarioDAO.actualizarUsuario(usuarioActualizado); 
+        
     }
 
     // Eliminar un usuario

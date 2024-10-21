@@ -1,7 +1,6 @@
 package Dao;
 
 import Modelo.CategoriaModelo;
-
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -9,42 +8,68 @@ import java.util.List;
 public class CategoriaDao {
     private Connection connection;
 
-    // Constructor que recibe una conexión
     public CategoriaDao(Connection connection) {
         this.connection = connection;
     }
 
-    // Método para crear una nueva categoría
-    public boolean crearCategoria(CategoriaModelo categoria) {
+    public boolean agregarCategoria(CategoriaModelo categoria) {
         String query = "INSERT INTO categorias (name) VALUES (?)";
-        try (Connection conn = Conexion.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(query)) {
+        try (PreparedStatement pstmt = connection.prepareStatement(query)) {
             pstmt.setString(1, categoria.getNombre());
-
             int filasAfectadas = pstmt.executeUpdate();
-            return filasAfectadas > 0; // Devuelve true si se insertó al menos una fila
+            return filasAfectadas > 0;
         } catch (SQLException e) {
-            System.err.println("Error al crear usuario: " + e.getMessage());
-            return false; // Devuelve false si hubo un error
+            System.err.println("Error al crear categoría: " + e.getMessage());
+            return false;
         }
     }
 
-    public CategoriaModelo leerCategoria(int id) {
-        String query = "SELECT * FROM categorias WHERE id = ?";
-        try (Connection conn = Conexion.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(query)) {
-            pstmt.setInt(1, id);
-            ResultSet rs = pstmt.executeQuery();
-            if (rs.next()) {
-                return new CategoriaModelo(
-                    rs.getInt("id"),
-                    rs.getString("name")
+    public List<CategoriaModelo> obtenerCategoria() throws SQLException {
+        List<CategoriaModelo> categorias = new ArrayList<>();
+        String sql = "SELECT * FROM proyecto.categorias";
+        try (Statement statement = connection.createStatement();
+             ResultSet resultSet = statement.executeQuery(sql)) {
+            while (resultSet.next()) {
+                CategoriaModelo categoria = new CategoriaModelo(
+                    resultSet.getInt("id"),
+                    resultSet.getString("name")
                 );
+                categorias.add(categoria);
             }
-        } catch (SQLException e) {
-            System.err.println("Error al leer usuario: " + e.getMessage());
         }
-        return null; // Devuelve null si no se encontró el usuario
+        return categorias;
+    }
+
+    public CategoriaModelo obtenerCategoriaPorId(int id) throws SQLException {
+        String sql = "SELECT * FROM categorias WHERE id = ?";
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setInt(1, id);
+            ResultSet resultSet = statement.executeQuery();
+            if (resultSet.next()) {
+                return new CategoriaModelo(
+                    resultSet.getInt("id"),
+                    resultSet.getString("name")
+                );
+            } else {
+                return null;
+            }
+        }
+    }
+
+    public void actualizarCategoria(CategoriaModelo categoria) throws SQLException {
+        String sql = "UPDATE categorias SET name = ? WHERE id = ?";
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setString(1, categoria.getNombre());
+            statement.setInt(2, categoria.getId());
+            statement.executeUpdate();
+        }
+    }
+
+    public void eliminarCategoria(int id) throws SQLException {
+        String sql = "DELETE FROM categorias WHERE id = ?";
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setInt(1, id);
+            statement.executeUpdate();
+        }
     }
 }
-

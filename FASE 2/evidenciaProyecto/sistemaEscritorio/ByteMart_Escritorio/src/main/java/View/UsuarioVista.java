@@ -4,8 +4,6 @@ import Controller.UsuarioController;
 import Modelo.UsuarioModelo;
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.DefaultTableModel;
@@ -58,13 +56,13 @@ public class UsuarioVista extends JPanel {
         // Panel inferior para los botones
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
 
-        JButton btnNuevo = new JButton("Nuevo");
+        JButton btnLimpiar = new JButton("Limpiar");
         JButton btnGrabar = new JButton("Grabar");
         JButton btnModificar = new JButton("Modificar");
         JButton btnEliminar = new JButton("Eliminar");
 
         // Agregar botones al panel
-        buttonPanel.add(btnNuevo);
+        buttonPanel.add(btnLimpiar);
         buttonPanel.add(btnGrabar);
         buttonPanel.add(btnModificar);
         buttonPanel.add(btnEliminar);
@@ -72,7 +70,7 @@ public class UsuarioVista extends JPanel {
         add(buttonPanel, BorderLayout.SOUTH);
 
         // Funcionalidad a los botones
-        btnNuevo.addActionListener(e -> {
+        btnLimpiar.addActionListener(e -> {
             txtNombreUsuario.setText("");
             txtPasswordUsuario.setText("");
             txtEmailUsuario.setText("");

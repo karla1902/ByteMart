@@ -5,8 +5,6 @@ import Modelo.ProductosModelo;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 public class ProductosController {
     private ProductoDao productoDAO;
@@ -18,10 +16,10 @@ public class ProductosController {
     // Crear un nuevo producto
     public boolean crearProducto(ProductosModelo producto) {
         try {
-            productoDAO.agregarProducto(producto);
+            productoDAO.crearProducto(producto);
             return true;
         } catch (SQLException e) {
-            e.printStackTrace();
+            System.err.println("Error al crear el producto: " + e.getMessage());
             return false;
         }
     }
@@ -29,20 +27,20 @@ public class ProductosController {
     public ProductosModelo leerProducto(int id) {
         try {
             return productoDAO.obtenerProductoPorId(id);
-        } catch (SQLException ex) {
-            Logger.getLogger(ProductosController.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (SQLException e) {
+            System.err.println("Error al leer el producto: " + e.getMessage());
+            return null;
         }
-        return null;  // Retorna null en caso de error
     }
 
     // Listar productos
     public List<ProductosModelo> listarProductos() {
         try {
-            return productoDAO.obtenerProductos();
-        } catch (SQLException ex) {
-            Logger.getLogger(ProductosController.class.getName()).log(Level.SEVERE, null, ex);
+            return productoDAO.listarProductos();
+        } catch (SQLException e) {
+            System.err.println("Error al listar los producto: " + e.getMessage());
+            return List.of();
         }
-        return List.of(); // Retorna una lista vacía en caso de error
     }
 
     // Actualizar un producto
@@ -50,10 +48,10 @@ public class ProductosController {
         ProductosModelo productoActualizado = new ProductosModelo(id, name, price, categoryId, marca, descripcion, stock, en_oferta);
         try {
             productoDAO.actualizarProducto(productoActualizado);
-            return true;  // Retorna true si la actualización es exitosa
+            return true;  
         } catch (SQLException e) {
-            e.printStackTrace();
-            return false; // Retorna false si ocurre una excepción
+            System.err.println("Error al actualizar el producto: " + e.getMessage());
+            return false; 
         }
     }
 
@@ -61,10 +59,10 @@ public class ProductosController {
     public boolean eliminarProducto(int id) {
         try {
             productoDAO.eliminarProducto(id);
-            return true;  // Retorna true si la eliminación es exitosa
+            return true; 
         } catch (SQLException e) {
-            e.printStackTrace();
-            return false; // Retorna false si ocurre una excepción
+            System.err.println("Error al eliminar el producto: " + e.getMessage());
+            return false;
         }
     }
 }

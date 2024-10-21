@@ -1,14 +1,19 @@
 package View;
-import Dao.Conexion;
+import Controller.CategoriaController;
 import java.awt.BorderLayout;
 import java.awt.FlowLayout;
 import java.awt.GridLayout;
 import javax.swing.*;
 import java.sql.Connection;
 import javax.swing.table.DefaultTableModel;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
+import java.sql.ResultSet;
+
 
 public class CategoriaVista extends JPanel{
     private DefaultTableModel modelCategorias;
+    private CategoriaController categoriaController;
     private JTextField txtNombreCategoria;
     private JTable tableCategorias;
 
@@ -34,17 +39,25 @@ public class CategoriaVista extends JPanel{
 
         JScrollPane scrollPane = new JScrollPane(tableCategorias);
         add(scrollPane, BorderLayout.CENTER);
+        
+        JTable tableProductos = new JTable(modelCategorias) {
+            @Override
+            // Hacer que ninguna celda sea editable
+            public boolean isCellEditable(int row, int column) {
+                return false; 
+            }
+        };
 
         // Panel inferior para los botones
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
 
-        JButton btnNuevo = new JButton("Nuevo");
+        JButton btnLimpiar= new JButton("Limpiar");
         JButton btnGrabar = new JButton("Grabar");
         JButton btnModificar = new JButton("Modificar");
         JButton btnEliminar = new JButton("Eliminar");
 
         // Agregar botones al panel
-        buttonPanel.add(btnNuevo);
+        buttonPanel.add(btnLimpiar);
         buttonPanel.add(btnGrabar);
         buttonPanel.add(btnModificar);
         buttonPanel.add(btnEliminar);
@@ -52,33 +65,36 @@ public class CategoriaVista extends JPanel{
         add(buttonPanel, BorderLayout.SOUTH);
 
         // Funcionalidad de los botones
-        btnNuevo.addActionListener(e -> txtNombreCategoria.setText(""));
+        btnLimpiar.addActionListener(e -> txtNombreCategoria.setText(""));
 
         btnGrabar.addActionListener(e -> {
-            String nombreCategoria = txtNombreCategoria.getText().trim();
-            if (!nombreCategoria.isEmpty()) {
-                // Aquí llamar a un método que inserta la categoría en la base de datos
-                agregarCategoria(connection, nombreCategoria);
-                cargarCategorias(connection); // Recargar categorías de la base de datos
-                txtNombreCategoria.setText("");
-            } else {
-                JOptionPane.showMessageDialog(this, "El nombre de la categoría no puede estar vacío.", "Error", JOptionPane.ERROR_MESSAGE);
+            String nuevoNombre = txtNombreCategoria.getText().trim();
+            int selectedRow = tableProductos.getSelectedRow();
+            if (selectedRow != -1) {
+                if (!nuevoNombre.isEmpty()) {
+                    try{
+                        // Actualizar en la base de datos
+                        String query = "UPDATE proyecto.categoria SET name = ? WHERE id = ?";
+                        PreparedStatement stmt = connection.prepareStatement(query);
+                        stmt.setString(1, nuevoNombre);
+                        stmt.executeUpdate();
+                        stmt.close();
+                        
+                        modelCategorias.setValueAt(nuevoNombre, selectedRow, 1);
+                        JOptionPane.showMessageDialog(this, "Categoría creadacon éxito.");
+                    }catch (SQLException ex) {
+                        JOptionPane.showMessageDialog(this, "Error al actualizar la categoría: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+                    }
+                } else {
+                    JOptionPane.showMessageDialog(this, "El nombre de la categoría no puede estar vacío.", "Error", JOptionPane.ERROR_MESSAGE);
+                }
             }
         });
 
         btnModificar.addActionListener(e -> {
             int selectedRow = tableCategorias.getSelectedRow();
             if (selectedRow != -1) {
-                String nuevoNombre = txtNombreCategoria.getText().trim();
-                if (!nuevoNombre.isEmpty()) {
-                    // Aquí llamar a un método que actualiza la categoría en la base de datos
-                    int id = (int) modelCategorias.getValueAt(selectedRow, 0);
-                    modificarCategoria(connection, id, nuevoNombre);
-                    cargarCategorias(connection); // Recargar categorías de la base de datos
-                    txtNombreCategoria.setText("");
-                } else {
-                    JOptionPane.showMessageDialog(this, "El nombre de la categoría no puede estar vacío.", "Error", JOptionPane.ERROR_MESSAGE);
-                }
+                    txtNombreCategoria.setText((String) modelCategorias.getValueAt(selectedRow, 1));
             } else {
                 JOptionPane.showMessageDialog(this, "Selecciona una categoría para modificar.", "Advertencia", JOptionPane.WARNING_MESSAGE);
             }
@@ -87,43 +103,58 @@ public class CategoriaVista extends JPanel{
         btnEliminar.addActionListener(e -> {
             int selectedRow = tableCategorias.getSelectedRow();
             if (selectedRow != -1) {
-                int id = (int) modelCategorias.getValueAt(selectedRow, 0);
-                // Aquí llamar a un método que elimina la categoría en la base de datos
-                eliminarCategoria(connection, id);
-                cargarCategorias(connection); // Recargar categorías de la base de datos
-                txtNombreCategoria.setText("");
+                int idCategoria = (int) modelCategorias.getValueAt(selectedRow, 0);
+                int confirm = JOptionPane.showConfirmDialog(this, "¿Está seguro de eliminar la categoría?", "Confirmar eliminación", JOptionPane.YES_NO_OPTION);
+                if (confirm == JOptionPane.YES_OPTION) {
+                    try{
+                       String deleteQuery = "DELETE FROM proyecto.categoria WHERE id = ?";
+                        PreparedStatement stmt = connection.prepareStatement(deleteQuery);
+                        stmt.setInt(1, idCategoria);
+
+                        int rowsAffected = stmt.executeUpdate();
+                        stmt.close();
+
+                        if (rowsAffected > 0) {
+                            modelCategorias.removeRow(selectedRow);
+                            JOptionPane.showMessageDialog(this, "Categoría eliminada correctamente.", "Eliminación exitosa", JOptionPane.INFORMATION_MESSAGE);
+                            // Limpiar los campos de entrada
+                            txtNombreCategoria.setText("");
+                        } else {
+                            JOptionPane.showMessageDialog(this, "Error: No se pudo eliminar el producto de la base de datos.", "Error", JOptionPane.ERROR_MESSAGE);
+                        }
+                    }catch (SQLException ex) {
+                        ex.printStackTrace();
+                        JOptionPane.showMessageDialog(this, "Error al eliminar categoría: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+                    }
+                }
             } else {
                 JOptionPane.showMessageDialog(this, "Selecciona una categoría para eliminar.", "Advertencia", JOptionPane.WARNING_MESSAGE);
             }
         });
-
-        // Cargar categorías desde la base de datos al inicio
-        cargarCategorias(connection);
-    }
-
-    private void cargarCategorias(Connection connection) {
-        // Implementar la lógica para cargar las categorías desde la base de datos
-        // Limpiar la tabla antes de cargar nuevas categorías
-        modelCategorias.setRowCount(0);
         
-        // Aquí iría el código para consultar la base de datos y llenar el modelo
-        // Ejemplo (debes implementar esto):
-        // ResultSet rs = statement.executeQuery("SELECT * FROM categorias");
-        // while (rs.next()) {
-        //     modelCategorias.addRow(new Object[]{rs.getInt("id"), rs.getString("nombre")});
-        // }
+        cargarDatosTabla(connection);
     }
 
-    private void agregarCategoria(Connection connection, String nombreCategoria) {
-        // Implementar la lógica para insertar la nueva categoría en la base de datos
-    }
+    private void cargarDatosTabla(Connection connection) {
+        try {
+            String query = "SELECT id, name FROM proyecto.categoria "; 
+            PreparedStatement stmt = connection.prepareStatement(query);
+            ResultSet rs = stmt.executeQuery();
 
-    private void modificarCategoria(Connection connection, int id, String nuevoNombre) {
-        // Implementar la lógica para modificar la categoría en la base de datos
+            while (rs.next()) {
+                modelCategorias.addRow(new Object[]{
+                        rs.getInt("id"),
+                        rs.getString("name"),
+                });
+            }
+            rs.close();
+            stmt.close();
+        } catch (SQLException e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(this, "Error al cargar datos de la base de datos: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+        }
     }
-
-    private void eliminarCategoria(Connection connection, int id) {
-        // Implementar la lógica para eliminar la categoría de la base de datos
-    }
+    
+    
 }
 
