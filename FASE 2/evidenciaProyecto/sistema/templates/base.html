@@ -1,4 +1,27 @@
 <!DOCTYPE html>
+<style>
+	    /* Estilos para el carrito vacío */
+		.empty-cart {
+        text-align: center; /* Centra el texto e imagen */
+        margin-top: 50px; /* Espaciado superior */
+    }
+
+    .empty-cart-image {
+        max-width: 100px; /* Ancho máximo de la imagen */
+        height: auto; /* Mantiene la relación de aspecto */
+        margin-bottom: 20px; /* Espacio debajo de la imagen */
+    }
+
+    .empty-cart p {
+        font-size: 18px; /* Tamaño de la fuente del mensaje */
+        color: #555; /* Color gris para el mensaje */
+        margin-bottom: 20px; /* Espacio inferior */
+    }
+
+    .empty-cart a.btn-custom {
+        margin-top: 10px; /* Espacio superior para el botón */
+    }
+</style>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -30,6 +53,13 @@
 
 	<!-- Slick Carousel JS -->
 	<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/slick-carousel/1.8.1/jquery.slick.min.js"></script>
+
+
+		<!-- SweetAlert2 CSS -->
+	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+
+	<!-- SweetAlert2 JS -->
+	<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.js"></script>
 
 
     <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
@@ -109,37 +139,48 @@
     <a class="dropdown-toggle" data-toggle="dropdown" aria-expanded="true">
         <i class="fa fa-shopping-cart"></i>
         <span>Carrito</span>
-        <div class="qty">{{ carrito|length }}</div>
+        <div class="qty">{{ total_items_carrito }}</div>  <!-- Mostrar la cantidad total de productos -->
     </a>
+    
     <div class="cart-dropdown">
         <div class="cart-list">
-            {% for producto in carrito %}
-            <div class="product-widget">
-                <div class="product-img">
-                    {% if producto.image_url %}  <!-- Verificar si hay una URL de imagen -->
-                        <img src="{{ producto.image_url }}" alt="{{ producto.nombre }}" style="width: 50px; height: auto;"> <!-- Usar la URL de la imagen del producto -->
-                    {% else %}
-                        <img src="{{ url_for('static', filename='img/product_default.png') }}" alt="producto">  <!-- Imagen por defecto -->
-                    {% endif %}
+            {% if carrito|length == 0 %}
+                <div class="empty-cart">
+                    <img src="{{ url_for('static', filename='img/cartEmpty.png') }}" alt="Carrito vacío" class="empty-cart-image">
+                    <h5>No hay productos en tu carrito.</h5>
                 </div>
-                <div class="product-body">
-                    <h3 class="product-name"><a href="#">{{ producto.name }}</a></h3>
-                    <h4 class="product-price"><span class="qty">1x</span>${{ producto.price }}</h4>
-                </div>
-                <button class="delete"><i class="fa fa-close"></i></button>
-            </div>
-            {% endfor %}
+            {% else %}
+                {% for item in carrito %}
+                    <div class="product-widget">
+                        <div class="product-img">
+                            {% if item.image_url %}
+                                <img src="{{ item.image_url }}" alt="{{ item.producto.name }}" style="width: 50px; height: auto;">
+                            {% else %}
+                                <img src="{{ url_for('static', filename='img/product_default.png') }}" alt="producto">
+                            {% endif %}
+                        </div>
+                        <div class="product-body">
+                            <h3 class="product-name"><a href="#">{{ item.producto.name }}</a></h3>
+                            <h4 class="product-price"><span class="qty">{{ item.cantidad }}x</span>${{ item.producto.price }}</h4>
+                        </div>
+                        <button class="delete"><i class="fa fa-close"></i></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
         </div>
+        
         <div class="cart-summary">
-            <small>{{ carrito|length }} Item(s) selected</small>
-            <h5>SUBTOTAL: ${{ subtotal }}</h5>
+            <small>{{ carrito|length }} Item(s) Seleccionados</small>
+            <h5>SUBTOTAL: ${{ subtotal_carrito }}</h5>  <!-- Usar subtotal_carrito aquí -->
         </div>
+        
         <div class="cart-btns">
             <a href="{{ url_for('ver_carrito') }}">Ver Carrito</a>
             <a href="{{ url_for('checkout') }}">Checkout <i class="fa fa-arrow-circle-right"></i></a>
         </div>
     </div>
 </div>
+
 
 
 								<!-- Menu Toogle -->

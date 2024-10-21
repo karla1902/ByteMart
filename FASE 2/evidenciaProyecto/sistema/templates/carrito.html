@@ -101,7 +101,29 @@
         color: red;    /* Mensaje de error en rojo */
     }
 
+    /* Estilos para el carrito vacío */
+    .empty-cart {
+        text-align: center; /* Centra el texto e imagen */
+        margin-top: 50px; /* Espaciado superior */
+    }
+
+    .empty-cart-image {
+        max-width: 200px; /* Ancho máximo de la imagen */
+        height: auto; /* Mantiene la relación de aspecto */
+        margin-bottom: 20px; /* Espacio debajo de la imagen */
+    }
+
+    .empty-cart p {
+        font-size: 18px; /* Tamaño de la fuente del mensaje */
+        color: #555; /* Color gris para el mensaje */
+        margin-bottom: 20px; /* Espacio inferior */
+    }
+
+    .empty-cart a.btn-custom {
+        margin-top: 10px; /* Espacio superior para el botón */
+    }
 </style>
+
 
 <body>
     <div class="cart-container">
@@ -117,6 +139,13 @@
         {% endif %}
         {% endwith %}
         
+        {% if carrito|length == 0 %}
+        <div class="empty-cart">
+            <img src="{{ url_for('static', filename='img/cartEmpty.png') }}" alt="Carrito vacío" class="empty-cart-image">
+            <p>Tu carrito está vacío, ¡añade productos para empezar!</p>
+            <a href="{{ url_for('index') }}" class="btn-custom">Ir a la tienda</a>
+        </div>
+        {% else %}
         <table>
             <tr>
                 <th>Nombre Producto</th>
@@ -144,7 +173,6 @@
             </tr>
             {% endfor %}
         </table>
-        
 
         <div class="button-container">
             <p>Subtotal: ${{ subtotal }}</p>
@@ -155,10 +183,10 @@
             <form action="{{ url_for('checkout') }}" method="POST" style="display:inline;"> <!-- Formulario para checkout -->
                 <button type="submit" class="btn-custom">Ir a pagar</button>
             </form>
-            
         </div>
-        
+        {% endif %}
     </div>
 </body>
+
 
 {% endblock %}

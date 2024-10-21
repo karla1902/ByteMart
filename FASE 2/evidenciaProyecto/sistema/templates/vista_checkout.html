@@ -51,23 +51,35 @@
                             <div class="form-group">
                                 <select class="input" name="provincia" id="provincia" required onchange="loadComunass()">
                                     <option value="">Seleccione una provincia</option>
-                                    <!-- Las opciones se llenarán dinámicamente -->
                                 </select>
                             </div>
                             <div class="form-group">
                                 <select class="input" name="comuna" id="comuna" required>
                                     <option value="">Seleccione una comuna</option>
-                                    <!-- Las opciones se llenarán dinámicamente -->
                                 </select>
                             </div>
                             
+
                             <div class="form-group">
                                 <input class="input" type="tel" name="tel" placeholder="Telephone" required>
                             </div>
                             <div class="order-notes">
                                 <textarea class="input" placeholder="Order Notes" name="order_notes"></textarea>
                             </div>
-                            <button type="submit" class="primary-btn order-submit">Realizar Pedido</button>
+                            <div class="form-group">
+                                <label for="tarjeta_id">Selecciona tu tarjeta</label>
+                                <select class="input" name="tarjeta_id" id="tarjeta_id" required>
+                                    <option value="">Seleccione una tarjeta</option>
+                                    {% for tarjeta in tarjetas %}
+                                        <option value="{{ tarjeta.id }}">{{ tarjeta.numero_tarjeta[-4:] }}</option> <!-- Muestra solo los últimos 4 dígitos -->
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            
+                            
+                            <input type="hidden" name="total_compra" value="{{ total_price }}">
+
+                            <button type="submit" class="primary-btn order-submit">Realizar Pedido y Pago</button>
                         </form>
                     </div>
                     <!-- /Billing Details -->
@@ -101,11 +113,6 @@
                             <div><strong class="order-total">${{ total_price }}</strong></div>
                         </div>
                     </div>
-                    <form action="{{ url_for('process_checkout') }}" method="POST" id="payment-form">
-                        <input type="hidden" name="tarjeta_id" value="{{ tarjeta_id }}">
-                        <input type="hidden" name="total_compra" value="{{ total_price }}">
-                        <button type="submit" class="primary-btn order-submit">Realizar Pago</button>
-                    </form>
                 </div>
             </div>
         </div>
@@ -113,56 +120,22 @@
     <!-- /SECTION -->
 
 
-    <script>
-        function loadProvincias() {
-            const regionSelect = document.getElementById('region');
-            const provinciaSelect = document.getElementById('provincia');
-            const comunaSelect = document.getElementById('comuna');
-            
-            const selectedRegionId = regionSelect.value;
-            
-            // Limpiar provincias y comunas al cambiar de región
-            provinciaSelect.innerHTML = '<option value="">Seleccione una provincia</option>';
-            comunaSelect.innerHTML = '<option value="">Seleccione una comuna</option>';
-    
-            if (selectedRegionId) {
-                // Hacer una solicitud para obtener provincias basadas en la región seleccionada
-                fetch(`http://127.0.0.1:5005/provincias/${selectedRegionId}`)
-                    .then(response => response.json())
-                    .then(data => {
-                        data.provincias.forEach(provincia => {
-                            const option = document.createElement('option');
-                            option.value = provincia.codigo;
-                            option.textContent = provincia.nombre;
-                            provinciaSelect.appendChild(option);
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <script>
+                document.addEventListener('DOMContentLoaded', function() {
+                    {% for category, message in messages %}
+                        Swal.fire({
+                            icon: '{{ 'success' if category == 'success' else 'error' }}',
+                            title: '{{ category.capitalize() }}',
+                            text: '{{ message }}',
+                            showConfirmButton: true,
+                            timer: 3000 // Opcional: cerrar automáticamente después de 3 segundos
                         });
-                    });
-            }
-        }
-    
-        function loadComunass() {
-            const provinciaSelect = document.getElementById('provincia');
-            const comunaSelect = document.getElementById('comuna');
-    
-            const selectedProvinciaId = provinciaSelect.value;
-    
-            // Limpiar comunas al cambiar de provincia
-            comunaSelect.innerHTML = '<option value="">Seleccione una comuna</option>';
-    
-            if (selectedProvinciaId) {
-                // Hacer una solicitud para obtener comunas basadas en la provincia seleccionada
-                fetch(`http://127.0.0.1:5005/comunas/${selectedProvinciaId}`)
-                    .then(response => response.json())
-                    .then(data => {
-                        data.comunas.forEach(comuna => {
-                            const option = document.createElement('option');
-                            option.value = comuna.codigo;
-                            option.textContent = comuna.nombre;
-                            comunaSelect.appendChild(option);
-                        });
-                    });
-            }
-        }
-    </script>
+                    {% endfor %}
+                });
+            </script>
+        {% endif %}
+    {% endwith %}
     
 {% endblock %}

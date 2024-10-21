@@ -2,16 +2,166 @@
 
 {% block content %}
 <style>
-    .card-list .list-group-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center; /* Alinea el contenido verticalmente */
-}
+    /* Importar la fuente Poppins */
+    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap');
 
-.card-list button {
-    margin-left: 10px; /* Espacio entre el texto de la tarjeta y el botón */
-}
+    /* Estilos para la tarjeta en el perfil */
+    .profile-container {
+        padding: 20px;
+        font-family: 'Poppins', sans-serif;
+    }
+
+    /* Diseño de la lista de tarjetas */
+    .card-list .list-group-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background-color: #f8f9fa;
+        border-radius: 10px;
+        padding: 15px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        margin-bottom: 15px;
+        transition: background-color 0.3s ease;
+    }
+
+    .card-list .list-group-item:hover {
+        background-color: #e2e6ea; /* Color de fondo al pasar el mouse */
+    }
+
+    /* Estilos personalizados para la tarjeta */
+    .credit-card {
+        position: relative;
+        background: linear-gradient(135deg, #1e2a38 0%, #2c3e50 100%); /* Gradiente para la tarjeta */
+        color: #ffffff;
+        border-radius: 25px; /* Aumentar el radio para bordes más suaves */
+        padding: 20px;
+        width: 100%;
+        max-width: 400px;
+        box-shadow: 0 8px 15px rgba(0, 0, 0, 0.2);
+        transition: transform 0.2s; /* Transición para el efecto de zoom */
+    }
+
+    .credit-card:hover {
+        transform: scale(1.02); /* Agrandar ligeramente al pasar el mouse */
+    }
+
+    /* Últimos 4 dígitos estilo especial */
+    .credit-card .card-number {
+        font-size: 1.4em;
+        letter-spacing: 2px;
+        text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5); /* Sombra de texto */
+    }
+
+    .credit-card .expiry, .credit-card .verification {
+        font-size: 0.9em;
+        color: #adb5bd;
+    }
+
+    .credit-card .logo {
+        position: absolute;
+        top: 15px;
+        right: 20px;
+        font-size: 2em; /* Aumentar el tamaño del logo */
+        color: #ffcc00; /* Color dorado o amarillo */
+        text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5); /* Sombra de texto */
+    }
+
+    /* Estilo del botón de eliminación */
+    .card-list .btn-delete {
+        background-color: #dc3545;
+        color: white;
+        border-radius: 50%;
+        width: 30px;
+        height: 30px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-size: 1em;
+        border: none;
+        transition: background-color 0.3s ease;
+    }
+
+    .card-list .btn-delete:hover {
+        background-color: #c82333;
+    }
+
+    /* Botón personalizado */
+    .btn-custom {
+        background-color: #007bff;
+        color: white;
+        padding: 10px 20px;
+        border: none;
+        border-radius: 5px;
+        font-size: 1em;
+        cursor: pointer;
+    }
+
+    .btn-custom:hover {
+        background-color: #0056b3;
+    }
+
+    .form-label {
+        font-weight: bold;
+    }
+
+    /* Alinear contenido de la tarjeta */
+    .card-details {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    /* Mejorar el aspecto de los formularios */
+    input.form-control {
+        border-radius: 8px;
+        border: 1px solid #ced4da;
+        padding: 10px;
+        font-size: 1rem;
+    }
+
+    /* Diseño de la lista de tarjetas */
+    .card-list .list-group-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background-color: #f8f9fa;
+        border-radius: 10px;
+        padding: 15px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        margin-bottom: 15px;
+    }
+
+    /* Alinear contenido de la tarjeta */
+    .credit-card {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-grow: 1; /* Esto permite que la tarjeta ocupe todo el espacio disponible */
+    }
+
+    /* Estilo del botón de eliminación */
+    .card-list .btn-delete {
+        background-color: #dc3545;
+        color: white;
+        border-radius: 50%;
+        width: 30px;
+        height: 30px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-size: 1em;
+        border: none;
+        transition: background-color 0.3s ease;
+    }
+
+    .card-list .btn-delete:hover {
+        background-color: #c82333;
+    }
+
 </style>
+
+
+
 <div class="profile-container">
     <h2>Mi Perfil</h2>
 
@@ -29,27 +179,39 @@
 
     <form method="POST" action="/profile">
         <div class="row">
-            <!-- Nombre de usuario -->
             <div class="mb-3 col-md-6">
                 <label for="username" class="form-label">Nombre de usuario</label>
                 <input type="text" id="username" name="username" class="form-control" value="{{ user.username }}" required>
             </div>
             
-            <!-- Correo electrónico -->
             <div class="mb-3 col-md-6">
                 <label for="email" class="form-label">Correo electrónico</label>
                 <input type="email" id="email" name="email" class="form-control" value="{{ user.email }}" required>
             </div>
+    
+            <div class="mb-3 col-md-6">
+                <label for="nombre" class="form-label">Nombre</label>
+                <input type="text" id="nombre" name="nombre" class="form-control" value="{{ user.nombre }}" required>
+            </div>
+            
+            <div class="mb-3 col-md-6">
+                <label for="apellido" class="form-label">Apellido</label>
+                <input type="text" id="apellido" name="apellido" class="form-control" value="{{ user.apellido }}" required>
+            </div>
+    
+            <div class="mb-3 col-md-12">
+                <label for="direccion" class="form-label">Dirección</label>
+                <input type="text" id="direccion" name="direccion" class="form-control" value="{{ user.direccion }}">
+            </div>
         </div>
-
-        <!-- Botones de acción para el perfil -->
+    
         <div class="d-flex justify-content-end mt-4">
             <button type="button" class="btn btn-secondary me-2" id="editButton">Editar</button>
             <button type="submit" class="btn-custom">Guardar</button>
         </div>
     </form>
+    
 
-    <!-- Espaciado entre secciones -->
     <hr class="my-4">
 
     <h3 class="mt-5">Mis Tarjetas</h3>
@@ -57,15 +219,20 @@
         {% if tarjetas %}
             <ul class="list-group">
                 {% for tarjeta in tarjetas %}
-                    <li class="list-group-item d-flex justify-content-between align-items-center">
-                        <div>
-                            <strong>Número de Tarjeta:</strong> {{ tarjeta.numero_tarjeta }} | 
-                            <strong>Código de Verificación:</strong> {{ tarjeta.codigo_verificacion }} | 
-                            <strong>Saldo:</strong> ${{ tarjeta.saldo }}
+                    <li class="list-group-item">
+                        <div class="credit-card">
+                            <div class="logo"><i class="fa fa-cc-visa"></i></div> <!-- Logo de Visa -->
+                            <div class="card-details">
+                                <span class="card-number">**** **** **** {{ tarjeta.numero_tarjeta[-4:] }}</span>
+                                <span class="expiry">Expira: {{ tarjeta.mes_vencimiento }}/{{ tarjeta.anio_vencimiento }}</span>
+                                <span class="verification">CVV: {{ tarjeta.codigo_verificacion }}</span>
+                                <span class="saldo"><strong>Saldo:</strong> ${{ tarjeta.saldo }}</span>
+                                <span class="user-name"> {{ user.nombre }} {{ user.apellido }}</span>
+                            </div>
+                            <form method="POST" action="/delete_card/{{ tarjeta.id }}" class="d-inline">
+                                <button type="submit" class="btn-delete" onclick="return confirm('¿Estás seguro de que deseas eliminar esta tarjeta?');">X</button>
+                            </form>
                         </div>
-                        <form method="POST" action="/delete_card/{{ tarjeta.id }}" class="d-inline">
-                            <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('¿Estás seguro de que deseas eliminar esta tarjeta?');">X</button>
-                        </form>
                     </li>
                 {% endfor %}
             </ul>
@@ -73,8 +240,10 @@
             <p>No tienes tarjetas agregadas.</p>
         {% endif %}
     </div>
+    
+    
+    
 
-    <!-- Formulario para agregar tarjeta -->
     <h3 class="mt-5">Agregar Tarjeta</h3>
     <form method="POST" action="/add_card">
         <div class="row">
@@ -103,39 +272,28 @@
                 onkeypress="return event.charCode >= 48 && event.charCode <= 57 || event.charCode === 47" 
                 oninput="addSlash(this)">
         </div>
-        <!-- Botón para agregar tarjeta -->
         <div class="d-flex justify-content-end" style="margin: 10px;">
             <button type="submit" class="btn-custom">Agregar Tarjeta</button>
         </div>
     </form>
 
-
-
 </div>
+
 <script>
     function addSlash(input) {
-        // Remover el carácter '/' si ya existe
         let value = input.value.replace('/', '');
-    
-        // Agregar '/' después de dos caracteres
         if (value.length >= 2) {
             value = value.slice(0, 2) + '/' + value.slice(2);
         }
-    
-        // Limitar la longitud a 5 caracteres
         if (value.length > 5) {
             value = value.slice(0, 5);
         }
-    
-        // Validar que el mes no sea mayor a 12
-        if (value.length >= 2) {
-            const month = parseInt(value.slice(0, 2), 10);
-            if (month > 12) {
-                value = '12' + value.slice(2); // Cambiar el mes a 12 si es mayor
-            }
+        const month = parseInt(value.slice(0, 2), 10);
+        if (month > 12) {
+            value = '12' + value.slice(2);
         }
-    
         input.value = value;
     }
-    </script>
+</script>
+
 {% endblock %}

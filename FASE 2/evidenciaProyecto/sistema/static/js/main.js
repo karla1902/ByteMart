@@ -244,6 +244,79 @@
 })(jQuery);
 
 
+// main.js
+
+document.addEventListener('DOMContentLoaded', function() {
+    const regionSelect = document.getElementById('region');
+    const provinciaSelect = document.getElementById('provincia');
+    const comunaSelect = document.getElementById('comuna');
+
+    if (regionSelect.value) {
+        loadProvincias(); // Llama a loadProvincias si ya hay una región seleccionada
+    }
+    
+    if (provinciaSelect.value) {
+        loadComunass(); // Llama a loadComunass si ya hay una provincia seleccionada
+    }
+});
+
+function loadProvincias() {
+    const regionSelect = document.getElementById('region');
+    const provinciaSelect = document.getElementById('provincia');
+    const comunaSelect = document.getElementById('comuna');
+    
+    const selectedRegionId = regionSelect.value;
+    provinciaSelect.innerHTML = '<option value="">Seleccione una provincia</option>';
+    comunaSelect.innerHTML = '<option value="">Seleccione una comuna</option>';
+
+    if (selectedRegionId) {
+        fetch(`http://127.0.0.1:5005/provincias/${selectedRegionId}`)
+            .then(response => response.json())
+            .then(data => {
+                data.provincias.forEach(provincia => {
+                    const option = document.createElement('option');
+                    option.value = provincia.codigo;
+                    option.textContent = provincia.nombre;
+                    provinciaSelect.appendChild(option);
+                });
+            });
+    }
+}
+
+function loadComunass() {
+    const provinciaSelect = document.getElementById('provincia');
+    const comunaSelect = document.getElementById('comuna');
+
+    const selectedProvinciaId = provinciaSelect.value;
+    comunaSelect.innerHTML = '<option value="">Seleccione una comuna</option>';
+
+    if (selectedProvinciaId) {
+        fetch(`http://127.0.0.1:5005/comunas/${selectedProvinciaId}`)
+            .then(response => response.json())
+            .then(data => {
+                data.comunas.forEach(comuna => {
+                    const option = document.createElement('option');
+                    option.value = comuna.codigo;
+                    option.textContent = comuna.nombre;
+                    comunaSelect.appendChild(option);
+                });
+            });
+    }
+}
+
+function fillForm(id, nombre, apellido, username, email, direccion, is_admin) {
+    document.querySelector('input[name="id"]').value = id;
+    document.getElementById('nombre').value = nombre;
+    document.getElementById('apellido').value = apellido;
+    document.getElementById('username').value = username;
+    document.getElementById('email').value = email;
+    document.getElementById('nombre_direccion').value = direccion; // Corregido
+    document.getElementById('is_admin').checked = is_admin; // Asegúrate de tener el checkbox
+}
+
+
+
+
 
 
 

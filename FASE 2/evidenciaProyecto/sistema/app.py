@@ -15,6 +15,7 @@ from sqlalchemy import Sequence
 import requests
 from flask_cors import CORS
 from sqlalchemy import text
+import locale
 
 
 
@@ -98,7 +99,13 @@ def test_connection():
     except Exception as e:
         app.logger.error(f'Error en la conexión a la base de datos: {e}')
 
-# Modelo de Usuario
+
+# Establecer la configuración regional para la moneda
+locale.setlocale(locale.LC_ALL, 'es_ES.UTF-8')  # Cambia según tus necesidades
+
+# Función para formatear el saldo
+def formatear_saldo(saldo):
+    return f"${saldo:,.0f}".replace(',', '.').replace('$', '$ ')
 
 
 # Modelo de Usuario
@@ -502,14 +509,18 @@ def profile():
     tarjetas = Tarjeta.query.filter_by(usuario_id=user.id).all()  # Obtener las tarjetas del usuario
 
     if request.method == 'POST':
-        # Actualizar el nombre de usuario y el correo electrónico desde el formulario
+        # Actualizar los campos desde el formulario
         user.email = request.form['email']
         user.username = request.form['username']
+        user.nombre = request.form['nombre']  # Nuevo campo
+        user.apellido = request.form['apellido']  # Nuevo campo
+        user.direccion = request.form['direccion']  # Nuevo campo
         db.session.commit()  # Guardar los cambios en la base de datos
         flash('Datos actualizados correctamente', 'success')
         return redirect(url_for('profile'))
 
     return render_template('profile.html', user=user, tarjetas=tarjetas)  # Pasa las tarjetas a la plantilla
+
 
 
 @app.route('/logout')
@@ -591,19 +602,32 @@ def gestionar_usuarios():
     return render_template('admin_usuarios.html', usuarios=usuarios, roles=roles, usuario=usuario)
 
 
-@app.route('/admin/usuarios/<int:id>/eliminar', methods=['POST'])
+@app.route('/eliminar_usuario/<int:id>', methods=['POST'])
 def eliminar_usuario(id):
+    # Obtener el usuario por su ID
     usuario = Usuario.query.get(id)
     if usuario:
+        # Primero, eliminar las tarjetas asociadas
+        if usuario.tarjetas:  # Verifica que existan tarjetas
+            for tarjeta in usuario.tarjetas:
+                db.session.delete(tarjeta)  # Eliminar cada tarjeta
+
+        # Luego, eliminar el carrito asociado
+        if usuario.carrito:  # Verifica que el carrito exista
+            # Eliminar todos los ítems en el carrito
+            for item in usuario.carrito.items:
+                db.session.delete(item)  # Eliminar cada ítem del carrito
+
+            db.session.delete(usuario.carrito)  # Luego eliminar el carrito
+
+        # Ahora eliminar el usuario
         db.session.delete(usuario)
         db.session.commit()
         flash('Usuario eliminado con éxito.', 'success')
     else:
         flash('Usuario no encontrado.', 'error')
+
     return redirect(url_for('gestionar_usuarios'))
-
-
-
 
 
 
@@ -862,64 +886,103 @@ def editar_producto(id):
 def ver_carrito():
     categorias = Categoria.query.all()
     
-    # Asegúrate de que el usuario esté autenticado
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    
     carrito = Carrito.query.filter_by(usuario_id=session['user_id']).first()
     items = []
 
     if carrito:
         items = ItemCarrito.query.filter_by(carrito_id=carrito.id).all()
 
-    subtotal = sum(item.producto.price * item.cantidad for item in items)  # Total por cantidad
-    
-    # Agregar la URL de la imagen al carrito
+    subtotal = sum(item.producto.price * item.cantidad for item in items)
+
     for item in items:
-        item.image_url = item.producto.imagenes[0].image_url if item.producto.imagenes else None
+        if item.producto.imagenes:
+            item.image_url = item.producto.imagenes[0].image_url
+        else:
+            item.image_url = None
 
     return render_template('carrito.html', carrito=items, subtotal=subtotal, categorias=categorias)
 
 
 
 
-@app.route('/checkout', methods=['POST'])
+
+@app.route('/checkout', methods=['GET', 'POST'])
 def checkout():
-    carrito = Carrito.query.filter_by(usuario_id=session['user_id']).first()
+    categorias = Categoria.query.all()
+    if request.method == 'POST':
+        carrito = Carrito.query.filter_by(usuario_id=session['user_id']).first()
 
-    # Validar si hay un carrito
-    if not carrito:
-        flash('Tu carrito está vacío', 'warning')
-        return redirect(url_for('ver_carrito'))
+        # Validar si hay un carrito
+        if not carrito:
+            flash('Tu carrito está vacío', 'warning')
+            return redirect(url_for('ver_carrito'))
 
-    # Obtener los ítems del carrito
-    items = ItemCarrito.query.filter_by(carrito_id=carrito.id).all()
+        # Obtener los ítems del carrito
+        items = ItemCarrito.query.filter_by(carrito_id=carrito.id).all()
 
-    # Validar si hay ítems en el carrito
-    if not items:
-        flash('Tu carrito está vacío', 'warning')
-        return redirect(url_for('ver_carrito'))
+        # Validar si hay ítems en el carrito
+        if not items:
+            flash('Tu carrito está vacío', 'warning')
+            return redirect(url_for('ver_carrito'))
 
-    # Preparar datos para el checkout
-    checkout_items = []
-    total = calcular_total(items)  # Calcular el total usando la función ajustada
+        # Preparar datos para el checkout
+        checkout_items = []
+        total = calcular_total(items)
 
-    for item in items:
-        # Obtener la primera imagen del producto, si existe
-        imagen = item.producto.imagenes[0].image_url if item.producto.imagenes else None
+        for item in items:
+            imagen = item.producto.imagenes[0].image_url if item.producto.imagenes else None
 
-        checkout_items.append({
-            'id': item.producto.id,
-            'name': item.producto.name,  # Asegúrate de usar el atributo correcto
-            'cantidad': item.cantidad,
-            'precio': item.producto.price,  # Asegúrate de que el precio está en el formato adecuado
-            'imagen': imagen  # Usar la imagen si existe
-        })
+            checkout_items.append({
+                'id': item.producto.id,
+                'name': item.producto.name,
+                'cantidad': item.cantidad,
+                'precio': item.producto.price,
+                'imagen': imagen
+            })
 
+        # Almacenar datos en la sesión
+        session['checkout_items'] = checkout_items
+        session['checkout_total'] = total
 
+        return redirect(url_for('checkout_view'))
 
-    # Almacenar datos en la sesión para usarlo en la página de checkout
-    session['checkout_items'] = checkout_items
-    session['checkout_total'] = total
+    else:  # Manejo del GET para mostrar la vista de checkout
+        # Obtener las tarjetas del usuario
+        tarjetas = Tarjeta.query.filter_by(usuario_id=session['user_id']).all()
 
-    return redirect(url_for('checkout_view'))  # Redirigir a la vista de checkout
+        try:
+            response = requests.get('http://localhost:5005/datos_completos')
+            response.raise_for_status()
+
+            data = response.json()
+            regiones = data.get('regiones', [])
+            provincias = data.get('provincias', [])
+            comunas = data.get('comunas', [])
+
+            total = session.get('checkout_total', 0)
+            checkout_items = session.get('checkout_items', [])
+
+            return render_template(
+                'vista_checkout.html',
+                total_price=total,
+                checkout_items=checkout_items,
+                regiones=regiones,
+                provincias=provincias,
+                comunas=comunas,
+                tarjetas=tarjetas,
+                categorias = categorias  # Pasar las tarjetas a la plantilla
+            )
+
+        except requests.exceptions.RequestException as e:
+            print(f"Error en la solicitud: {e}")
+            return "Error al obtener datos. Por favor, inténtelo más tarde.", 500
+        except ValueError as e:
+            print(f"Error al procesar JSON: {e}")
+            return "Error al procesar datos. Por favor, inténtelo más tarde.", 500
+
 
 
 @app.route('/checkout', methods=['GET'])
@@ -958,47 +1021,104 @@ def checkout_view():
 
 
 
-
-
-
-
 @app.route('/process_checkout', methods=['POST'])
 def process_checkout():
-    # Aquí va la lógica para procesar la compra
-    # Asegúrate de que el usuario esté autenticado
-    carrito = Carrito.query.filter_by(usuario_id=session['user_id']).first()
-    
-    if not carrito:
-        flash('Tu carrito está vacío', 'warning')
-        return redirect(url_for('ver_carrito'))
+    # Extraer datos del formulario
+    first_name = request.form.get('first-name')
+    last_name = request.form.get('last-name')
+    email = request.form.get('email')
+    address = request.form.get('address')
+    region = request.form.get('region')
+    provincia = request.form.get('provincia')
+    comuna = request.form.get('comuna')
+    tel = request.form.get('tel')
+    tarjeta_id = request.form.get('tarjeta_id')
+    total_compra = request.form.get('total_compra')
 
-    items = ItemCarrito.query.filter_by(carrito_id=carrito.id).all()
-    if not items:
-        flash('Tu carrito está vacío', 'warning')
-        return redirect(url_for('ver_carrito'))
+    # Validaciones
+    if not tarjeta_id or not total_compra:
+        flash('Por favor, selecciona una tarjeta y asegúrate de que el total de compra sea correcto.', 'error')
+        return redirect(url_for('checkout'))
 
-    total = calcular_total(items)  # Calcular el total
-    tarjeta_id = request.form.get('tarjeta_id')  # Asegúrate de obtener el ID de la tarjeta del formulario
-
-    # Realizar la solicitud de pago a la API de pago
     try:
-        response = requests.post('http://localhost:5003/api/pagar', json={
-            'tarjeta_id': tarjeta_id,
-            'total_compra': total
-        })
-        response.raise_for_status()  # Esto lanzará un error si la respuesta no es 200
+        total_compra = int(total_compra)
+    except ValueError:
+        flash('El total de compra no es válido.', 'error')
+        return redirect(url_for('checkout'))
 
-        # Aquí puedes manejar la respuesta de la API, como confirmar la transacción
-        flash('Pago realizado con éxito', 'success')
-        
-        # Aquí podrías guardar la orden en tu base de datos
-        # (esto es solo un ejemplo, deberías ajustar según tu lógica de negocio)
-        
+    tarjeta = Tarjeta.query.get(tarjeta_id)
+    if not tarjeta:
+        flash('Tarjeta no válida.', 'error')
+        return redirect(url_for('checkout'))
+
+    saldo_actual = tarjeta.saldo
+    if saldo_actual < total_compra:
+        flash('Saldo insuficiente en la tarjeta.', 'error')
+        return redirect(url_for('checkout'))
+
+    url_pago = 'http://localhost:5003/api/pagar'
+    try:
+        response = requests.post(url_pago, json={
+            'numero_tarjeta': tarjeta.numero_tarjeta,
+            'total_compra': total_compra
+        }, headers={'Content-Type': 'application/json'})
+
+        response.raise_for_status()
+
+        if response.status_code == 200:
+            tarjeta.saldo -= total_compra
+            db.session.commit()
+
+            nuevo_proceso_pago = ProcesoPago(tarjeta_id=tarjeta_id, monto=total_compra)
+            db.session.add(nuevo_proceso_pago)
+
+            orden_id = request.form.get('orden_id')
+            orden = Orden.query.get(orden_id)
+            if orden:
+                estado_pagado = EstadoOrden.query.filter_by(nombre='Pagado').first()
+                orden.estado_id = estado_pagado.id
+                db.session.commit()
+
+                nueva_factura = Factura(orden_id=orden_id, monto=total_compra)
+                db.session.add(nueva_factura)
+                db.session.commit()
+
+            # Descontar stock de productos
+            carrito = Carrito.query.filter_by(usuario_id=session['user_id']).first()
+            if carrito:
+                items_carrito = ItemCarrito.query.filter_by(carrito_id=carrito.id).all()
+                for item in items_carrito:
+                    producto = Producto.query.get(item.producto_id)
+                    if producto and producto.stock >= item.cantidad:
+                        producto.stock -= item.cantidad
+                    else:
+                        flash(f'No hay suficiente stock para {producto.name}.', 'error')
+                        return redirect(url_for('checkout'))
+                
+                # Vaciar el carrito: eliminar todos los ítems y el carrito mismo
+                for item in items_carrito:
+                    db.session.delete(item)  # Eliminar cada ítem del carrito
+
+                db.session.delete(carrito)  # Eliminar el carrito
+                db.session.commit()  # Hacer commit para guardar cambios
+
+            flash('Tu pedido ha sido realizado con éxito!', 'success')
+            return redirect(url_for('gracias'))  # Redirigir a la página de agradecimiento
+
+        else:
+            mensaje_error = response.json().get('mensaje', 'Error desconocido')
+            flash(mensaje_error, 'error')
+
     except requests.exceptions.RequestException as e:
-        flash('Error al procesar el pago: {}'.format(e), 'danger')
-        return redirect(url_for('ver_carrito'))
+        flash(f'Error al procesar el pago: {str(e)}', 'error')
 
-    return redirect(url_for('success_page'))  # Redirigir a una página de éxito
+    return redirect(url_for('checkout'))
+
+# @app.route('/gracias')
+# def gracias():
+#     return render_template('checkout')  # Asegúrate de tener una plantilla de agradecimiento
+
+
 
 
 
@@ -1237,6 +1357,30 @@ def update_saldo(tarjeta_id):
     db.session.commit()
 
     return jsonify({'success': True, 'message': 'Saldo actualizado correctamente'})
+
+
+
+@app.context_processor
+def inject_carrito():
+    if 'user_id' in session:
+        carrito = Carrito.query.filter_by(usuario_id=session['user_id']).first()
+        items = []
+        subtotal = 0
+        total_items = 0  # Variable para la cantidad total de productos en el carrito
+
+        if carrito:
+            items = ItemCarrito.query.filter_by(carrito_id=carrito.id).all()
+            subtotal = sum(item.producto.price * item.cantidad for item in items)
+            
+            # Calcular el número total de productos
+            total_items = sum(item.cantidad for item in items)  # Suma de las cantidades de cada item
+            
+            # Agregar la URL de la imagen al carrito
+            for item in items:
+                item.image_url = item.producto.imagenes[0].image_url if item.producto.imagenes else None
+        
+        return {'carrito': items, 'subtotal_carrito': subtotal, 'total_items_carrito': total_items}
+    return {'carrito': [], 'subtotal_carrito': 0, 'total_items_carrito': 0}
 
 
 
