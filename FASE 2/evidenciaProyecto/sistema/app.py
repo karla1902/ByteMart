@@ -1103,7 +1103,7 @@ def process_checkout():
                 db.session.commit()  # Hacer commit para guardar cambios
 
             flash('Tu pedido ha sido realizado con éxito!', 'success')
-            return redirect(url_for('gracias'))  # Redirigir a la página de agradecimiento
+            return redirect(url_for('checkout'))  # Redirigir a la página de agradecimiento
 
         else:
             mensaje_error = response.json().get('mensaje', 'Error desconocido')
