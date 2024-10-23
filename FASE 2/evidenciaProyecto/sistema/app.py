@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, jsonify, redirect, url_for, session, flash, g
+from flask import Flask, abort, render_template, request, jsonify, redirect, url_for, session, flash, g
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from flask_bcrypt import Bcrypt
@@ -673,7 +673,22 @@ def actualizar_categoria(id):
         flash('Categoría actualizada con éxito', 'success')
     return redirect(url_for('gestionar_categorias'))
 
+@app.route('/categorias', methods=['GET'])
+def mostrar_categorias():
+    categorias = Categoria.query.all()
+    return render_template('categorias.html', categorias=categorias)
 
+@app.route('/categorias/<categoria_name>', methods=['GET'])
+def categoria_producto(categoria_name):
+    # Obtener la categoría por nombre
+    categorias = Categoria.query.all()
+    categoria = Categoria.query.filter_by(name=categoria_name).first()
+    if not categoria:
+        abort(404)  # Maneja el caso donde la categoría no existe
+    
+    # Filtrar los productos por la instancia de categoría
+    productos = Producto.query.filter_by(categoria=categoria).all()
+    return render_template('resultados_busqueda.html', categoria=categoria, productos=productos,categorias=categorias)
 
 
 @app.route('/admin/productos', methods=['GET', 'POST'])

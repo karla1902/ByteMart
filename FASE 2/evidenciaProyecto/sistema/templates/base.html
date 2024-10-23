@@ -203,40 +203,41 @@
 		</header>
 		<!-- /HEADER -->
 
-		<!-- NAVIGATION -->
-		<nav id="navigation">
-			<!-- container -->
-			<div class="container">
-				<!-- responsive-nav -->
-				<div id="responsive-nav">
-					<!-- NAV -->
-					<ul class="main-nav nav navbar-nav">
-						<li class=""><a href="/">Inicio</a></li>
-						<li><a href="#">Ofertas Especiales</a></li>
-						<li class="dropdown">
-							<a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">
-								Categorías <span class="caret"></span>
-							</a>
-							<ul class="dropdown-menu">
-								{% for categoria in categorias %}
-									<li><a href="{{ url_for('buscar_por_categoria', categoria_id=categoria.id) }}">{{ categoria.name }}</a></li>
-								{% endfor %}
-							</ul>
-						</li>
-						<li><a href="{{ url_for('buscar_por_categoria', categoria_id=3) }}">Computadores</a></li>
-						<li><a href="{{ url_for('buscar_por_categoria', categoria_id=4) }}">Celulares</a></li>
-						<li><a href="{{ url_for('buscar_por_categoria', categoria_id=5) }}">Cámaras</a></li>
-						<li><a href="{{ url_for('buscar_por_categoria', categoria_id=6) }}">Accesorios</a></li>
-						<li><a href="{{ url_for('destacados') }}">Destacados</a></li>
+<!-- NAVIGATION -->
+<nav id="navigation">
+    <!-- container -->
+    <div class="container">
+        <!-- responsive-nav -->
+        <div id="responsive-nav">
+            <!-- NAV -->
+            <ul class="main-nav nav navbar-nav">
+                <li class=""><a href="/">Inicio</a></li>
+                <li><a href="#">Ofertas Especiales</a></li>
+                <li class="dropdown">
+                    <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">
+                        Categorías <span class="caret"></span>
+                    </a>
+                    <ul class="dropdown-menu">
+                        {% for categoria in categorias %}
+						<li><a href="{{ url_for('categoria_producto', categoria_name=categoria.name) }}">{{ categoria.name }}</a></li>
 
-					</ul>
-					<!-- /NAV -->
-				</div>
-				<!-- /responsive-nav -->
-			</div>
-			<!-- /container -->
-		</nav>
-		<!-- /NAVIGATION -->
+                        {% endfor %}
+                    </ul>
+                </li>
+                <li><a href="{{ url_for('buscar_por_categoria', categoria_id=3) }}">Computadores</a></li>
+                <li><a href="{{ url_for('buscar_por_categoria', categoria_id=4) }}">Celulares</a></li>
+                <li><a href="{{ url_for('buscar_por_categoria', categoria_id=5) }}">Cámaras</a></li>
+                <li><a href="{{ url_for('buscar_por_categoria', categoria_id=6) }}">Accesorios</a></li>
+                <li><a href="{{ url_for('destacados') }}">Destacados</a></li>
+            </ul>
+            <!-- /NAV -->
+        </div>
+        <!-- /responsive-nav -->
+    </div>
+    <!-- /container -->
+</nav>
+<!-- /NAVIGATION -->
+
 
     </header>
     <!-- /HEADER -->
