@@ -1,0 +1,37 @@
+{
+  "retailers": {
+    "pc_factory": {
+      "product_links": [
+        "https://www.pcfactory.cl/producto/34049-amd-cpu-ryzen-3-3200g-am4?origin=PCF",
+	"https://www.pcfactory.cl/producto/39324-amd-cpu-ryzen-5-5600x-am4?origin=PCF",
+	"https://www.pcfactory.cl/producto/39323-amd-cpu-ryzen-7-5800x-am4?origin=PCF",
+	"https://www.pcfactory.cl/producto/51492-amd-cpu-ryzen-7-5700x3d-am4?origin=PCF",
+	"https://www.pcfactory.cl/producto/46284-amd-cpu-ryzen-5-5500-am4?origin=PCF",
+	"https://www.pcfactory.cl/producto/46062-asus-m-b-amd-a520m-k-prime-am4?origin=PCF",
+	"https://www.pcfactory.cl/producto/47870-asus-m-b-amd-b550m-plus-tuf-gaming-wifi-ii-am4?origin=PCF",
+	"https://www.pcfactory.cl/producto/51648-gigabyte-placa-madre-amd-b550m-k-am4?origin=PCF",
+	"https://www.pcfactory.cl/producto/47163-asus-placa-madre-amd-x670-p-prime-am5?origin=PCF",
+	"https://www.pcfactory.cl/producto/51647-gigabyte-placa-madre-amd-b650m-k-g11-am5?origin=PCF"
+      ]
+    },
+    "Bytemart": {
+      "product_links": [
+        "http://127.0.0.1:5000/producto/1"
+      ]
+    },
+    "MyShop": {
+      "product_links": [
+        "https://www.myshop.cl/producto/cpu-sam4-amd-ryzen-3-3200g-40-ghz-4-mb-yd3200c5fhbox-p21648",
+	"https://www.myshop.cl/producto/cpu-sam4-amd-ryzen-5-5600x-100-100000065box-p18590",
+	"https://www.myshop.cl/producto/cpu-sam4-amd-ryzen-7-5800x-100-100000063wof-p12971",
+	"https://www.myshop.cl/producto/cpu-amd-socket-am4-ryzen-7-5700x3d-30-ghz-8-core-scooler-100-100001503wof-p28181",
+	"https://www.myshop.cl/producto/cpu-amd-ryzen-5-5500-100-100000457box-p12965",
+	"https://www.myshop.cl/producto/mb-sam4-amd-asus-prime-a520m-k-2x-ddr4-micro-atx-p23784",
+	"https://www.myshop.cl/producto/mb-sam4-amd-asus-tuf-gaming-b550m-plus-wifi-ii-micro-atx-amd-b550-chipset-usb-c-gen2-25-gigabit-lan-wi-fi-6-bluetooth-tarjeta-grafica-cpu-necesaria-hd-audio-p26733",
+	"https://www.myshop.cl/producto/placa-madre-amd-gigabyte-b550m-k-socket-am4-4x-ddr4-micro-atx-p19073",
+	"https://www.myshop.cl/producto/mb-sam5-amd-asus-prime-x670-p-wifi-4x-ddr5-atx-p21710",
+	"https://www.myshop.cl/producto/mb-sam5-amd-gigabyte-b650m-k-4x-ddr5-micro-atx-p28823"
+      ]
+    }
+  }
+}
