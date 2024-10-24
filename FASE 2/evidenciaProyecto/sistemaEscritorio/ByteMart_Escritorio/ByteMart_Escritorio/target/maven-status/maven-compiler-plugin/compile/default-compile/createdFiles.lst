@@ -1,12 +1,14 @@
 View\ProductosVista.class
 Dao\ProductoDao.class
 Modelo\ProductosModelo.class
+View\MenuVista.class
 Dao\UsuarioDao.class
+View\Login$1.class
 View\CategoriaVista$1.class
+View\Login.class
 Dao\Conexion.class
 com\mycompany\bytemart_escritorio\ByteMart_Escritorio.class
 Controller\CategoriaController.class
-View\Menu.class
 View\UsuarioVista$1.class
 View\ProductosVista$1.class
 View\UsuarioVista.class
@@ -15,7 +17,6 @@ View\CategoriaVista.class
 Dao\CategoriaDao.class
 Modelo\UsuarioModelo.class
 View\UsuarioVista$2.class
-View\Vista.class
 Modelo\CategoriaModelo.class
 Modelo\RolModelo.class
 View\OrdenesVista.class

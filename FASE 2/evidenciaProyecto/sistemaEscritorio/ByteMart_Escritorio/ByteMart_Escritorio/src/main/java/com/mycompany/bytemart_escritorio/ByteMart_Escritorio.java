@@ -2,7 +2,7 @@ package com.mycompany.bytemart_escritorio;
 
 import java.sql.Connection;
 import Dao.Conexion;
-import View.Vista;
+import View.LoginVista;
 import javax.swing.SwingUtilities;
 
 public class ByteMart_Escritorio {
@@ -14,7 +14,7 @@ public class ByteMart_Escritorio {
             Connection connection = Conexion.getConnection();
             if (connection != null) {
                 // Crear y mostrar la vista
-                Vista vista = new Vista();
+                LoginVista vista = new LoginVista(connection);
                 vista.setVisible(true);
             } else {
                 // Manejo de error en caso de que la conexión falle

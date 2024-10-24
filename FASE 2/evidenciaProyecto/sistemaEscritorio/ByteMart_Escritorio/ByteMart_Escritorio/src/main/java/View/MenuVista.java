@@ -4,10 +4,10 @@ import javax.swing.*;
 import java.awt.*;
 import java.sql.Connection;
 
-public class Menu extends JFrame{
+public class MenuVista extends JFrame{
     private Connection connection; // Para la conexión a la base de datos
 
-    public Menu(Connection connection) {
+    public MenuVista(Connection connection) {
         this.connection = connection; 
         setTitle("Sistema Byte Mart");
         setSize(1000, 600);
@@ -36,7 +36,7 @@ public class Menu extends JFrame{
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
             Connection connection = null; 
-            Menu menu = new Menu(connection);
+            MenuVista menu = new MenuVista(connection);
             menu.setVisible(true);
         });
     }
