@@ -25,13 +25,33 @@ public class LoginVista extends JFrame {
         setLocationRelativeTo(null);
         setLayout(new BorderLayout());
 
+        // Panel para el título y la imagen
+        JPanel topPanel = new JPanel();
+        topPanel.setLayout(new GridBagLayout());
+        topPanel.setBackground(new Color(20, 160, 140));  // Color verde azulado
+
+        // Añadir la imagen escalada al JLabel
+        JLabel logoLabel = new JLabel();
+        ImageIcon originalIcon = new ImageIcon(getClass().getResource("/logoByteMart.png"));
+        Image scaledImage = originalIcon.getImage().getScaledInstance(100, 100, Image.SCALE_SMOOTH); // Ajusta el tamaño aquí
+        logoLabel.setIcon(new ImageIcon(scaledImage));
+
+        // Configurar GridBagConstraints para el logo
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.insets = new Insets(10, 10, 10, 10); 
+        gbc.anchor = GridBagConstraints.CENTER;  
+        topPanel.add(logoLabel, gbc);
+
         // Panel para el formulario
         JPanel formPanel = new JPanel();
         formPanel.setLayout(new GridBagLayout());
-        formPanel.setBackground(new Color(230, 255, 250));  // Color de fondo personalizado
-
-        GridBagConstraints gbc = new GridBagConstraints();
+        formPanel.setBackground(new Color(230, 255, 250)); 
+        
+        gbc = new GridBagConstraints();
         gbc.insets = new Insets(10, 10, 10, 10); 
+        gbc.anchor = GridBagConstraints.CENTER; 
 
         // Etiqueta "Username"
         JLabel usernameLabel = new JLabel("Username:");
@@ -59,25 +79,15 @@ public class LoginVista extends JFrame {
         JButton loginButton = new JButton("Login");
         gbc.gridx = 1;
         gbc.gridy = 2;
+        gbc.anchor = GridBagConstraints.CENTER; 
         formPanel.add(loginButton, gbc);
         
         loginButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 validarUsuario(); 
-        }
-});
-
-        // Panel para el título y la imagen (puedes agregar un JLabel con un ícono)
-        JPanel topPanel = new JPanel();
-        topPanel.setLayout(new BorderLayout());
-        topPanel.setBackground(new Color(20, 160, 140));  // Color verde azulado
-        JLabel titleLabel = new JLabel("LOGIN", JLabel.CENTER);
-        titleLabel.setFont(new Font("Arial", Font.BOLD, 24));
-        titleLabel.setForeground(Color.WHITE);
-
-        // Añadir el título al topPanel
-        topPanel.add(titleLabel, BorderLayout.CENTER);
+            }
+        });
 
         // Añadir los paneles a la ventana principal
         add(topPanel, BorderLayout.NORTH);
@@ -85,7 +95,7 @@ public class LoginVista extends JFrame {
 
         setVisible(true);
     }
-    
+
     // Método para validar el usuario y la contraseña en la base de datos
     private void validarUsuario() {
         String username = txtUsuario.getText();
@@ -96,7 +106,11 @@ public class LoginVista extends JFrame {
             return;
         }
 
-        String query = "SELECT * FROM proyecto.usuario WHERE username = ? AND password = ?";
+        String query = "SELECT u.username, u.password " + 
+               "FROM proyecto.usuario u " +
+               "JOIN proyecto.usuario_rol ru ON u.id = ru.id " +
+               "JOIN proyecto.rol r ON ru.id = r.id " +
+               "WHERE u.username = ? AND u.password = ? AND r.nombre <> 'Cliente'";
 
         try (PreparedStatement ps = connection.prepareStatement(query)) {
             ps.setString(1, username);
@@ -115,7 +129,7 @@ public class LoginVista extends JFrame {
 
         } catch (SQLException e) {
             e.printStackTrace();
-            JOptionPane.showMessageDialog(this, "Error al conectar con la base de datos.", "Error", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Error con la conexion de base de datos.", "Error", JOptionPane.ERROR_MESSAGE);
         }
     }
 
