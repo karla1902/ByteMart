@@ -152,7 +152,7 @@ class Producto(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(155), unique=True, nullable=False)
     price = db.Column(db.Integer, nullable=False)
-    marca = db.Column(db.String(100), nullable=False)
+    marca_id = db.Column(db.Integer, db.ForeignKey('marca.id'), nullable=False)  # Cambiado a referencia de marca
     descripcion = db.Column(db.String(1000), nullable=False)
     stock = db.Column(db.Integer, nullable=False)
     category_id = db.Column(db.Integer, db.ForeignKey('categoria.id'), nullable=False)
@@ -168,6 +168,7 @@ class Producto(db.Model):
 
 
 
+
 # Modelo de Imagen
 class Imagen(db.Model):
     __table_args__ = {'extend_existing': True}
@@ -177,6 +178,18 @@ class Imagen(db.Model):
 
     def __repr__(self):
         return f'<Imagen {self.image_url}>'
+
+# Modelo de Marcas
+class Marca(db.Model):
+    __table_args__ = {'extend_existing': True}
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), unique=True, nullable=False)
+
+    productos = db.relationship('Producto', backref='marca', lazy=True)
+
+    def __repr__(self):
+        return f'<Marca {self.name}>'
+
 
 
 # Modelo de Carrito
@@ -308,7 +321,7 @@ class Factura(db.Model):
     __table_args__ = {'extend_existing': True}
     id = db.Column(db.Integer, primary_key=True)
     orden_id = db.Column(db.Integer, db.ForeignKey('orden.id'), nullable=False)
-    monto = db.Column(db.Float, nullable=False)
+    monto = db.Column(db.Integer, nullable=False)
     fecha_creacion = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
 
     orden = db.relationship('Orden', backref='factura', lazy=True)
@@ -690,11 +703,56 @@ def categoria_producto(categoria_name):
     productos = Producto.query.filter_by(categoria=categoria).all()
     return render_template('resultados_busqueda.html', categoria=categoria, productos=productos,categorias=categorias)
 
+@app.route('/admin/marcas', methods=['GET', 'POST'])
+def gestionar_marcas():
+    if request.method == 'POST':
+        if 'name' in request.form:  # Crear marca
+            nombre_marca = request.form['name']
+            nueva_marca = Marca(name=nombre_marca)
+            db.session.add(nueva_marca)
+            db.session.commit()
+            flash('Marca creada con éxito', 'success')
+            return redirect(url_for('gestionar_marcas'))
+
+        # Lógica para actualización de marca
+        elif 'id' in request.form:  # Actualizar marca
+            marca_id = request.form['id']
+            marca = Marca.query.get(marca_id)
+            marca.name = request.form['name']
+            db.session.commit()
+            flash('Marca actualizada con éxito', 'success')
+            return redirect(url_for('gestionar_marcas'))
+
+    marcas = Marca.query.all()
+    return render_template('admin_marcas.html', marcas=marcas)
+
+@app.route('/admin/marcas/<int:id>', methods=['POST'])
+def eliminar_marca(id):
+    marca = Marca.query.get(id)
+    if marca:
+        db.session.delete(marca)
+        db.session.commit()
+        flash('Marca eliminada con éxito', 'success')
+    return redirect(url_for('gestionar_marcas'))
+
+@app.route('/admin/marcas/<int:id>/update', methods=['POST'])
+def actualizar_marca(id):
+    marca = Marca.query.get(id)
+    if marca:
+        marca.name = request.form['name']
+        db.session.commit()
+        flash('Marca actualizada con éxito', 'success')
+    return redirect(url_for('gestionar_marcas'))
+
+
+
+
 
 @app.route('/admin/productos', methods=['GET', 'POST'])
 @app.route('/admin/productos/<int:id>', methods=['GET', 'POST'])
 def gestionar_productos(id=None):
     categorias = Categoria.query.all()
+    marcas = Marca.query.all()  # Obtener todas las marcas
     producto = None  # Inicializamos como None por si estamos creando un producto nuevo
     
     if id:
@@ -705,22 +763,22 @@ def gestionar_productos(id=None):
         if producto:  # Editar producto existente
             producto.name = request.form['name']
             producto.price = request.form['price']
-            producto.marca = request.form['marca']
+            producto.marca_id = request.form['marca_id']  # Almacenamos el ID de la marca
             producto.descripcion = request.form['descripcion']
             producto.stock = request.form['stock']
             producto.category_id = request.form['category_id']
             producto.en_oferta = 'en_oferta' in request.form
-            producto.destacado = 'destacado' in request.form  # Convertir 'on' a True
+            producto.destacado = 'destacado' in request.form
 
         else:  # Crear un nuevo producto
             nombre_producto = request.form['name']
             precio_producto = request.form['price']
-            marca = request.form['marca']
+            marca_id = request.form['marca_id']  # Tomamos el ID de la marca seleccionada
             descripcion = request.form['descripcion']
             stock = request.form['stock']
             categoria_id = request.form['category_id']
             en_oferta = 'en_oferta' in request.form
-            destacado = 'destacado' in request.form  # Convertir 'on' a True
+            destacado = 'destacado' in request.form
 
             # Validar precios y stock
             try:
@@ -730,10 +788,10 @@ def gestionar_productos(id=None):
                 flash('El precio o el stock no son válidos', 'danger')
                 return redirect(url_for('gestionar_productos', id=id))
 
-            producto = Producto(name=nombre_producto, price=precio_producto, marca=marca, 
+            producto = Producto(name=nombre_producto, price=precio_producto, marca_id=marca_id, 
                                 stock=stock, descripcion=descripcion, 
                                 category_id=categoria_id, en_oferta=en_oferta, 
-                                destacado=destacado)  # Agrega el nuevo campo al crear el producto
+                                destacado=destacado)
             db.session.add(producto)
             db.session.commit()  # Guardar el producto primero para obtener el ID
 
@@ -753,7 +811,8 @@ def gestionar_productos(id=None):
         return redirect(url_for('gestionar_productos'))
 
     productos = Producto.query.all()
-    return render_template('admin_productos.html', productos=productos, categorias=categorias, producto=producto)
+    return render_template('admin_productos.html', productos=productos, categorias=categorias, marcas=marcas, producto=producto)
+
 
 
 

@@ -35,51 +35,58 @@
             </ul>
         {% endif %}
         {% endwith %}
-            <form method="POST" enctype="multipart/form-data">
-                <div class="form-group">
-                    <label for="name">Nombre del producto</label>
-                    <input type="text" class="form-control" id="name" name="name" value="{{ producto.name if producto else '' }}" required>
-                </div>
-                <div class="form-group">
-                    <label for="price">Precio</label>
-                    <input type="text" class="form-control" id="price" name="price" value="{{ producto.price if producto else '' }}" required oninput="formatPrice(this)">
-                </div>
-                <div class="form-group">
-                    <label for="marca">Marca</label>
-                    <input type="text" class="form-control" id="marca" name="marca" value="{{ producto.marca if producto else '' }}" required>
-                </div>
-                <div class="form-group">
-                    <label for="stock">Stock</label>
-                    <input type="text" class="form-control" id="stock" name="stock" value="{{ producto.stock if producto else '' }}" required>
-                </div>
-                <div class="form-group">
-                    <label for="descripcion">Descripción del producto</label>
-                    <textarea class="form-control" id="descripcion" name="descripcion" rows="3" required>{{ producto.descripcion if producto else '' }}</textarea>
-                </div>
-                <div class="form-group">
-                    <label for="category_id">Categoría</label>
-                    <select class="form-control" id="category_id" name="category_id" required>
-                        {% for categoria in categorias %}
-                            <option value="{{ categoria.id }}" {% if producto and producto.category_id == categoria.id %}selected{% endif %}>{{ categoria.name }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label for="images">Añadir imágenes</label>
-                    <input type="file" class="form-control" id="images" name="images" accept="image/*" multiple>
-                </div>
-                <div class="form-group">
-                    <label for="en_oferta">¿Está en oferta?</label>
-                    <input type="checkbox" id="en_oferta" name="en_oferta" {% if producto and producto.en_oferta %}checked{% endif %}>
-                </div>
-                <div class="form-group">
-                    <label for="destacado">¿Está destacado?</label>
-                    <input type="checkbox" id="destacado" name="destacado" {% if producto and producto.destacado %}checked{% endif %}>
-                </div>                
-                <div class="text-right">
-                    <button type="submit" class="btn-custom">{{ 'Actualizar Producto' if producto else 'Guardar Producto' }}</button>
-                </div>
-            </form>
+        <form method="POST" enctype="multipart/form-data">
+            <div class="form-group">
+                <label for="name">Nombre del producto</label>
+                <input type="text" class="form-control" id="name" name="name" value="{{ producto.name if producto else '' }}" required>
+            </div>
+            <div class="form-group">
+                <label for="price">Precio</label>
+                <input type="text" class="form-control" id="price" name="price" value="{{ producto.price if producto else '' }}" required oninput="formatPrice(this)">
+            </div>
+            <div class="form-group">
+                <label for="marca_id">Marca</label>
+                <select class="form-control" id="marca_id" name="marca_id" required>
+                    <option value="0">Seleccione una marca</option>
+                    {% for marca in marcas %}
+                        <option value="{{ marca.id }}" {% if producto and producto.marca_id == marca.id %}selected{% endif %}>{{ marca.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="stock">Stock</label>
+                <input type="text" class="form-control" id="stock" name="stock" value="{{ producto.stock if producto else '' }}" required>
+            </div>
+            <div class="form-group">
+                <label for="descripcion">Descripción del producto</label>
+                <textarea class="form-control" id="descripcion" name="descripcion" rows="3" required>{{ producto.descripcion if producto else '' }}</textarea>
+            </div>
+            <div class="form-group">
+                <label for="category_id">Categoría</label>
+                <select class="form-control" id="category_id" name="category_id" required>
+                    <option value="0">Seleccione una categoría</option>
+                    {% for categoria in categorias %}
+                        <option value="{{ categoria.id }}" {% if producto and producto.category_id == categoria.id %}selected{% endif %}>{{ categoria.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="images">Añadir imágenes</label>
+                <input type="file" class="form-control" id="images" name="images" accept="image/*" multiple>
+            </div>
+            <div class="form-group">
+                <label for="en_oferta">¿Está en oferta?</label>
+                <input type="checkbox" id="en_oferta" name="en_oferta" {% if producto and producto.en_oferta %}checked{% endif %}>
+            </div>
+            <div class="form-group">
+                <label for="destacado">¿Está destacado?</label>
+                <input type="checkbox" id="destacado" name="destacado" {% if producto and producto.destacado %}checked{% endif %}>
+            </div>                
+            <div class="text-right">
+                <button type="submit" class="btn-custom">{{ 'Actualizar Producto' if producto else 'Guardar Producto' }}</button>
+            </div>
+        </form>
+        
             
             
             
