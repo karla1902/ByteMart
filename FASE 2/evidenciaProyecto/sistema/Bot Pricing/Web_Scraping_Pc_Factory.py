@@ -126,6 +126,11 @@ for link in pc_factory_data:
         valores = (nombre, categoria, marca, stock, precio, tienda)
         cursor.execute(query, valores)
 
+        query_alt = """
+        INSERT INTO pc_factory_data (nombre, categoria, marca, stock, precio, tienda)
+        VALUES (%s, %s, %s, %s, %s, %s)
+        """
+        cursor.execute(query_alt, valores)
         # Confirmar la inserción en la base de datos
         connection.commit()
 

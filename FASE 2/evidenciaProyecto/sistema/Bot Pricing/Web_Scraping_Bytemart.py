@@ -140,6 +140,11 @@ for link in Bytemart_data:
         valores = (nombre, categoria, marca, stock, precio, tienda)
         cursor.execute(query, valores)
 
+        query_alt = """
+        INSERT INTO Bytemart_data (nombre, categoria, marca, stock, precio, tienda)
+        VALUES (%s, %s, %s, %s, %s, %s)
+        """
+        cursor.execute(query_alt, valores)
         # Confirmar la inserción en la base de datos
         connection.commit()
 

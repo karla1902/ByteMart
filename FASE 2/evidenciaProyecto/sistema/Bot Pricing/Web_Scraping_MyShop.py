@@ -6,6 +6,8 @@ from selenium.webdriver.support import expected_conditions as EC
 import json
 import mysql.connector
 import re
+from selenium.common.exceptions import NoSuchElementException
+from selenium.common.exceptions import TimeoutException
 
 # ---------------Configuración del WebDriver-------------------
 service = Service()
@@ -150,9 +152,29 @@ for link in myShop_data:
         valores = (nombre, categoria, marca, stock, precio, tienda)
         cursor.execute(query, valores)
 
+        query_alt = """
+        INSERT INTO MyShop_data (nombre, categoria, marca, stock, precio, tienda)
+        VALUES (%s, %s, %s, %s, %s, %s)
+        """
+        cursor.execute(query_alt, valores)
         # Confirmar la inserción en la base de datos
         connection.commit()
 
+    except TimeoutException as e:
+        print("No hay existencias del producto solicitado")
+        query = """
+        INSERT INTO MyShop_data (nombre, categoria, marca, stock, precio, tienda)
+        VALUES ("Sin stock", "Sin stock", "Sin stock", 0, 0, "MyShop")
+        """
+        cursor.execute(query)
+        connection.commit()
+
+        query = """
+        INSERT INTO tienda_data (nombre, categoria, marca, stock, precio, tienda)
+        VALUES ("Sin stock", "Sin stock", "Sin stock", 0, 0, "MyShop")
+        """
+        cursor.execute(query)
+        connection.commit()
     except Exception as e:
         print(f"Error al extraer datos de {link}: {e}")
 
