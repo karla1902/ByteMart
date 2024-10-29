@@ -1,9 +1,11 @@
 View\ProductosVista.class
 Dao\ProductoDao.class
 Modelo\ProductosModelo.class
+View\login2$1.class
 View\MenuVista.class
 Dao\UsuarioDao.class
 View\CategoriaVista$1.class
+View\login2.class
 Dao\Conexion.class
 com\mycompany\bytemart_escritorio\ByteMart_Escritorio.class
 Controller\CategoriaController.class

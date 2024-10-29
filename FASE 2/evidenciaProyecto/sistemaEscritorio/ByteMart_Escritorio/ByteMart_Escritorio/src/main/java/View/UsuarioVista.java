@@ -103,7 +103,6 @@ public class UsuarioVista extends JPanel {
         btnModificar.addActionListener(e -> modificarUsuario());
         btnEliminar.addActionListener(e -> eliminarUsuario());
 
-        // Listener para cargar los datos del usuario seleccionado
         tableUsuarios.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
             @Override
             public void valueChanged(ListSelectionEvent e) {
@@ -115,7 +114,7 @@ public class UsuarioVista extends JPanel {
     }
 
     private void limpiarCampos() {
-        // Limpiar los campos de entrada
+        
         txtNombreUsuario.setText("");
         txtPasswordUsuario.setText("");
         txtNombre.setText("");
@@ -125,28 +124,28 @@ public class UsuarioVista extends JPanel {
         comboRoles.setSelectedIndex(0);
     }
 
-    // Método que se ejecuta al crear un usuario
     private void guardarUsuario() {
-        // Captura de datos del usuario desde los campos de entrada
-        String nombreUsuario = txtNombreUsuario.getText().trim(); // Asumiendo que tienes un JTextField para el nombre de usuario
-        String passwordUsuario = txtPasswordUsuario.getText().trim(); // JTextField para la contraseña
-        String nombre = txtNombre.getText().trim(); // JTextField para el nombre
-        String apellido = txtApellido.getText().trim(); // JTextField para el apellido
-        String email = txtEmail.getText().trim(); // JTextField para el email
-        String direccion = txtDireccion.getText().trim(); // JTextField para la dirección
+        String username = txtNombreUsuario.getText().trim(); 
+        String password = txtPasswordUsuario.getText().trim(); 
+        String nombre = txtNombre.getText().trim();
+        String apellido = txtApellido.getText().trim();
+        String email = txtEmail.getText().trim(); 
+        String direccion = txtDireccion.getText().trim();
 
         // Crear el usuario
-        UsuarioModelo nuevoUsuario = new UsuarioModelo(0, nombreUsuario, passwordUsuario, nombre, apellido, email, direccion, null, null, false);
-        int usuarioId = nuevoUsuario.getId();
+        //no captura correctamente el id 
+        int usuarioId = usuarioController.crearUsuario(username, password, nombre, apellido, email, direccion);
+
 
         if (usuarioId != -1) {
+            int idUsuario = (int) modelUsuarios.getValueAt(0, 0);
             // Obtener el rol seleccionado del JComboBox
-            RolModelo rolSeleccionado = (RolModelo) comboRoles.getSelectedItem(); // Cast al tipo RolModelo
+            RolModelo rolSeleccionado = (RolModelo) comboRoles.getSelectedItem();
             if (rolSeleccionado != null) {
-                int rolId = rolSeleccionado.getId(); // Obtiene el ID del rol seleccionado
+                int rolId = rolSeleccionado.getId();
 
-                // Llamada al controlador para agregar el rol al usuario
-                usuarioController.agregarUsuarioRol(usuarioId, rolId);
+                // Llamada al controlador para agregar el id rol y id usuario
+                usuarioController.agregarUsuarioRol(idUsuario, rolId);
                 JOptionPane.showMessageDialog(this, "Usuario creado y rol asignado con éxito. ID de usuario: " + usuarioId);
             } else {
                 JOptionPane.showMessageDialog(this, "Error: No se ha seleccionado un rol.");
@@ -166,8 +165,9 @@ public class UsuarioVista extends JPanel {
             modelUsuarios.setValueAt(txtApellido.getText().trim(), selectedRow, 3);
             modelUsuarios.setValueAt(txtEmail.getText().trim(), selectedRow, 4);
             modelUsuarios.setValueAt(txtDireccion.getText().trim(), selectedRow, 5);
+            
             RolModelo rolSeleccionado = (RolModelo) comboRoles.getSelectedItem();
-            modelUsuarios.setValueAt(rolSeleccionado.getNombre(), selectedRow, 6); // Actualiza el rol
+            modelUsuarios.setValueAt(rolSeleccionado.getNombre(), selectedRow, 6); 
         } else {
             JOptionPane.showMessageDialog(this, "Seleccione un usuario para modificar.", "Error", JOptionPane.ERROR_MESSAGE);
         }
@@ -176,7 +176,24 @@ public class UsuarioVista extends JPanel {
     private void eliminarUsuario() {
         int selectedRow = tableUsuarios.getSelectedRow();
         if (selectedRow != -1) {
-            modelUsuarios.removeRow(selectedRow); // Eliminar el usuario seleccionado
+            int idUsuario = (int) modelUsuarios.getValueAt(selectedRow, 0);
+            int confirm = JOptionPane.showConfirmDialog(this, "¿Está seguro de eliminar el usuario?", "Confirmar eliminación", JOptionPane.YES_NO_OPTION);
+            if (confirm == JOptionPane.YES_OPTION) {
+                    boolean eliminado = usuarioController.eliminarUsuario(idUsuario);
+
+                    if (eliminado) {
+                        modelUsuarios.removeRow(selectedRow);
+                        JOptionPane.showMessageDialog(this, "Categoría eliminado correctamente.", "Eliminación exitosa", JOptionPane.INFORMATION_MESSAGE);
+                        txtNombreUsuario.setText("");
+                        txtPasswordUsuario.setText("");
+                        txtNombre.setText("");
+                        txtApellido.setText("");
+                        txtEmail.setText("");
+                        txtDireccion.setText("");
+                    } else {
+                        JOptionPane.showMessageDialog(this, "Error: No se pudo eliminar el categoría de la base de datos.", "Error", JOptionPane.ERROR_MESSAGE);
+                    }
+                }
         } else {
             JOptionPane.showMessageDialog(this, "Seleccione un usuario para eliminar.", "Error", JOptionPane.ERROR_MESSAGE);
         }
@@ -203,7 +220,7 @@ public class UsuarioVista extends JPanel {
 
     private void cargarDatosTabla(Connection connection) {
         try {
-            modelUsuarios.setRowCount(0); // Asegúrate de que modelUsuarios está definido y asociado con la tabla
+            modelUsuarios.setRowCount(0); 
 
             String query = "SELECT u.id, u.username, u.password ,u.nombre, u.apellido, u.email, u.direccion, r.nombre AS rol " +
                        "FROM proyecto.usuario u " +

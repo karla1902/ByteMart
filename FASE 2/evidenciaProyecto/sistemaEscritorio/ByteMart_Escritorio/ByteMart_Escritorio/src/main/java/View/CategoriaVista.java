@@ -77,11 +77,10 @@ public class CategoriaVista extends JPanel{
             String nombreCategoria = txtNombreCategoria.getText().trim();
 
             if (!nombreCategoria.isEmpty()) {
-                // Crear una instancia de CategoriaModelo solo con el nombre (puedes usar 0 o null para el ID, ya que es autogenerado)
-                CategoriaModelo categoriaModelo = new CategoriaModelo(0, nombreCategoria, null); // El ID será autogenerado, y la fecha no se pasa
+                CategoriaModelo categoriaModelo = new CategoriaModelo(0, nombreCategoria, null); 
 
                 if (categoriaController.crearCategoria(categoriaModelo)) {
-                    cargarDatosTabla(connection); // Actualizar la tabla
+                    cargarDatosTabla(connection); 
                     JOptionPane.showMessageDialog(this, "Categoría agregada con éxito.");
                 } else {
                     JOptionPane.showMessageDialog(this, "Error al agregar categoría.", "Error", JOptionPane.ERROR_MESSAGE);
@@ -91,14 +90,11 @@ public class CategoriaVista extends JPanel{
             }
         });
 
-        // Botón Modificar para seleccionar una categoría de la tabla
         btnModificar.addActionListener(e -> {
             int selectedRow = tableCategorias.getSelectedRow();
             if (selectedRow != -1) {
-                // Obtener el nombre de la categoría desde la tabla (columna 1, que corresponde a 'Nombre')
                 txtNombreCategoria.setText((String) modelCategorias.getValueAt(selectedRow, 1));
 
-                // Mostrar el botón para guardar cambios
                 btnGuardarCambios.setVisible(true); 
             } else {
                 JOptionPane.showMessageDialog(this, "Selecciona una categoría para modificar.", "Advertencia", JOptionPane.WARNING_MESSAGE);
@@ -110,15 +106,12 @@ public class CategoriaVista extends JPanel{
         btnGuardarCambios.addActionListener(e -> {
             int selectedRow = tableCategorias.getSelectedRow(); // Obtener la fila seleccionada
             if (selectedRow != -1) {
-                // Obtener el ID de la categoría seleccionada (columna 0) y el nombre actualizado
                 int idCategoria = (int) modelCategorias.getValueAt(selectedRow, 0);
                 String nuevoNombre = txtNombreCategoria.getText().trim();
 
                 if (!nuevoNombre.isEmpty()) {
-                    // Actualizar la categoría mediante el controlador
                     categoriaController.actualizarCategoria(idCategoria, nuevoNombre);
 
-                    // Actualizar la tabla y ocultar el botón de guardar cambios
                     cargarDatosTabla(connection);
                     JOptionPane.showMessageDialog(this, "Categoría modificada con éxito.");
                     btnGuardarCambios.setVisible(false);
@@ -166,7 +159,6 @@ public class CategoriaVista extends JPanel{
             while (resultSet.next()) {
                 int id = resultSet.getInt("id");
                 String name = resultSet.getString("name");
-                // Agregar más columnas según sea necesario
                 modelCategorias.addRow(new Object[]{id, name}); // Añade la fila al modelo
             }
         } catch (SQLException e) {

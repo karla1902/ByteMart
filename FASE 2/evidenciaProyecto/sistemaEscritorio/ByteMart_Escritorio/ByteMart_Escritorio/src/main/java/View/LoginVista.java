@@ -32,7 +32,7 @@ public class LoginVista extends JFrame {
 
         // Añadir la imagen escalada al JLabel
         JLabel logoLabel = new JLabel();
-        ImageIcon originalIcon = new ImageIcon(getClass().getResource("/logoByteMart.png"));
+        ImageIcon originalIcon = new ImageIcon(getClass().getResource("/shopping-basket.png"));
         Image scaledImage = originalIcon.getImage().getScaledInstance(100, 100, Image.SCALE_SMOOTH); // Ajusta el tamaño aquí
         logoLabel.setIcon(new ImageIcon(scaledImage));
 
