@@ -12,7 +12,7 @@ public class UsuarioModelo {
     private String direccion; 
     private String resetCode; 
     private Date resetCodeExpiration; 
-//    private boolean isAdmin; // Indica si el usuario es administrador
+    private boolean isAdmin; // Indica si el usuario es administrador
 
     // Constructor
     public UsuarioModelo(int id, String username, String contrasena, String nombre, String apellido, 
@@ -27,7 +27,7 @@ public class UsuarioModelo {
         this.direccion = direccion;
         this.resetCode = resetCode;
         this.resetCodeExpiration = resetCodeExpiration;
-//        this.isAdmin = isAdmin;
+        this.isAdmin = isAdmin;
     }
 
     // Getters y Setters
@@ -58,6 +58,6 @@ public class UsuarioModelo {
     public Date getResetCodeExpiration() { return resetCodeExpiration; }
     public void setResetCodeExpiration(Date resetCodeExpiration) { this.resetCodeExpiration = resetCodeExpiration; }
 
-//    public boolean isAdmin() { return isAdmin; }
-//    public void setAdmin(boolean isAdmin) { this.isAdmin = isAdmin; }
+    public boolean isAdmin() { return isAdmin; }
+    public void setAdmin(boolean isAdmin) { this.isAdmin = isAdmin; }
 }

@@ -18,7 +18,7 @@ public class ProductoDao {
             statement.setString(1, producto.getName());             
             statement.setInt(2, producto.getPrice());              
             statement.setInt(3, producto.getCategoryId());         
-            statement.setString(4, producto.getMarca());            
+            statement.setInt(4, producto.getMarcaId());            
             statement.setString(5, producto.getDescripcion());    
             statement.setInt(6, producto.getStock());              
             statement.setBoolean(7, producto.getEnOferta());       
@@ -40,7 +40,7 @@ public class ProductoDao {
                     resultSet.getInt("id"),
                     resultSet.getString("name"),
                     resultSet.getInt("price"),
-                    resultSet.getString("marca"),
+                    resultSet.getInt("marcaId"),
                     resultSet.getString("descripcion"),
                     resultSet.getInt("stock"),
                     resultSet.getInt("category_id"),
@@ -67,7 +67,7 @@ public class ProductoDao {
                     resultSet.getInt("id"),
                     resultSet.getString("name"),
                     resultSet.getInt("price"),
-                    resultSet.getString("marca"),
+                    resultSet.getInt("marcaId"),
                     resultSet.getString("descripcion"),
                     resultSet.getInt("stock"),
                     resultSet.getInt("category_id"), 
@@ -87,7 +87,7 @@ public class ProductoDao {
             statement.setString(1, producto.getName());
             statement.setInt(2, producto.getPrice());
             statement.setInt(3, producto.getCategoryId());
-            statement.setString(4, producto.getMarca());
+            statement.setInt(4, producto.getMarcaId());
             statement.setString(5, producto.getDescripcion());
             statement.setInt(6, producto.getStock());
             statement.setBoolean(7, producto.getEnOferta());

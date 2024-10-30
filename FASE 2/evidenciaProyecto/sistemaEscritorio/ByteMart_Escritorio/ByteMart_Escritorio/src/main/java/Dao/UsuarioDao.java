@@ -14,9 +14,9 @@ public class UsuarioDao {
     }
 
     // Método para crear un nuevo usuario
-    public boolean crearUsuario(UsuarioModelo usuario) {
+    public Integer crearUsuario(UsuarioModelo usuario) {
         String query = "INSERT INTO proyecto.usuario (username, password, nombre, apellido, email, direccion, reset_code, reset_code_expiration, is_admin) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
-        try (PreparedStatement pstmt = connection.prepareStatement(query)) {
+        try (PreparedStatement pstmt = connection.prepareStatement(query, Statement.RETURN_GENERATED_KEYS)) {
             pstmt.setString(1, usuario.getUsername());
             pstmt.setString(2, usuario.getContrasena());
             pstmt.setString(3, usuario.getNombre());
@@ -25,17 +25,23 @@ public class UsuarioDao {
             pstmt.setString(6, usuario.getDireccion());
             pstmt.setString(7, usuario.getResetCode());
             pstmt.setTimestamp(8, usuario.getResetCodeExpiration() != null ? new Timestamp(usuario.getResetCodeExpiration().getTime()) : null);
-            //pstmt.setBoolean(9, usuario.isAdmin());
+            pstmt.setBoolean(9, usuario.isAdmin());
 
             int filasAfectadas = pstmt.executeUpdate();
-            return filasAfectadas > 0;
-            
-          
+            if (filasAfectadas > 0) {
+                try (ResultSet generatedKeys = pstmt.getGeneratedKeys()) {
+                    if (generatedKeys.next()) {
+                        return generatedKeys.getInt(1); // Devuelve el ID generado
+                    }
+                }
+            }
+            return null; // Devuelve null si no se creó el usuario
         } catch (SQLException e) {
             System.err.println("Error al crear usuario: " + e.getMessage());
-            return false;
-        }
+            return null; // Devuelve null en caso de error
+        }  
     }
+
     
     public void agregarUsuarioRol(int usuarioId, int rolId) {
         String sql = "INSERT INTO `proyecto`.`usuario_rol` (`usuario_id`, `rol_id`) VALUES (?, ?)";
@@ -70,8 +76,8 @@ public class UsuarioDao {
                         rs.getString("email"),
                         rs.getString("direccion"),
                         rs.getString("reset_code"),
-                        rs.getTimestamp("reset_code_expiration"),  // Esto está bien, Timestamp puede ser utilizado aquí
-                        rs.getBoolean("is_admin") // Elimina la coma extra
+                        rs.getTimestamp("reset_code_expiration"),  
+                        rs.getBoolean("is_admin")
                     );
                     return usuario;
                 }
@@ -98,8 +104,8 @@ public class UsuarioDao {
                     rs.getString("email"),
                     rs.getString("direccion"),
                     rs.getString("reset_code"),
-                    rs.getTimestamp("reset_code_expiration"),  // Esto está bien, Timestamp puede ser utilizado aquí
-                    rs.getBoolean("is_admin") // Elimina la coma extra
+                    rs.getTimestamp("reset_code_expiration"), 
+                    rs.getBoolean("is_admin") 
                 );
                 usuarios.add(usuario);
             }
@@ -122,7 +128,7 @@ public class UsuarioDao {
             pstmt.setString(6, usuario.getDireccion());
             pstmt.setString(7, usuario.getResetCode());
             pstmt.setTimestamp(8, usuario.getResetCodeExpiration() != null ? new Timestamp(usuario.getResetCodeExpiration().getTime()) : null);
-            //pstmt.setBoolean(9, usuario.isAdmin());
+            pstmt.setBoolean(9, usuario.isAdmin());
             pstmt.setInt(10, usuario.getId());
 
             int filasAfectadas = pstmt.executeUpdate();

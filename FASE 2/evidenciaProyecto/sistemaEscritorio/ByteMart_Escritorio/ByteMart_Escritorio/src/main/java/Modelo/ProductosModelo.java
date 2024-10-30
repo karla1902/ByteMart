@@ -5,7 +5,7 @@ public class ProductosModelo {
     private int id;
     private String name;
     private int price;
-    private String marca;
+    private int marcaId;
     private String descripcion;
     private int stock;
     private int categoryId;
@@ -14,11 +14,11 @@ public class ProductosModelo {
     private String fechaCreacion;
 
     // Constructor
-    public ProductosModelo(int id, String name, int price, String marca, String descripcion, int stock, int categoryId, boolean enOferta, boolean destacado, String fechaCreacion) {
+    public ProductosModelo(int id, String name, int price, int marcaId, String descripcion, int stock, int categoryId, boolean enOferta, boolean destacado, String fechaCreacion) {
         this.id = id;
         this.name = name;
         this.price = price;
-        this.marca = marca;
+        this.marcaId = marcaId;
         this.descripcion = descripcion;
         this.stock = stock;
         this.categoryId = categoryId;
@@ -52,12 +52,12 @@ public class ProductosModelo {
         this.price = price;
     }
 
-    public String getMarca() {
-        return marca;
+    public int getMarcaId() {
+        return marcaId;
     }
 
-    public void setMarca(String marca) {
-        this.marca = marca;
+    public void setMarcaId(int marcaId) {
+        this.marcaId = marcaId;
     }
 
     public String getDescripcion() {

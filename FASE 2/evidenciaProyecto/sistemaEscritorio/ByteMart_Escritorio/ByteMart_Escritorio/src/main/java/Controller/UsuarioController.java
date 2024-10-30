@@ -12,17 +12,19 @@ public class UsuarioController {
     public UsuarioController(Connection connection) {
         usuarioDAO = new UsuarioDao(connection);
     }
+    
     // Crear un nuevo usuario
-    public boolean crearUsuario(String username, String contrasena, String nombre, String apellido, 
+    public Integer crearUsuario(String username, String contrasena, String nombre, String apellido, 
                                 String email, String direccion, String resetCode, 
                                 Date resetCodeExpiration, boolean isAdmin) {
+        // Crear un nuevo objeto UsuarioModelo
         UsuarioModelo nuevoUsuario = new UsuarioModelo(0, username, contrasena, nombre, apellido, 
                                                         email, direccion, resetCode, 
                                                         resetCodeExpiration, isAdmin);
+
         return usuarioDAO.crearUsuario(nuevoUsuario);
-        
-        
     }
+
 
     // Leer un usuario
     public UsuarioModelo leerUsuario(int id) {

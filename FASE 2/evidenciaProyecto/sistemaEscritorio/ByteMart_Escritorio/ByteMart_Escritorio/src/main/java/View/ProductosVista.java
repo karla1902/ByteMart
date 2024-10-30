@@ -4,6 +4,7 @@ import Controller.ProductosController;
 import Controller.CategoriaController;
 import Modelo.ProductosModelo;
 import Modelo.CategoriaModelo;
+import Modelo.MarcaModelo;
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
@@ -56,8 +57,8 @@ public class ProductosVista extends JPanel {
         inputPanel.add(txtPrecio);
 
         inputPanel.add(new JLabel("Marca:"));
-        JTextField txtMarca = new JTextField();
-        inputPanel.add(txtMarca);
+        JComboBox<MarcaModelo> cmbMarca = new JComboBox<>();
+        inputPanel.add(cmbMarca);
 
         inputPanel.add(new JLabel("Destacado:"));
         JComboBox<String> cmbDestacado = new JComboBox<>(new String[]{"No", "Sí"});
@@ -121,7 +122,7 @@ public class ProductosVista extends JPanel {
         btnGrabar.addActionListener(e -> {
             String nombre = txtNombreProducto.getText().trim();
             String descripcion = txtDescripcion.getText().trim();
-            String marca = txtMarca.getText().trim();
+            String marca = cmbMarca.getSelectedItem().toString();
             int precio = Integer.parseInt(txtPrecio.getText().trim());
             int stock = Integer.parseInt(txtStockMaximo.getText().trim());
             boolean enOferta = cmbOferta.getSelectedItem().equals("Sí");
@@ -130,7 +131,10 @@ public class ProductosVista extends JPanel {
             CategoriaModelo categoriaSeleccionada = (CategoriaModelo) cmbCategoria.getSelectedItem();
             int idCategoria = categoriaSeleccionada != null ? categoriaSeleccionada.getId() : -1;
             
-            if (!nombre.isEmpty() && idCategoria != -1) {
+            MarcaModelo marcaSeleccionada = (MarcaModelo) cmbMarca.getSelectedItem();
+            int idMarca = marcaSeleccionada != null ? marcaSeleccionada.getId() : -1;
+            
+            if (!nombre.isEmpty() && idCategoria != -1 && idMarca != -1) {
                 
                 if (productosController.crearProducto(productosModelo)) {
                     cargarDatosTabla(connection);
@@ -155,16 +159,21 @@ public class ProductosVista extends JPanel {
                 cmbOferta.setSelectedItem(model.getValueAt(selectedRow, 4));
                 txtPrecio.setText(model.getValueAt(selectedRow, 5).toString());
                 txtStockMaximo.setText(model.getValueAt(selectedRow, 6).toString());
-                cmbCategoria.setSelectedItem(model.getValueAt(selectedRow, 7));
-                txtMarca.setText((String) model.getValueAt(selectedRow, 3));
-                
-                String categoriaNombre = (String) model.getValueAt(selectedRow, 7);
+                cmbCategoria.setSelectedItem((String) model.getValueAt(selectedRow, 7));
+                cmbMarca.setSelectedItem((String) model.getValueAt(selectedRow, 3));
                 
                 // Iterar sobre el ComboBox de categorías para seleccionar la correcta
                 for (int i = 0; i < cmbCategoria.getItemCount(); i++) {
                     CategoriaModelo categoria = (CategoriaModelo) cmbCategoria.getItemAt(i);
-                    if (categoria.getName().equals(categoriaNombre)) {
+                    if (categoria.getName().equals(cmbCategoria)) {
                         cmbCategoria.setSelectedItem(categoria);
+                        break;
+                    }
+                }
+                for (int i = 0; i < cmbMarca.getItemCount(); i++) {
+                    MarcaModelo marca = (MarcaModelo) cmbMarca.getItemAt(i);
+                    if (marca.getName().equals(cmbCategoria)) {
+                        cmbMarca.setSelectedItem(marca);
                         break;
                     }
                 }
@@ -180,7 +189,10 @@ public class ProductosVista extends JPanel {
             if (obtenerProductoporId != -1) {  
                 String nombre = txtNombreProducto.getText().trim();
                 String descripcion = txtDescripcion.getText().trim();
-                String marca = txtMarca.getText().trim();
+                
+                MarcaModelo marcaSeleccionada = (MarcaModelo) cmbMarca.getSelectedItem();
+                int idMarca= marcaSeleccionada.getId();
+                
                 int precio = Integer.parseInt(txtPrecio.getText().trim());
                 int stock = Integer.parseInt(txtStockMaximo.getText().trim());
 
@@ -191,7 +203,7 @@ public class ProductosVista extends JPanel {
                 int idCategoria = categoriaSeleccionada.getId();
 
                 System.out.println("ID del producto seleccionado: " + obtenerProductoporId);
-                    productosController.actualizarProducto(obtenerProductoporId, nombre, precio, idCategoria, marca, descripcion, stock, enOferta, enOferta);
+                    productosController.actualizarProducto(obtenerProductoporId, nombre, precio, idCategoria, idMarca, descripcion, stock, enOferta, enOferta);
                     cargarDatosTabla(connection);
                     JOptionPane.showMessageDialog(this, "Producto modificado con éxito.");
                     btnGuardarCambios.setVisible(false);
@@ -239,9 +251,10 @@ public class ProductosVista extends JPanel {
         try {
             modelProductos.setRowCount(0);
 
-            String query = "SELECT p.id, p.name, p.descripcion, p.marca, p.stock, p.price, p.en_oferta, c.name AS categoria " +
+            String query = "SELECT p.id, p.name, p.descripcion, m.name AS marca, p.stock, p.price, p.en_oferta, c.name AS categoria " +
                            "FROM proyecto.producto p " +
-                           "JOIN proyecto.categoria c ON p.category_id = c.id"; 
+                           "JOIN proyecto.categoria c ON p.category_id = c.id "+ 
+                           "JOIN proyecto.marca m ON p.marca_id = m.id"; 
             PreparedStatement stmt = connection.prepareStatement(query);
             ResultSet rs = stmt.executeQuery();
 
@@ -288,5 +301,28 @@ public class ProductosVista extends JPanel {
             JOptionPane.showMessageDialog(this, "Error al cargar las categorías de la base de datos: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
         }
     }
+    
+    private void cargarCbmMarca(Connection connection, JComboBox<MarcaModelo> cmbMarca) {
+    try {
+        String query = "SELECT * FROM proyecto.marca"; 
+        try (PreparedStatement stmt = connection.prepareStatement(query)) {
+            ResultSet rs = stmt.executeQuery();
+            
+            while (rs.next()) {
+                int id = rs.getInt("id");
+                String name = rs.getString("name");
+                Date fecha_creacion = rs.getDate("fecha_creacion");
+                MarcaModelo marca = new MarcaModelo(id, name);
+                cmbMarca.addItem(marca); 
+            }
+            
+            rs.close();
+        }
+    } catch (SQLException e) {
+        e.printStackTrace();
+        JOptionPane.showMessageDialog(this, "Error al cargar las marcas de la base de datos: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+    }
+}
+
 }
 

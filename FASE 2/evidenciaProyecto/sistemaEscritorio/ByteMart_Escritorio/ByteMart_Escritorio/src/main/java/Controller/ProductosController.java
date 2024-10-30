@@ -44,8 +44,8 @@ public class ProductosController {
     }
 
     // Actualizar un producto
-    public boolean actualizarProducto(int id, String name, int price, int categoryId, String marca, String descripcion, int stock, boolean en_oferta, boolean destacado) {
-       ProductosModelo productoActualizado = new ProductosModelo(id, name, price, marca, descripcion, stock, categoryId, en_oferta, destacado, descripcion);
+    public boolean actualizarProducto(int id, String name, int price, int categoryId, int marcaId, String descripcion, int stock, boolean en_oferta, boolean destacado) {
+       ProductosModelo productoActualizado = new ProductosModelo(id, name, price, marcaId, descripcion, stock, categoryId, en_oferta, destacado, descripcion);
     
         try {
             productoDAO.actualizarProducto(productoActualizado);
