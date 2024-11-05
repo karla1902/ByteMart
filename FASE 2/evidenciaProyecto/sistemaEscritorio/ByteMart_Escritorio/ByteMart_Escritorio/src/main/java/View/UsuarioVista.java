@@ -146,10 +146,16 @@ public class UsuarioVista extends JPanel {
             String email = txtEmail.getText().trim();
             String direccion = txtDireccion.getText().trim();
 
-            boolean actualizado = usuarioController.actualizarUsuario(idUsuario, username, password, nombre, apellido, email, direccion, username, null, false);
+            // Obtener el rol seleccionado
+            RolModelo rolSeleccionado = (RolModelo) comboRoles.getSelectedItem();
+            int rolId = rolSeleccionado != null ? rolSeleccionado.getId() : -1;
 
+            // Llamar al método de actualización en el controlador
+            boolean actualizado = usuarioController.actualizarUsuario(idUsuario, username, password, 
+                                                                      nombre, apellido, email, 
+                                                                      direccion, null, null, 
+                                                                      false, rolId);
             if (actualizado) {
-                // Aquí se pasa la conexión a `listarUsuarios`
                 cargarDatosTabla(connection);
                 JOptionPane.showMessageDialog(this, "Usuario modificado correctamente.");
             } else {

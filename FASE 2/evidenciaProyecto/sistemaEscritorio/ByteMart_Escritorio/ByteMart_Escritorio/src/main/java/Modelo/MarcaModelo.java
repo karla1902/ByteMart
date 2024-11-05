@@ -27,4 +27,9 @@ public class MarcaModelo {
         this.name = name;
     }
 
+    // Devuelve el nombre de la marca 
+    @Override
+    public String toString() {
+        return name; 
+    }
 }

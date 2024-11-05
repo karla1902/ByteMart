@@ -122,7 +122,6 @@ public class ProductosVista extends JPanel {
         btnGrabar.addActionListener(e -> {
             String nombre = txtNombreProducto.getText().trim();
             String descripcion = txtDescripcion.getText().trim();
-            String marca = cmbMarca.getSelectedItem().toString();
             int precio = Integer.parseInt(txtPrecio.getText().trim());
             int stock = Integer.parseInt(txtStockMaximo.getText().trim());
             boolean enOferta = cmbOferta.getSelectedItem().equals("Sí");
@@ -134,8 +133,12 @@ public class ProductosVista extends JPanel {
             MarcaModelo marcaSeleccionada = (MarcaModelo) cmbMarca.getSelectedItem();
             int idMarca = marcaSeleccionada != null ? marcaSeleccionada.getId() : -1;
             
+            
             if (!nombre.isEmpty() && idCategoria != -1 && idMarca != -1) {
                 
+                 // Crear una nueva instancia de ProductosModelo y asignar los valores
+                ProductosModelo productosModelo = new ProductosModelo(0, nombre, precio, idMarca, descripcion, stock, idCategoria, enOferta, destacado, "");
+
                 if (productosController.crearProducto(productosModelo)) {
                     cargarDatosTabla(connection);
                     JOptionPane.showMessageDialog(this, "Producto agregado con éxito.");
@@ -160,7 +163,7 @@ public class ProductosVista extends JPanel {
                 txtPrecio.setText(model.getValueAt(selectedRow, 5).toString());
                 txtStockMaximo.setText(model.getValueAt(selectedRow, 6).toString());
                 cmbCategoria.setSelectedItem((String) model.getValueAt(selectedRow, 7));
-                cmbMarca.setSelectedItem((String) model.getValueAt(selectedRow, 3));
+                cmbMarca.setSelectedItem(model.getValueAt(selectedRow, 3));
                 
                 // Iterar sobre el ComboBox de categorías para seleccionar la correcta
                 for (int i = 0; i < cmbCategoria.getItemCount(); i++) {
@@ -170,9 +173,10 @@ public class ProductosVista extends JPanel {
                         break;
                     }
                 }
+                
                 for (int i = 0; i < cmbMarca.getItemCount(); i++) {
                     MarcaModelo marca = (MarcaModelo) cmbMarca.getItemAt(i);
-                    if (marca.getName().equals(cmbCategoria)) {
+                    if (marca.getName().equals(cmbMarca)) {
                         cmbMarca.setSelectedItem(marca);
                         break;
                     }
@@ -232,6 +236,7 @@ public class ProductosVista extends JPanel {
                         txtStockMaximo.setText("");
                         txtPrecio.setText("");
                         cmbCategoria.setSelectedIndex(0);
+                        cmbMarca.setSelectedIndex(0);
                         cmbOferta.setSelectedIndex(0);
                     } else {
                         JOptionPane.showMessageDialog(this, "Error: No se pudo eliminar el producto de la base de datos.", "Error", JOptionPane.ERROR_MESSAGE);
@@ -244,6 +249,7 @@ public class ProductosVista extends JPanel {
 
         cargarDatosTabla(connection);
         cargarCbmCategoria(connection, cmbCategoria);
+        cargarCbmMarca(connection, cmbMarca);
         
     }
     
@@ -303,26 +309,28 @@ public class ProductosVista extends JPanel {
     }
     
     private void cargarCbmMarca(Connection connection, JComboBox<MarcaModelo> cmbMarca) {
-    try {
-        String query = "SELECT * FROM proyecto.marca"; 
-        try (PreparedStatement stmt = connection.prepareStatement(query)) {
+        try {
+            String query = "SELECT * FROM proyecto.marca"; 
+            PreparedStatement stmt = connection.prepareStatement(query);
             ResultSet rs = stmt.executeQuery();
-            
+
+            // Limpiar elementos previos para evitar duplicados
+            cmbMarca.removeAllItems();
+
             while (rs.next()) {
                 int id = rs.getInt("id");
                 String name = rs.getString("name");
-                Date fecha_creacion = rs.getDate("fecha_creacion");
                 MarcaModelo marca = new MarcaModelo(id, name);
-                cmbMarca.addItem(marca); 
+                cmbMarca.addItem(marca);
             }
-            
+
             rs.close();
+            stmt.close();
+        } catch (SQLException e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(this, "Error al cargar las marcas de la base de datos: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
         }
-    } catch (SQLException e) {
-        e.printStackTrace();
-        JOptionPane.showMessageDialog(this, "Error al cargar las marcas de la base de datos: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
     }
-}
 
 }
 

@@ -2,7 +2,6 @@ package Controller;
 import Dao.UsuarioDao;
 import Modelo.UsuarioModelo;
 import java.sql.Connection;
-import java.sql.ResultSet;
 import java.util.Date;
 import java.util.List;
 
@@ -36,16 +35,28 @@ public class UsuarioController {
         return usuarioDAO.listarUsuarios();
     }
 
-    // Actualizar un usuario
-    public boolean actualizarUsuario(int id, String username, String contrasena, String nombre, 
-                                      String apellido, String email, String direccion, 
-                                      String resetCode, Date resetCodeExpiration, boolean isAdmin) {
+   public boolean actualizarUsuario(int id, String username, String contrasena, String nombre, 
+                                  String apellido, String email, String direccion, 
+                                  String resetCode, Date resetCodeExpiration, boolean isAdmin,
+                                  int rolId) {
+        // Crear el modelo de usuario actualizado
         UsuarioModelo usuarioActualizado = new UsuarioModelo(id, username, contrasena, nombre, 
                                                               apellido, email, direccion, 
                                                               resetCode, resetCodeExpiration, 
                                                               isAdmin);
-        return usuarioDAO.actualizarUsuario(usuarioActualizado); 
+
+        // Actualizar el usuario
+        boolean usuarioModificado = usuarioDAO.actualizarUsuario(usuarioActualizado);
+
+        // Si el usuario se actualiza correctamente, actualizamos el rol
+        if (usuarioModificado) {
+            return usuarioDAO.actualizarUsuarioRol(id, rolId);
+        }
+
+        // Retornar false si no se pudo actualizar el usuario
+        return false;
     }
+
 
     // Eliminar un usuario
     public boolean eliminarUsuario(int id) {

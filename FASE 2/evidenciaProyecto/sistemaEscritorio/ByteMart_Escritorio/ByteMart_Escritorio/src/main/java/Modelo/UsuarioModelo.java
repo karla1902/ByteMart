@@ -12,8 +12,8 @@ public class UsuarioModelo {
     private String direccion; 
     private String resetCode; 
     private Date resetCodeExpiration; 
-    private boolean isAdmin; // Indica si el usuario es administrador
-
+    private boolean isAdmin; 
+    
     // Constructor
     public UsuarioModelo(int id, String username, String contrasena, String nombre, String apellido, 
                          String email, String direccion, String resetCode, 
@@ -60,4 +60,6 @@ public class UsuarioModelo {
 
     public boolean isAdmin() { return isAdmin; }
     public void setAdmin(boolean isAdmin) { this.isAdmin = isAdmin; }
+    
+    
 }

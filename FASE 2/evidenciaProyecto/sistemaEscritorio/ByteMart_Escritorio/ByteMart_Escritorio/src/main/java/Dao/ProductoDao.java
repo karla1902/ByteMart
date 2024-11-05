@@ -11,7 +11,7 @@ public class ProductoDao {
     }
 
     public void crearProducto(ProductosModelo producto) throws SQLException {
-        String sql = "INSERT INTO proyecto.producto (name, price, category_id, marca, descripcion, stock, en_oferta, destacado, fecha_creacion) " +
+        String sql = "INSERT INTO proyecto.producto (name, price, category_id, marca_id, descripcion, stock, en_oferta, destacado, fecha_creacion) " +
                      "VALUES (?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)";
 
         try (PreparedStatement statement = connection.prepareStatement(sql)) {
@@ -40,7 +40,7 @@ public class ProductoDao {
                     resultSet.getInt("id"),
                     resultSet.getString("name"),
                     resultSet.getInt("price"),
-                    resultSet.getInt("marcaId"),
+                    resultSet.getInt("marca_id"),
                     resultSet.getString("descripcion"),
                     resultSet.getInt("stock"),
                     resultSet.getInt("category_id"),
@@ -82,7 +82,7 @@ public class ProductoDao {
     }
 
     public void actualizarProducto(ProductosModelo producto) throws SQLException {
-        String sql = "UPDATE proyecto.producto SET name = ?, price = ?, category_Id = ?, marca = ?, descripcion = ?, stock = ?, en_oferta = ? WHERE id = ?";
+        String sql = "UPDATE proyecto.producto SET name = ?, price = ?, category_id = ?, marca_id = ?, descripcion = ?, stock = ?, en_oferta = ? WHERE id = ?";
         try (PreparedStatement statement = connection.prepareStatement(sql)) {
             statement.setString(1, producto.getName());
             statement.setInt(2, producto.getPrice());

@@ -138,6 +138,20 @@ public class UsuarioDao {
             return false;
         }
     }
+    
+    public boolean actualizarUsuarioRol(int usuarioId, int rolId) {
+        String query = "UPDATE proyecto.usuario_rol SET rol_id = ? WHERE usuario_id = ?";
+        try (PreparedStatement pstmt = connection.prepareStatement(query)) {
+            pstmt.setInt(1, rolId);
+            pstmt.setInt(2, usuarioId);
+            int filasAfectadas = pstmt.executeUpdate();
+            return filasAfectadas > 0;
+        } catch (SQLException e) {
+            System.err.println("Error al actualizar el rol del usuario: " + e.getMessage());
+            return false;
+        }
+    }
+
 
     // Método para eliminar un usuario por su ID
     public boolean eliminarUsuario(int id) {

@@ -26,14 +26,15 @@ public class CategoriaModelo {
         return name;
     }
 
-    public Date getFechaCreacion() { // Agregado: getter para fecha de creación
+    public Date getFechaCreacion() {
         return fechaCreacion;
     }
 
-    public void setFechaCreacion(Date fechaCreacion) { // Agregado: setter para fecha de creación
+    public void setFechaCreacion(Date fechaCreacion) {
         this.fechaCreacion = fechaCreacion;
     }
 
+    // Devuelve el nombre de la categoria
     @Override
     public String toString() {
         return name; 

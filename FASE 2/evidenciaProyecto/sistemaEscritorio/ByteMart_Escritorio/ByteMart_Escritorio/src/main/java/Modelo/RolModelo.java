@@ -17,8 +17,9 @@ public class RolModelo {
         return nombre;
     }
 
+    // Para mostrar el nombre del rol en el ComboBox
     @Override
     public String toString() {
-        return nombre; // Para mostrar el nombre en el JComboBox
+        return nombre; 
     }
 }
