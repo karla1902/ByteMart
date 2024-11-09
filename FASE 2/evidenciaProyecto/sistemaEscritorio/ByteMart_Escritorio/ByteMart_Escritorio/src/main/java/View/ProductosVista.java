@@ -190,6 +190,7 @@ public class ProductosVista extends JPanel {
         // Lógica para guardar los cambios
         btnGuardarCambios = new JButton("Guardar Cambios");
         btnGuardarCambios.addActionListener(e -> {
+            //validar que se seleccione un item
             if (obtenerProductoporId != -1) {  
                 String nombre = txtNombreProducto.getText().trim();
                 String descripcion = txtDescripcion.getText().trim();

@@ -141,6 +141,7 @@ public class UsuarioDao {
     
     public boolean actualizarUsuarioRol(int usuarioId, int rolId) {
         String query = "UPDATE proyecto.usuario_rol SET rol_id = ? WHERE usuario_id = ?";
+
         try (PreparedStatement pstmt = connection.prepareStatement(query)) {
             pstmt.setInt(1, rolId);
             pstmt.setInt(2, usuarioId);
@@ -154,14 +155,29 @@ public class UsuarioDao {
 
 
     // Método para eliminar un usuario por su ID
-    public boolean eliminarUsuario(int id) {
+     public boolean eliminarUsuario(int id) {
+        String queryUsuario = "DELETE FROM proyecto.usuario_rol u WHERE usuario_id = ?";
         String query = "DELETE FROM proyecto.usuario WHERE id = ?";
-        try (PreparedStatement pstmt = connection.prepareStatement(query)) {
-            pstmt.setInt(1, id);
-            int filasAfectadas = pstmt.executeUpdate();
-            return filasAfectadas > 0;
-        } catch (SQLException e) {
+
+        
+        try (PreparedStatement pstmtRol = connection.prepareStatement(queryUsuario)) {
+            try(PreparedStatement pstmtUsuario = connection.prepareStatement(query)){
+                //Eliminar Rol del Usuario
+                pstmtRol.setInt(1, id);
+                int filasAfectadas = pstmtRol.executeUpdate();
+                
+                //Eliminar Usuario
+                pstmtUsuario.setInt(1, id);
+                int filasAfectadasUsuario = pstmtUsuario.executeUpdate();
+                return filasAfectadasUsuario > 0;
+            }
+            catch (SQLException e) {
             System.err.println("Error al eliminar usuario: " + e.getMessage());
+            return false;
+        }
+            
+        } catch (SQLException e) {
+            System.err.println("Error al eliminar el rol del usuario: " + e.getMessage());
             return false;
         }
     }

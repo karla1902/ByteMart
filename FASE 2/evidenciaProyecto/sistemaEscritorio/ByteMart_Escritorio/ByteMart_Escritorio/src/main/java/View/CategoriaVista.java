@@ -105,6 +105,7 @@ public class CategoriaVista extends JPanel{
         btnGuardarCambios = new JButton("Guardar Cambios");
         btnGuardarCambios.addActionListener(e -> {
             int selectedRow = tableCategorias.getSelectedRow(); // Obtener la fila seleccionada
+            //validar que se seleccione un item
             if (selectedRow != -1) {
                 int idCategoria = (int) modelCategorias.getValueAt(selectedRow, 0);
                 String nuevoNombre = txtNombreCategoria.getText().trim();
