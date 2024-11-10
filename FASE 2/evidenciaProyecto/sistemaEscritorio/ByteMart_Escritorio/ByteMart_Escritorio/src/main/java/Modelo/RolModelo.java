@@ -1,8 +1,8 @@
 package Modelo;
 
 public class RolModelo {
-    private int id;
-    private String nombre;
+    private final int id;
+    private final String nombre;
 
     public RolModelo(int id, String nombre) {
         this.id = id;

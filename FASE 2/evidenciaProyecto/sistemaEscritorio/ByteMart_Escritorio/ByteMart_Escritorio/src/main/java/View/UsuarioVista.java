@@ -2,6 +2,7 @@ package View;
 
 import Controller.UsuarioController;
 import Modelo.RolModelo;
+import Modelo.RolUsuarioModelo;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionListener;
@@ -14,14 +15,14 @@ import javax.swing.table.DefaultTableModel;
 public class UsuarioVista extends JPanel {
     private DefaultTableModel modelUsuarios;
     private UsuarioController usuarioController;
-    private JTextField txtNombreUsuario;
+    private JTextField txtUsername;
     private JTextField txtPasswordUsuario;
     private JTextField txtNombre;
     private JTextField txtApellido;
     private JTextField txtEmail;
     private JTextField txtDireccion;
     private JComboBox<RolModelo> comboRoles; 
-    private final JTable tableUsuarios;
+    private JTable tableUsuarios;
     private JButton btnGuardarCambios;
     private int obtenerUsuarioporId = -1;
 
@@ -34,13 +35,13 @@ public class UsuarioVista extends JPanel {
         inputPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
         inputPanel.add(new JLabel("Nombre de Usuario:"));
-        txtNombreUsuario = new JTextField();
-        inputPanel.add(txtNombreUsuario);
+        txtUsername = new JTextField();
+        inputPanel.add(txtUsername);
 
         inputPanel.add(new JLabel("Contraseña:"));
         txtPasswordUsuario = new JTextField();
         inputPanel.add(txtPasswordUsuario);
-
+        
         inputPanel.add(new JLabel("Nombre:"));
         txtNombre = new JTextField();
         inputPanel.add(txtNombre);
@@ -64,7 +65,7 @@ public class UsuarioVista extends JPanel {
         add(inputPanel, BorderLayout.NORTH);
 
         // Tabla de usuarios
-        modelUsuarios = new DefaultTableModel(new Object[]{"ID", "Nombre de Usuario", "Nombre", "Apellido", "Email", "Dirección", "Rol"}, 0);
+        modelUsuarios = new DefaultTableModel(new Object[]{"Id", "Username", "Password", "Nombre","Apellido", "Email", "Dirección", "Rol"}, 0);
         tableUsuarios = new JTable(modelUsuarios) {
             @Override
             public boolean isCellEditable(int row, int column) {
@@ -77,22 +78,25 @@ public class UsuarioVista extends JPanel {
         // Panel inferior para los botones
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
 
+        JButton btnSalir = new JButton("Salir");
         JButton btnLimpiar = new JButton("Limpiar");
         JButton btnGrabar = new JButton("Grabar");
         JButton btnModificar = new JButton("Modificar");
         JButton btnEliminar = new JButton("Eliminar");
-
+        
+        buttonPanel.add(btnSalir);
         buttonPanel.add(btnLimpiar);
         buttonPanel.add(btnGrabar);
         buttonPanel.add(btnModificar);
         buttonPanel.add(btnEliminar);
-        //buttonPanel.add(btnGuardarCambios);
         
+        
+        btnSalir.addActionListener(e -> System.exit(0));
         add(buttonPanel, BorderLayout.SOUTH);
 
         // Funcionalidad a los botones
         btnLimpiar.addActionListener(e -> {
-           txtNombreUsuario.setText("");
+           txtUsername.setText("");
            txtPasswordUsuario.setText("");
            txtNombre.setText("");
            txtApellido.setText("");
@@ -102,7 +106,7 @@ public class UsuarioVista extends JPanel {
         });
         
         btnGrabar.addActionListener(e -> {
-           String username = txtNombreUsuario.getText().trim();
+           String username = txtUsername.getText().trim();
            String password = txtPasswordUsuario.getText().trim();
            String nombre = txtNombre.getText().trim();
            String apellido = txtApellido.getText().trim(); 
@@ -131,18 +135,21 @@ public class UsuarioVista extends JPanel {
             if (selectedRow != -1) {
                 // Obtener el ID y los datos del usuario seleccionado
                 DefaultTableModel model = (DefaultTableModel) tableUsuarios.getModel();
-                obtenerUsuarioporId = (int) model.getValueAt(selectedRow, 0);
-                txtNombreUsuario.setText((String) model.getValueAt(selectedRow, 1));
-                txtNombre.setText((String) model.getValueAt(selectedRow, 2));
-                txtApellido.setText((String) model.getValueAt(selectedRow, 3));
-                txtEmail.setText((String) model.getValueAt(selectedRow, 4));
-                txtDireccion.setText((String) model.getValueAt(selectedRow, 5));
 
+                obtenerUsuarioporId = (int) model.getValueAt(selectedRow, 0);
+                txtUsername.setText((String) model.getValueAt(selectedRow, 1)); 
+                txtNombre.setText((String) model.getValueAt(selectedRow, 3));
+                txtPasswordUsuario.setText((String) model.getValueAt(selectedRow, 2));   
+                txtApellido.setText((String) model.getValueAt(selectedRow, 4));  
+                txtEmail.setText((String) model.getValueAt(selectedRow, 5));  
+                txtDireccion.setText((String) model.getValueAt(selectedRow, 6)); 
+                //comboRoles.setSelectedItem(model.getValueAt(selectedRow, 7));
+                
                 // Seleccionar el rol del usuario
-                String rol = (String) modelUsuarios.getValueAt(selectedRow, 6);
+                String rolNombre = (String) model.getValueAt(selectedRow, 7);
                 for (int i = 0; i < comboRoles.getItemCount(); i++) {
                     RolModelo rolModelo = (RolModelo) comboRoles.getItemAt(i);
-                    if (rolModelo.getNombre().equals(rol)) {
+                    if (rolModelo.getNombre().equals(rolNombre)) {
                         comboRoles.setSelectedItem(rolModelo);
                         break;
                     }
@@ -159,31 +166,37 @@ public class UsuarioVista extends JPanel {
             //validar que se seleccione un item
             if (obtenerUsuarioporId != -1) {
               // Obtener los datos ingresados por el usuario en los campos de texto
-                String nombreUsuario = txtNombreUsuario.getText().trim();
+                String username = txtUsername.getText().trim();
+                String password = txtPasswordUsuario.getText().trim();
                 String nombre = txtNombre.getText().trim();
                 String apellido = txtApellido.getText().trim();
                 String email = txtEmail.getText().trim();
                 String direccion = txtDireccion.getText().trim();
-
-                // Obtener el rol seleccionado
                 RolModelo rolSeleccionado = (RolModelo) comboRoles.getSelectedItem();
                 int idRol = rolSeleccionado.getId();
-
-                // Valida que los campos no estén vacíos
-                if (nombreUsuario.isEmpty() || nombre.isEmpty() || apellido.isEmpty() || email.isEmpty() || direccion.isEmpty()) {
-                    JOptionPane.showMessageDialog(this, "Todos los campos deben ser completados.", "Advertencia", JOptionPane.WARNING_MESSAGE);
-                    return;
-                }
-
-                // Llama al controlador para actualizar los datos del usuario
+                
+                System.out.println("Columna 0 (ID): " + obtenerUsuarioporId);
+                System.out.println("Columna 1 (Username): " + txtUsername.getText().trim());
+                System.out.println("Columna 2 (Password): " + txtPasswordUsuario.getText().trim());
+                System.out.println("Columna 3 (Nombre): " + txtNombre.getText().trim());
+                System.out.println("Columna 4 (Apellido): " + txtApellido.getText().trim());
+                System.out.println("Columna 5 (Email): " + txtEmail.getText().trim());
+                System.out.println("Columna 6 (Direccion): " + rolSeleccionado);
 
                 System.out.println("ID del producto seleccionado: " + obtenerUsuarioporId);
-                usuarioController.actualizarUsuario(idRol, email, nombre, nombre, apellido, email, direccion, direccion, null, false, idRol);
+                 boolean resultado = usuarioController.actualizarUsuario(obtenerUsuarioporId, username, password, nombre, apellido, email, direccion, null, null, true, idRol);
 
-                JOptionPane.showMessageDialog(this, "Usuario modificado con éxito.");
-                cargarDatosTabla(connection);
+                if (resultado) {
+                    JOptionPane.showMessageDialog(this, "Usuario modificado con éxito.");
+                    btnGuardarCambios.setVisible(false);
+                    cargarDatosTabla(connection); 
+                } else {
+                    JOptionPane.showMessageDialog(this, "Error al modificar el usuario.", "Error", JOptionPane.ERROR_MESSAGE);
+                }
                 // Ocultar el botón de guardar después de guardar los cambios
                 btnGuardarCambios.setVisible(false); 
+                
+                cargarDatosTabla(connection);
 
             } else {
                 JOptionPane.showMessageDialog(this, "Error al modificar el usuario.", "Error", JOptionPane.ERROR_MESSAGE);
@@ -192,6 +205,7 @@ public class UsuarioVista extends JPanel {
         
         btnGuardarCambios.setVisible(false); 
         buttonPanel.add(btnGuardarCambios); 
+        cargarDatosTabla(connection);
         
         btnEliminar.addActionListener(e -> {
             int selectedRow = tableUsuarios.getSelectedRow();
@@ -205,7 +219,7 @@ public class UsuarioVista extends JPanel {
                     if (eliminado) {
                         modelUsuarios.removeRow(selectedRow);
                         JOptionPane.showMessageDialog(this, "Usuario eliminado correctamente.", "Eliminación exitosa", JOptionPane.INFORMATION_MESSAGE);
-                        txtNombreUsuario.setText("");
+                        txtUsername.setText("");
                         txtPasswordUsuario.setText("");
                         txtNombre.setText("");
                         txtApellido.setText("");
@@ -230,7 +244,7 @@ public class UsuarioVista extends JPanel {
        private void cargarDatosTabla(Connection connection) {
            try {
                modelUsuarios.setRowCount(0);
-               String query = "SELECT u.id, u.username, u.nombre, u.apellido, u.email, u.direccion, r.nombre AS rol " +
+               String query = "SELECT u.id, u.username,u.password, u.nombre, u.apellido, u.email, u.direccion, r.nombre AS rol " +
                               "FROM proyecto.usuario u " +
                               "JOIN proyecto.usuario_rol ur ON u.id = ur.usuario_id " +
                               "JOIN proyecto.rol r ON ur.rol_id = r.id";
@@ -241,6 +255,7 @@ public class UsuarioVista extends JPanel {
                    modelUsuarios.addRow(new Object[]{
                        rs.getInt("id"),
                        rs.getString("username"),
+                       rs.getString("password"),
                        rs.getString("nombre"),
                        rs.getString("apellido"),
                        rs.getString("email"),

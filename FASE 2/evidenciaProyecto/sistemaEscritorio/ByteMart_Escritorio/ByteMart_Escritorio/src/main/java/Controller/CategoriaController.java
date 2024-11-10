@@ -42,17 +42,17 @@ public class CategoriaController {
         }
     }
     
-public boolean actualizarCategoria(int id, String name) {
-    try {
-        // Crea un objeto CategoriaModelo solo con ID y nombre
-        CategoriaModelo categoriaActualizada = new CategoriaModelo(id, name, null); // La fecha de creación se deja como null.
-        categoriaDAO.actualizarCategoria(categoriaActualizada);
-        return true;  
-    } catch (SQLException e) {
-        System.err.println("Error al actualizar las categorías: " + e.getMessage());
-        return false; 
+    public boolean actualizarCategoria(int id, String name) {
+        try {
+            // Crea un objeto CategoriaModelo solo con ID y nombre
+            CategoriaModelo categoriaActualizada = new CategoriaModelo(id, name, null); // La fecha de creación se deja como null.
+            categoriaDAO.actualizarCategoria(categoriaActualizada);
+            return true;  
+        } catch (SQLException e) {
+            System.err.println("Error al actualizar las categorías: " + e.getMessage());
+            return false; 
+        }
     }
-}
 
 
     public boolean eliminarCategoria(int id){

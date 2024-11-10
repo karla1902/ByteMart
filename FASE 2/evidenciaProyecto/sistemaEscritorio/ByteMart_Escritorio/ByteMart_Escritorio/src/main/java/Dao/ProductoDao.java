@@ -94,7 +94,7 @@ public class ProductoDao {
             statement.setInt(8, producto.getId());
 
             int rowsUpdated = statement.executeUpdate();
-            System.out.println("Filas actualizadas: " + rowsUpdated); // Ver cuántas filas se actualizan
+            System.out.println("Filas actualizadas: " + rowsUpdated); 
         }
     }
 

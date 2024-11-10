@@ -1,6 +1,7 @@
 View\ProductosVista.class
 Dao\ProductoDao.class
 Modelo\ProductosModelo.class
+Modelo\RolUsuarioModelo.class
 View\MenuVista.class
 Modelo\MarcaModelo.class
 Dao\UsuarioDao.class

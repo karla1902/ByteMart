@@ -61,7 +61,7 @@ public class UsuarioDao {
     }
 
     // Método para leer un usuario por su ID
-    public UsuarioModelo leerUsuario(int id) {
+    public UsuarioModelo obtenerUsuarioPorId(int id) {
         String query = "SELECT * FROM proyecto.usuario WHERE id = ?";
         try (PreparedStatement pstmt = connection.prepareStatement(query)) {
             pstmt.setInt(1, id);
@@ -84,6 +84,25 @@ public class UsuarioDao {
             }
         } catch (SQLException e) {
             System.err.println("Error al leer usuario: " + e.getMessage());
+        }
+        return null;
+    }
+    
+    public UsuarioModelo obtenerUsuarioPorUsername(String username) {
+        String query = "SELECT * FROM proyecto.usuario WHERE username = ?";
+        try (PreparedStatement pstmt = connection.prepareStatement(query)) {
+            pstmt.setString(1, username);
+            ResultSet rs = pstmt.executeQuery();
+            if (rs.next()) {
+                return new UsuarioModelo(rs.getInt("id"), rs.getString("username"), 
+                                         rs.getString("password"), rs.getString("nombre"), 
+                                         rs.getString("apellido"), rs.getString("email"), 
+                                         rs.getString("direccion"), rs.getString("reset_code"), 
+                                         rs.getTimestamp("reset_code_expiration"), 
+                                         rs.getBoolean("is_admin"));
+            }
+        } catch (SQLException e) {
+            System.err.println("Error al obtener usuario por username: " + e.getMessage());
         }
         return null;
     }
@@ -132,11 +151,12 @@ public class UsuarioDao {
             pstmt.setInt(10, usuario.getId());
 
             int filasAfectadas = pstmt.executeUpdate();
-            return filasAfectadas > 0;
+            System.out.println("Filas actualizadas: " + filasAfectadas);
         } catch (SQLException e) {
             System.err.println("Error al actualizar usuario: " + e.getMessage());
             return false;
         }
+        return true;
     }
     
     public boolean actualizarUsuarioRol(int usuarioId, int rolId) {
