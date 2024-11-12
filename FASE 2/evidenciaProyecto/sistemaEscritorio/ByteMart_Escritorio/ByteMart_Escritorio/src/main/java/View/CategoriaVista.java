@@ -4,6 +4,8 @@ import Modelo.CategoriaModelo;
 import java.awt.BorderLayout;
 import java.awt.FlowLayout;
 import java.awt.GridLayout;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
 import javax.swing.*;
 import java.sql.Connection;
 import javax.swing.table.DefaultTableModel;
@@ -11,6 +13,7 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.ResultSet;
 import java.sql.Statement;
+import java.util.List;
 
 
 public class CategoriaVista extends JPanel{
@@ -18,6 +21,7 @@ public class CategoriaVista extends JPanel{
     private CategoriaModelo categoriaModelo;
     private CategoriaController categoriaController;
     private JButton btnGuardarCambios;
+    private JTextField txtBuscarCategoria;
 
     public CategoriaVista(Connection connection) {
         this.categoriaController = new CategoriaController(connection);
@@ -30,6 +34,10 @@ public class CategoriaVista extends JPanel{
         inputPanel.add(new JLabel("Nombre de Categoría:"));
         JTextField txtNombreCategoria = new JTextField();
         inputPanel.add(txtNombreCategoria);
+        
+        inputPanel.add(new JLabel("Buscador Categoría:"));
+        txtBuscarCategoria = new JTextField();
+        inputPanel.add(txtBuscarCategoria);
 
         add(inputPanel, BorderLayout.NORTH);
 
@@ -47,6 +55,15 @@ public class CategoriaVista extends JPanel{
             }
         };
 
+        // Filtro en tiempo real
+        txtBuscarCategoria.addKeyListener(new KeyAdapter() {
+            @Override
+            public void keyReleased(KeyEvent e) {
+                aplicarFiltro(connection);
+            }
+        });
+
+        cargarDatosTabla(connection);
         JScrollPane scrollPane = new JScrollPane(tableCategorias);
         add(scrollPane, BorderLayout.CENTER);
 
@@ -152,20 +169,33 @@ public class CategoriaVista extends JPanel{
     }
 
     private void cargarDatosTabla(Connection connection) {
-        modelCategorias.setRowCount(0); // Asegúrate de limpiar los datos antiguos
-
+        modelCategorias.setRowCount(0);
         String sql = "SELECT * FROM proyecto.categoria";
         try (Statement statement = connection.createStatement();
              ResultSet resultSet = statement.executeQuery(sql)) {
             while (resultSet.next()) {
                 int id = resultSet.getInt("id");
                 String name = resultSet.getString("name");
-                modelCategorias.addRow(new Object[]{id, name}); // Añade la fila al modelo
+                modelCategorias.addRow(new Object[]{id, name});
             }
         } catch (SQLException e) {
             System.err.println("Error al cargar los datos de la tabla: " + e.getMessage());
         }
     }
 
+    private void aplicarFiltro(Connection connection) {
+        String palabra = txtBuscarCategoria.getText().trim();
+        modelCategorias.setRowCount(0);
+        if (palabra.isEmpty()) {
+            cargarDatosTabla(connection);
+            return;
+        } else {
+            List<CategoriaModelo> categorias = categoriaController.buscarCategoriasPorPalabraClave(palabra);
+            for (CategoriaModelo categoria : categorias) {
+                modelCategorias.addRow(new Object[]{categoria.getId(), categoria.getName()});
+            }
+        }
+        
+    }
 }
 

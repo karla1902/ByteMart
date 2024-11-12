@@ -136,8 +136,9 @@ public class ProductosVista extends JPanel {
             
             if (!nombre.isEmpty() && idCategoria != -1 && idMarca != -1) {
                  
+                java.util.Date fechaCreacionActual = new java.util.Date();
                  // Crear una nueva instancia de ProductosModelo y asignar los valores
-                ProductosModelo productosModelo = new ProductosModelo(0, nombre, precio, idMarca, descripcion, stock, idCategoria, enOferta, destacado, "");
+                ProductosModelo productosModelo = new ProductosModelo(0, nombre, precio, idMarca, descripcion, stock, idCategoria, enOferta, destacado, fechaCreacionActual);
 
                 if (productosController.crearProducto(productosModelo)) {
                     cargarDatosTabla(connection);

@@ -3,6 +3,7 @@ package Controller;
 import Dao.ProductoDao;
 import Modelo.ProductosModelo;
 import java.sql.Connection;
+import java.sql.Date;
 import java.sql.SQLException;
 import java.util.List;
 
@@ -44,14 +45,14 @@ public class ProductosController {
     }
 
     // Actualizar un producto
-    public boolean actualizarProducto(int id, String name, int price, int categoryId, int marcaId, String descripcion, int stock, boolean en_oferta, boolean destacado) {
-       ProductosModelo productoActualizado = new ProductosModelo(id, name, price, marcaId, descripcion, stock, categoryId, en_oferta, destacado, descripcion);
+    public boolean actualizarProducto(int id, String name, int price, int categoryId, int marcaId, String descripcion, int stock, boolean en_oferta, boolean destacado ) {
+       ProductosModelo productoActualizado = new ProductosModelo(id, name, price, marcaId, descripcion, stock, categoryId, en_oferta, destacado, null);
     
         try {
             productoDAO.actualizarProducto(productoActualizado);
             return true;  
-        } catch (SQLException e) {
-            System.err.println("Error al actualizar el producto: " + e.getMessage());
+        } catch (SQLException ex) {
+            System.err.println("Error al actualizar el producto: " + ex.getMessage());
             return false; 
         }
    }

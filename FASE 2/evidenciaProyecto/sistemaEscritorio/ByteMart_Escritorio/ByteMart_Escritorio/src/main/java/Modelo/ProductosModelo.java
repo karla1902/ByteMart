@@ -1,5 +1,7 @@
 package Modelo;
 
+import java.util.Date;
+
 public class ProductosModelo {
     
     private int id;
@@ -11,10 +13,10 @@ public class ProductosModelo {
     private int categoryId;
     private boolean enOferta;
     private boolean destacado;
-    private String fechaCreacion;
+    private Date fechaCreacion;
 
     // Constructor
-    public ProductosModelo(int id, String name, int price, int marcaId, String descripcion, int stock, int categoryId, boolean enOferta, boolean destacado, String fechaCreacion) {
+    public ProductosModelo(int id, String name, int price, int marcaId, String descripcion, int stock, int categoryId, boolean enOferta, boolean destacado, Date fechaCreacion) {
         this.id = id;
         this.name = name;
         this.price = price;
@@ -100,11 +102,11 @@ public class ProductosModelo {
         this.destacado = destacado;
     }
 
-    public String getFechaCreacion() {
+    public Date getFechaCreacion() {
         return fechaCreacion;
     }
 
-    public void setFechaCreacion(String fechaCreacion) {
+    public void setFechaCreacion(Date fechaCreacion) {
         this.fechaCreacion = fechaCreacion;
     }
 }

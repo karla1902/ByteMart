@@ -20,7 +20,7 @@ public class MenuVista extends JFrame{
         
         ProductosVista productosVista = new ProductosVista(connection);
         CategoriaVista categoriaVista = new CategoriaVista(connection);
-        OrdenesVista ordenesVista = new OrdenesVista(connection);
+        OrdenesCompraVista ordenesVista = new OrdenesCompraVista(connection);
         UsuarioVista usuarioVista = new UsuarioVista(connection);
         
         tabbedPanePrincipal.addTab("Productos", productosVista);

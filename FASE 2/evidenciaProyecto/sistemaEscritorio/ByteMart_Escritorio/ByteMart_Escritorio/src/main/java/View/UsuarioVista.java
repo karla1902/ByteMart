@@ -70,8 +70,8 @@ public class UsuarioVista extends JPanel {
             @Override
             public boolean isCellEditable(int row, int column) {
                 return false;
-            }
-        };
+            } 
+       };
         JScrollPane scrollPane = new JScrollPane(tableUsuarios);
         add(scrollPane, BorderLayout.CENTER);
 

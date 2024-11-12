@@ -86,4 +86,24 @@ public class CategoriaDao {
             System.err.println("Error al eliminar la categoría: " + e.getMessage());
         }
     }
+    
+    //Metodo para filtrar por palabra clave
+    public List<CategoriaModelo> buscarCategoria(String palabra) throws SQLException {
+        List<CategoriaModelo> categorias = new ArrayList<>();
+        String sql = "SELECT * FROM proyecto.categoria WHERE name LIKE ?";
+
+        try (PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+            preparedStatement.setString(1, "%" + palabra + "%");
+            try (ResultSet resultSet = preparedStatement.executeQuery()) {
+                while (resultSet.next()) {
+                    int id = resultSet.getInt("id");
+                    String name = resultSet.getString("name");
+                    categorias.add(new CategoriaModelo(id, name, null));
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("Error al aplicar el filtro: " + e.getMessage());
+        }
+        return categorias;
+    }
 }

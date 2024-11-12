@@ -46,7 +46,7 @@ public class ProductoDao {
                     resultSet.getInt("category_id"),
                     resultSet.getBoolean("en_oferta"),
                     resultSet.getBoolean("destacado"),
-                    resultSet.getString("fecha_creacion") 
+                    resultSet.getDate("fecha_creacion") 
                 );
                 productos.add(producto);
             }
@@ -73,7 +73,7 @@ public class ProductoDao {
                     resultSet.getInt("category_id"), 
                     resultSet.getBoolean("en_oferta"),
                     resultSet.getBoolean("destacado"),
-                    resultSet.getString("fecha_creacion") 
+                    resultSet.getDate("fecha_creacion") 
                 );
             } else {
                 return null; // Retorna null si no se encuentra el producto
@@ -82,16 +82,16 @@ public class ProductoDao {
     }
 
     public void actualizarProducto(ProductosModelo producto) throws SQLException {
-        String sql = "UPDATE proyecto.producto SET name = ?, price = ?, category_id = ?, marca_id = ?, descripcion = ?, stock = ?, en_oferta = ? WHERE id = ?";
+        String sql = "UPDATE proyecto.producto SET name = ?, price = ?, category_id = ?, marca_id = ?, descripcion = ?, stock = ?, en_oferta = ?, destacado = ? WHERE id = ?";
         try (PreparedStatement statement = connection.prepareStatement(sql)) {
             statement.setString(1, producto.getName());
-            statement.setInt(2, producto.getPrice());
+            statement.setInt(2, producto.getPrice()); 
             statement.setInt(3, producto.getCategoryId());
-            statement.setInt(4, producto.getMarcaId());
-            statement.setString(5, producto.getDescripcion());
-            statement.setInt(6, producto.getStock());
-            statement.setBoolean(7, producto.getEnOferta());
-            statement.setInt(8, producto.getId());
+            statement.setInt(4, producto.getMarcaId()); 
+            statement.setString(5, producto.getDescripcion()); 
+            statement.setInt(6, producto.getStock()); 
+            statement.setBoolean(7, producto.getEnOferta()); 
+            statement.setBoolean(8, producto.getDestacado()); 
 
             int rowsUpdated = statement.executeUpdate();
             System.out.println("Filas actualizadas: " + rowsUpdated); 
