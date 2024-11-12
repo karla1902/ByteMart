@@ -39,7 +39,7 @@ public class UsuarioVista extends JPanel {
         inputPanel.add(txtUsername);
 
         inputPanel.add(new JLabel("Contraseña:"));
-        txtPasswordUsuario = new JTextField();
+        txtPasswordUsuario = new JPasswordField();
         inputPanel.add(txtPasswordUsuario);
         
         inputPanel.add(new JLabel("Nombre:"));
@@ -250,12 +250,14 @@ public class UsuarioVista extends JPanel {
                               "JOIN proyecto.rol r ON ur.rol_id = r.id";
                PreparedStatement stmt = connection.prepareStatement(query);
                ResultSet rs = stmt.executeQuery();
+               
+               String passwordOculta = "••••••••"; 
 
                while (rs.next()) {
                    modelUsuarios.addRow(new Object[]{
                        rs.getInt("id"),
                        rs.getString("username"),
-                       rs.getString("password"),
+                       passwordOculta,
                        rs.getString("nombre"),
                        rs.getString("apellido"),
                        rs.getString("email"),
