@@ -2,10 +2,8 @@ package View;
 
 import Controller.UsuarioController;
 import Modelo.RolModelo;
-import Modelo.RolUsuarioModelo;
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionListener;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -13,7 +11,7 @@ import java.sql.SQLException;
 import javax.swing.table.DefaultTableModel;
 
 public class UsuarioVista extends JPanel {
-    private DefaultTableModel modelUsuarios;
+    private DefaultTableModel tablaUsuarios;
     private UsuarioController usuarioController;
     private JTextField txtUsername;
     private JTextField txtPasswordUsuario;
@@ -31,42 +29,50 @@ public class UsuarioVista extends JPanel {
         setLayout(new BorderLayout());
 
         // Crear el panel de entrada
-        JPanel inputPanel = new JPanel(new GridLayout(4, 4, 10, 10));
-        inputPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        JPanel inputPanel = new JPanel(new GridLayout(20, 3, 2, 2));
+        inputPanel.setBorder(BorderFactory.createTitledBorder("Gestión de Usuarios"));
 
         inputPanel.add(new JLabel("Nombre de Usuario:"));
         txtUsername = new JTextField();
+        txtUsername.setPreferredSize(new Dimension(80, 25));
         inputPanel.add(txtUsername);
 
         inputPanel.add(new JLabel("Contraseña:"));
         txtPasswordUsuario = new JPasswordField();
+        txtPasswordUsuario.setPreferredSize(new Dimension(80, 25));
         inputPanel.add(txtPasswordUsuario);
         
         inputPanel.add(new JLabel("Nombre:"));
         txtNombre = new JTextField();
+        txtNombre.setPreferredSize(new Dimension(80, 25));
         inputPanel.add(txtNombre);
 
         inputPanel.add(new JLabel("Apellido:"));
         txtApellido = new JTextField();
+        txtApellido.setPreferredSize(new Dimension(80, 25));
         inputPanel.add(txtApellido);
 
         inputPanel.add(new JLabel("Email:"));
         txtEmail = new JTextField();
+        txtEmail.setPreferredSize(new Dimension(80, 25));
         inputPanel.add(txtEmail);
 
         inputPanel.add(new JLabel("Dirección:"));
         txtDireccion = new JTextField();
+        txtDireccion.setPreferredSize(new Dimension(80, 25));
         inputPanel.add(txtDireccion);
 
         inputPanel.add(new JLabel("Rol:"));
         comboRoles = new JComboBox<>();
+        comboRoles.setPreferredSize(new Dimension(80, 25));
         inputPanel.add(comboRoles);
 
-        add(inputPanel, BorderLayout.NORTH);
-
+        add(inputPanel, BorderLayout.WEST);
+        inputPanel.setPreferredSize(new Dimension(280, 200));
+        
         // Tabla de usuarios
-        modelUsuarios = new DefaultTableModel(new Object[]{"Id", "Username", "Password", "Nombre","Apellido", "Email", "Dirección", "Rol"}, 0);
-        tableUsuarios = new JTable(modelUsuarios) {
+        tablaUsuarios = new DefaultTableModel(new Object[]{"Id", "Username", "Password", "Nombre", "Apellido", "Email", "Dirección", "Rol"}, 0);
+        tableUsuarios = new JTable(tablaUsuarios) {
             @Override
             public boolean isCellEditable(int row, int column) {
                 return false;
@@ -76,8 +82,11 @@ public class UsuarioVista extends JPanel {
         add(scrollPane, BorderLayout.CENTER);
 
         // Panel inferior para los botones
-        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        JPanel centerPanel = new JPanel(new BorderLayout());
+        centerPanel.add(scrollPane, BorderLayout.CENTER);
+        add(centerPanel, BorderLayout.CENTER);
 
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
         JButton btnSalir = new JButton("Salir");
         JButton btnLimpiar = new JButton("Limpiar");
         JButton btnGrabar = new JButton("Grabar");
@@ -210,14 +219,14 @@ public class UsuarioVista extends JPanel {
         btnEliminar.addActionListener(e -> {
             int selectedRow = tableUsuarios.getSelectedRow();
             if (selectedRow != -1) {
-                int idUsuario = (int) modelUsuarios.getValueAt(selectedRow, 0);
+                int idUsuario = (int) tablaUsuarios.getValueAt(selectedRow, 0);
 
                 int confirm = JOptionPane.showConfirmDialog(this, "¿Está seguro de eliminar el usuario?", "Confirmar eliminación", JOptionPane.YES_NO_OPTION);
                 if (confirm == JOptionPane.YES_OPTION) {
                     boolean eliminado = usuarioController.eliminarUsuario(idUsuario);
 
                     if (eliminado) {
-                        modelUsuarios.removeRow(selectedRow);
+                        tablaUsuarios.removeRow(selectedRow);
                         JOptionPane.showMessageDialog(this, "Usuario eliminado correctamente.", "Eliminación exitosa", JOptionPane.INFORMATION_MESSAGE);
                         txtUsername.setText("");
                         txtPasswordUsuario.setText("");
@@ -243,7 +252,7 @@ public class UsuarioVista extends JPanel {
        // Método para cargar los datos de la tabla
        private void cargarDatosTabla(Connection connection) {
            try {
-               modelUsuarios.setRowCount(0);
+               tablaUsuarios.setRowCount(0);
                String query = "SELECT u.id, u.username,u.password, u.nombre, u.apellido, u.email, u.direccion, r.nombre AS rol " +
                               "FROM proyecto.usuario u " +
                               "JOIN proyecto.usuario_rol ur ON u.id = ur.usuario_id " +
@@ -254,7 +263,7 @@ public class UsuarioVista extends JPanel {
                String passwordOculta = "••••••••"; 
 
                while (rs.next()) {
-                   modelUsuarios.addRow(new Object[]{
+                   tablaUsuarios.addRow(new Object[]{
                        rs.getInt("id"),
                        rs.getString("username"),
                        passwordOculta,
@@ -291,4 +300,4 @@ public class UsuarioVista extends JPanel {
                JOptionPane.showMessageDialog(this, "Error al cargar roles: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
            }
        }
-}
+    }

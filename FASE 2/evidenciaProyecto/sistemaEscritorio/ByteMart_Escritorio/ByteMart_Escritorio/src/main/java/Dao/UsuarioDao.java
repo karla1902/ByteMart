@@ -1,6 +1,7 @@
 package Dao;
 
 import Modelo.UsuarioModelo;
+import Modelo.RolModelo;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -184,7 +185,7 @@ public class UsuarioDao {
             try(PreparedStatement pstmtUsuario = connection.prepareStatement(query)){
                 //Eliminar Rol del Usuario
                 pstmtRol.setInt(1, id);
-                int filasAfectadas = pstmtRol.executeUpdate();
+                pstmtRol.executeUpdate();
                 
                 //Eliminar Usuario
                 pstmtUsuario.setInt(1, id);

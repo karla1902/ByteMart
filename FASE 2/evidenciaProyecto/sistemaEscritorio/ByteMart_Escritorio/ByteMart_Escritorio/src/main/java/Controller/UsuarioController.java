@@ -2,6 +2,7 @@ package Controller;
 import Dao.UsuarioDao;
 import Modelo.UsuarioModelo;
 import java.sql.Connection;
+import java.sql.SQLException;
 import java.util.Date;
 import java.util.List;
 import javax.swing.JOptionPane;
@@ -77,8 +78,6 @@ public class UsuarioController {
 
         return true;
     }
-
-
 
     // Eliminar un usuario
     public boolean eliminarUsuario(int id) {

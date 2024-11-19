@@ -14,6 +14,7 @@ public class CategoriaController {
         categoriaDAO = new CategoriaDao(connection);
     }
     
+    // Crear un nueva Categoria
     public boolean crearCategoria(CategoriaModelo categoria) {
         try {
             categoriaDAO.agregarCategoria(categoria);
@@ -24,7 +25,7 @@ public class CategoriaController {
         }
     }
     
-    
+    // Leer una Categoria
     public CategoriaModelo obtenerCategoriaPorId(int id){
         try {
             return categoriaDAO.obtenerCategoriaPorId(id);
@@ -34,6 +35,7 @@ public class CategoriaController {
         }
     }
     
+    // Listar Categoria
     public List<CategoriaModelo> listarCategorias(String palabra){
         try {
             return categoriaDAO.obtenerCategoria();
@@ -45,6 +47,7 @@ public class CategoriaController {
         }
     }
     
+    // Actualizar un categorías
     public boolean actualizarCategoria(int id, String name) {
         try {
             // Crea un objeto CategoriaModelo solo con ID y nombre
@@ -57,7 +60,7 @@ public class CategoriaController {
         }
     }
 
-
+    // Eliminar una categoría
     public boolean eliminarCategoria(int id){
         try {
             categoriaDAO.eliminarCategoria(id);
@@ -68,7 +71,8 @@ public class CategoriaController {
         }
     }
      
-    public List<CategoriaModelo> buscarCategoriasPorPalabraClave(String palabraClave) {
+    // Buscar categoría
+    public List<CategoriaModelo> filtrarCategorias(String palabraClave) {
         try {
             return categoriaDAO.buscarCategoria(palabraClave);
         } catch (SQLException e) {

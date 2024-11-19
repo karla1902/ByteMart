@@ -67,5 +67,15 @@ public class ProductosController {
             return false;
         }
     }
+    
+    // Buscar categoría
+    public List<ProductosModelo> filtrarProductos(String palabra){
+        try {
+            return productoDAO.buscarProducto(palabra);
+        } catch (SQLException e){
+            System.err.println("Error al buscar los productos: " + e.getMessage());
+            return List.of();
+        }
+    } 
 }
 

@@ -6,10 +6,12 @@ import java.util.List;
 
 public class ProductoDao {
     private Connection connection;
+    
     public ProductoDao(Connection connection) {
         this.connection = connection;
     }
 
+    // Método para crear una nuevo producto
     public void crearProducto(ProductosModelo producto) throws SQLException {
         String sql = "INSERT INTO proyecto.producto (name, price, category_id, marca_id, descripcion, stock, en_oferta, destacado, fecha_creacion) " +
                      "VALUES (?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)";
@@ -30,6 +32,7 @@ public class ProductoDao {
         }
     }
 
+    // Método para obtener todas los proyecto
     public List<ProductosModelo> listarProductos() throws SQLException {
         List<ProductosModelo> productos = new ArrayList<>();
         String sql = "SELECT * FROM proyecto.producto";
@@ -56,6 +59,7 @@ public class ProductoDao {
         return productos;
     }
     
+     // Método para obtener una producto por su ID
     public ProductosModelo obtenerProductoPorId(int id) throws SQLException {
         String sql = "SELECT * FROM proyecto.producto WHERE id = ?";
         try (PreparedStatement statement = connection.prepareStatement(sql)) {
@@ -81,6 +85,7 @@ public class ProductoDao {
         }
     }
 
+    // Método para actualizar una producto
     public void actualizarProducto(ProductosModelo producto) throws SQLException {
         String sql = "UPDATE proyecto.producto SET name = ?, price = ?, category_id = ?, marca_id = ?, descripcion = ?, stock = ?, en_oferta = ?, destacado = ? WHERE id = ?";
         try (PreparedStatement statement = connection.prepareStatement(sql)) {
@@ -98,7 +103,7 @@ public class ProductoDao {
         }
     }
 
-
+    // Método para eliminar una producto por su ID
     public boolean eliminarProducto(int id) throws SQLException {
         String sql = "DELETE FROM proyecto.producto WHERE id = ?";
         try (PreparedStatement statement = connection.prepareStatement(sql)) {
@@ -110,4 +115,36 @@ public class ProductoDao {
             return false; // Devuelve false si hubo un error
         }
     }
+    
+    
+    //Metodo para filtrar por palabra clave
+    public List<ProductosModelo> buscarProducto(String palabra) throws SQLException {
+        List<ProductosModelo> productos = new ArrayList<>();
+        String sql = "SELECT * FROM proyecto.producto " +
+                     "JOIN proyecto.marca ON producto.marca_id = marca.id " +
+                     "JOIN proyecto.categoria ON producto.category_id = categoria.id " +
+                     "WHERE producto.name LIKE ? OR marca.name LIKE ? OR categoria.name LIKE ?";
+
+        try (PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+            preparedStatement.setString(1, "%" + palabra + "%");
+            preparedStatement.setString(2, "%" + palabra + "%");
+            preparedStatement.setString(3, "%" + palabra + "%");
+            try (ResultSet resultSet = preparedStatement.executeQuery()) {
+                while (resultSet.next()) {
+                    int id = resultSet.getInt("id");
+                    String name = resultSet.getString("name");
+                    int price = resultSet.getInt("price");
+                    int marcaId = resultSet.getInt("marca_id");
+                    String descripcion = resultSet.getString("descripcion");
+                    int stock = resultSet.getInt("stock");
+                    int categoryId = resultSet.getInt("category_id");
+                    productos.add(new ProductosModelo(id, name, price, marcaId, descripcion, stock, categoryId, false, false, null));
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("Error al aplicar el filtro: " + e.getMessage());
+        }
+        return productos;
+    }
+    
 }
