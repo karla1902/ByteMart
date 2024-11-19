@@ -3,26 +3,36 @@
 <br>
 <div class="container">
     <h1 class="my-4">Configuración administrativa</h1>
+
+    {% if 'Administrador' in user_roles or 'Jefe de tienda' in user_roles %}
     <div class="my-card mb-4" style="padding: 20px; box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1); border-radius: 5px; background-color: #fff;">
         <ul class="list-group">
             <li class="list-group-item">
-                <a href="/admin/categorias" class="d-block text-decoration-none">Administrar categorías</a>
+                <a href="{{ url_for('gestionar_categorias') }}" class="d-block text-decoration-none">Administrar categorías</a>
             </li>
             <li class="list-group-item">
-                <a href="/admin/productos" class="d-block text-decoration-none">Administrar productos</a>
+                <a href="{{ url_for('gestionar_productos') }}" class="d-block text-decoration-none">Administrar productos</a>
+            </li>
+
+            {% if 'Administrador' in user_roles %}
+            <li class="list-group-item">
+                <a href="{{ url_for('administrar_tarjetas') }}" class="d-block text-decoration-none">Administrar tarjetas</a>
             </li>
             <li class="list-group-item">
-                <a href="/admin/tarjetas" class="d-block text-decoration-none">Administrar tarjetas</a>
+                <a href="{{ url_for('gestionar_usuarios') }}" class="d-block text-decoration-none">Administrar usuarios</a>
             </li>
+            {% endif %}
+
             <li class="list-group-item">
-                <a href="/admin/usuarios" class="d-block text-decoration-none">Administrar Usuarios</a>
-            </li>
-            <li class="list-group-item">
-                <a href="/admin/marcas" class="d-block text-decoration-none">Administrar Marcas</a>
+                <a href="{{ url_for('gestionar_marcas') }}" class="d-block text-decoration-none">Administrar marcas</a>
             </li>
         </ul>
     </div>
+    {% else %}
+    <p>No tienes permisos para ver esta sección.</p>
+    {% endif %}
 </div>
+
 
 
 

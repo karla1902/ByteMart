@@ -16,7 +16,7 @@ import requests
 from flask_cors import CORS
 from sqlalchemy import text
 import locale
-
+from functools import wraps
 
 
 app = Flask(__name__)
@@ -360,6 +360,36 @@ def crear_roles():
             db.session.add(rol)
     db.session.commit()
 
+def roles_required(*roles):
+    def decorator(f):
+        @wraps(f)
+        def decorated_function(*args, **kwargs):
+            # Verificar si el usuario está en sesión
+            if 'user_id' not in session:
+                flash('Por favor, inicia sesión primero.', 'warning')
+                return redirect(url_for('login'))
+            
+            # Obtener el usuario de la base de datos
+            user = Usuario.query.get(session['user_id'])
+            if not user:
+                flash('Usuario no encontrado', 'danger')
+                return redirect(url_for('login'))
+            
+            # Comprobar si tiene al menos uno de los roles requeridos
+            user_roles = {rol.nombre for rol in user.roles}  # Convertir a set para optimizar la comparación
+            if not any(role in user_roles for role in roles):
+                flash('No tienes permiso para acceder a esta página', 'danger')
+                return redirect(url_for('index'))
+            
+            return f(*args, **kwargs)
+        return decorated_function
+    return decorator
+
+@app.route('/access_denied')
+def access_denied():
+    return render_template('access_denied.html'), 403
+
+
 
 @app.route('/')
 def index():
@@ -553,6 +583,7 @@ def configuracion():
 
 # Ruta para administrar usuarios
 @app.route('/admin/usuarios', methods=['GET', 'POST'])
+@roles_required('Administrador')
 def gestionar_usuarios():
     if 'user_id' not in session or not Usuario.query.get(session['user_id']).is_admin:
         flash('Acceso denegado. No tienes permisos para acceder a esta página.', 'danger')
@@ -750,6 +781,7 @@ def actualizar_marca(id):
 
 @app.route('/admin/productos', methods=['GET', 'POST'])
 @app.route('/admin/productos/<int:id>', methods=['GET', 'POST'])
+@roles_required('Administrador', 'Jefe de tienda', 'Vendedor')
 def gestionar_productos(id=None):
     categorias = Categoria.query.all()
     marcas = Marca.query.all()  # Obtener todas las marcas
@@ -1478,25 +1510,40 @@ def update_saldo(tarjeta_id):
 
 @app.context_processor
 def inject_carrito():
+    carrito_data = {
+        'carrito': [],
+        'subtotal_carrito': 0,
+        'total_items_carrito': 0,
+        'user_roles': set()
+    }
+
     if 'user_id' in session:
         carrito = Carrito.query.filter_by(usuario_id=session['user_id']).first()
         items = []
         subtotal = 0
-        total_items = 0  # Variable para la cantidad total de productos en el carrito
+        total_items = 0
 
+        # Lógica para el carrito
         if carrito:
             items = ItemCarrito.query.filter_by(carrito_id=carrito.id).all()
             subtotal = sum(item.producto.price * item.cantidad for item in items)
-            
-            # Calcular el número total de productos
-            total_items = sum(item.cantidad for item in items)  # Suma de las cantidades de cada item
-            
-            # Agregar la URL de la imagen al carrito
+            total_items = sum(item.cantidad for item in items)
+
             for item in items:
                 item.image_url = item.producto.imagenes[0].image_url if item.producto.imagenes else None
-        
-        return {'carrito': items, 'subtotal_carrito': subtotal, 'total_items_carrito': total_items}
-    return {'carrito': [], 'subtotal_carrito': 0, 'total_items_carrito': 0}
+
+        # Agregar datos del carrito
+        carrito_data['carrito'] = items
+        carrito_data['subtotal_carrito'] = subtotal
+        carrito_data['total_items_carrito'] = total_items
+
+        # Lógica para los roles del usuario
+        user = Usuario.query.get(session['user_id'])
+        if user:
+            carrito_data['user_roles'] = {rol.nombre for rol in user.roles}
+
+    return carrito_data
+
 
 @app.route('/confirmacion_compra')
 def confirmacion_compra():
