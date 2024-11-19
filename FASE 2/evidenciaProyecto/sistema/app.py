@@ -1097,39 +1097,63 @@ def checkout_view():
 
 @app.route('/process_checkout', methods=['POST'])
 def process_checkout():
-    # Extraer datos del formulario
-    first_name = request.form.get('first-name')
-    last_name = request.form.get('last-name')
-    email = request.form.get('email')
-    address = request.form.get('address')
-    region = request.form.get('region')
-    provincia = request.form.get('provincia')
-    comuna = request.form.get('comuna')
-    tel = request.form.get('tel')
-    tarjeta_id = request.form.get('tarjeta_id')
-    total_compra = request.form.get('total_compra')
-
-    # Validaciones
-    if not tarjeta_id or not total_compra:
-        flash('Por favor, selecciona una tarjeta y asegúrate de que el total de compra sea correcto.', 'error')
-        return redirect(url_for('checkout'))
-
     try:
-        total_compra = int(total_compra)
-    except ValueError:
-        flash('El total de compra no es válido.', 'error')
+        # Validar datos del formulario
+        first_name = request.form.get('first-name')
+        last_name = request.form.get('last-name')
+        email = request.form.get('email')
+        address = request.form.get('address')
+        region = request.form.get('region')
+        provincia = request.form.get('provincia')
+        comuna = request.form.get('comuna')
+        tel = request.form.get('tel')
+        tarjeta_id = request.form.get('tarjeta_id')
+        total_compra = request.form.get('total_compra')
+
+        if not tarjeta_id or not total_compra:
+            flash('Por favor, selecciona una tarjeta y asegúrate de que el total de compra sea correcto.', 'error')
+            return redirect(url_for('checkout'))
+
+        try:
+            total_compra = int(total_compra)
+        except ValueError:
+            flash('El total de compra no es válido.', 'error')
+            return redirect(url_for('checkout'))
+
+        # Verificar tarjeta
+        tarjeta = Tarjeta.query.get(tarjeta_id)
+        if not tarjeta:
+            flash('Tarjeta no válida.', 'error')
+            return redirect(url_for('checkout'))
+
+        if tarjeta.saldo < total_compra:
+            flash('Saldo insuficiente en la tarjeta.', 'error')
+            return redirect(url_for('checkout'))
+
+        # Procesar el pago
+        pago_exitoso = procesar_pago_externo(tarjeta, total_compra)
+        if not pago_exitoso:
+            flash('El pago no se pudo procesar. Intenta nuevamente.', 'error')
+            return redirect(url_for('checkout'))
+
+        # Actualizar modelos: Orden, Factura, Carrito
+        exito, mensaje = actualizar_modelos_post_pago(session['user_id'], tarjeta_id, total_compra)
+        if not exito:
+            flash(mensaje, 'error')
+            return redirect(url_for('checkout'))
+
+        flash('Tu pedido ha sido realizado con éxito!', 'success')
+        return redirect(url_for('confirmacion_compra'))  # Redirigir a una página de confirmación personalizada
+
+    except Exception as e:
+        db.session.rollback()  # Revertir cualquier cambio en caso de error
+        print(f"Error en el proceso de checkout: {e}")
+        flash('Ocurrió un error inesperado durante el proceso. Por favor, intenta nuevamente.', 'error')
         return redirect(url_for('checkout'))
 
-    tarjeta = Tarjeta.query.get(tarjeta_id)
-    if not tarjeta:
-        flash('Tarjeta no válida.', 'error')
-        return redirect(url_for('checkout'))
 
-    saldo_actual = tarjeta.saldo
-    if saldo_actual < total_compra:
-        flash('Saldo insuficiente en la tarjeta.', 'error')
-        return redirect(url_for('checkout'))
-
+# Función para procesar el pago en la API externa
+def procesar_pago_externo(tarjeta, total_compra):
     url_pago = 'http://localhost:5003/api/pagar'
     try:
         response = requests.post(url_pago, json={
@@ -1138,55 +1162,73 @@ def process_checkout():
         }, headers={'Content-Type': 'application/json'})
 
         response.raise_for_status()
-
         if response.status_code == 200:
-            tarjeta.saldo -= total_compra
+            tarjeta.saldo -= total_compra  # Actualizar saldo de la tarjeta localmente
             db.session.commit()
-
-            nuevo_proceso_pago = ProcesoPago(tarjeta_id=tarjeta_id, monto=total_compra)
-            db.session.add(nuevo_proceso_pago)
-
-            orden_id = request.form.get('orden_id')
-            orden = Orden.query.get(orden_id)
-            if orden:
-                estado_pagado = EstadoOrden.query.filter_by(nombre='Pagado').first()
-                orden.estado_id = estado_pagado.id
-                db.session.commit()
-
-                nueva_factura = Factura(orden_id=orden_id, monto=total_compra)
-                db.session.add(nueva_factura)
-                db.session.commit()
-
-            # Descontar stock de productos
-            carrito = Carrito.query.filter_by(usuario_id=session['user_id']).first()
-            if carrito:
-                items_carrito = ItemCarrito.query.filter_by(carrito_id=carrito.id).all()
-                for item in items_carrito:
-                    producto = Producto.query.get(item.producto_id)
-                    if producto and producto.stock >= item.cantidad:
-                        producto.stock -= item.cantidad
-                    else:
-                        flash(f'No hay suficiente stock para {producto.name}.', 'error')
-                        return redirect(url_for('checkout'))
-                
-                # Vaciar el carrito: eliminar todos los ítems y el carrito mismo
-                for item in items_carrito:
-                    db.session.delete(item)  # Eliminar cada ítem del carrito
-
-                db.session.delete(carrito)  # Eliminar el carrito
-                db.session.commit()  # Hacer commit para guardar cambios
-
-            flash('Tu pedido ha sido realizado con éxito!', 'success')
-            return redirect(url_for('checkout'))  # Redirigir a la página de agradecimiento
-
+            return True
         else:
             mensaje_error = response.json().get('mensaje', 'Error desconocido')
             flash(mensaje_error, 'error')
-
+            return False
     except requests.exceptions.RequestException as e:
-        flash(f'Error al procesar el pago: {str(e)}', 'error')
+        print(f"Error al conectarse a la API de pago: {e}")
+        return False
 
-    return redirect(url_for('checkout'))
+
+# Función para actualizar los modelos después del pago
+def actualizar_modelos_post_pago(usuario_id, tarjeta_id, total_compra):
+    try:
+        # Crear la orden con estado "Pagado"
+        estado_pagado = EstadoOrden.query.filter_by(nombre='Pagado').first()
+        if not estado_pagado:
+            return False, 'El estado "Pagado" no está configurado en el sistema.'
+
+        nueva_orden = Orden(
+            usuario_id=usuario_id,
+            estado_id=estado_pagado.id
+        )
+        db.session.add(nueva_orden)
+        db.session.commit()
+
+        # Asociar ítems del carrito a la orden
+        carrito = Carrito.query.filter_by(usuario_id=usuario_id).first()
+        if not carrito:
+            return False, 'No se encontró el carrito del usuario.'
+
+        items_carrito = ItemCarrito.query.filter_by(carrito_id=carrito.id).all()
+        for item in items_carrito:
+            producto = Producto.query.get(item.producto_id)
+            if producto and producto.stock >= item.cantidad:
+                producto.stock -= item.cantidad
+                orden_item = OrdenItem(
+                    orden_id=nueva_orden.id,
+                    producto_id=item.producto_id,
+                    cantidad=item.cantidad
+                )
+                db.session.add(orden_item)
+            else:
+                return False, f'Stock insuficiente para {producto.name}.'
+
+        # Crear factura asociada a la orden
+        nueva_factura = Factura(
+            orden_id=nueva_orden.id,
+            monto=total_compra
+        )
+        db.session.add(nueva_factura)
+
+        # Vaciar carrito
+        for item in items_carrito:
+            db.session.delete(item)
+        db.session.delete(carrito)
+
+        db.session.commit()
+        return True, 'Modelos actualizados con éxito.'
+
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error al actualizar los modelos: {e}")
+        return False, 'Error al actualizar los datos de la orden. Intenta nuevamente.'
+
 
 # @app.route('/gracias')
 # def gracias():
@@ -1456,6 +1498,19 @@ def inject_carrito():
         return {'carrito': items, 'subtotal_carrito': subtotal, 'total_items_carrito': total_items}
     return {'carrito': [], 'subtotal_carrito': 0, 'total_items_carrito': 0}
 
+@app.route('/confirmacion_compra')
+def confirmacion_compra():
+    # Obtener datos de la sesión
+    checkout_items = session.get('checkout_items', [])
+    total_price = session.get('checkout_total', 0)
+    email = session.get('user_email', 'tu@correo.com')  # Ajustar según cómo almacenes el email
+
+    return render_template(
+        'confirmacion_compra.html',
+        checkout_items=checkout_items,
+        total_price=total_price,
+        email=email
+    )
 
 
 
