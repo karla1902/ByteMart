@@ -4,7 +4,6 @@ import Dao.CategoriaDao;
 import java.sql.Connection;
 import java.sql.SQLException;
 import Modelo.CategoriaModelo;
-import java.sql.PreparedStatement;
 import java.util.List;
 
 public class CategoriaController {
@@ -36,7 +35,7 @@ public class CategoriaController {
     }
     
     // Listar Categoria
-    public List<CategoriaModelo> listarCategorias(String palabra){
+    public List<CategoriaModelo> listarCategorias(){
         try {
             return categoriaDAO.obtenerCategoria();
             
@@ -72,9 +71,9 @@ public class CategoriaController {
     }
      
     // Buscar categoría
-    public List<CategoriaModelo> filtrarCategorias(String palabraClave) {
+    public List<CategoriaModelo> filtrarCategorias(String palabra) {
         try {
-            return categoriaDAO.buscarCategoria(palabraClave);
+            return categoriaDAO.buscarCategoria(palabra);
         } catch (SQLException e) {
             System.err.println("Error al buscar las categorías: " + e.getMessage());
             return List.of();

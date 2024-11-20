@@ -1,69 +1,33 @@
 package View;
 
-import Dao.Conexion;
 import java.awt.BorderLayout;
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
-import java.awt.*;
 import java.awt.FlowLayout;
 import java.awt.GridLayout;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 
 public class OrdenesCompraVista extends JPanel{
    private DefaultTableModel tablaOrdenes;
-    private JTextField txtBuscarProducto;
-    private JButton btnGuardarCambios;
 
-    public OrdenesCompraVista() {
+    public OrdenesCompraVista(Connection connection) {
         setLayout(new BorderLayout());
 
         // Panel superior para los campos de entrada
-        JPanel inputPanel = new JPanel(new GridLayout(20, 3, 2, 2));
+        JPanel inputPanel = new JPanel(new GridLayout(3, 3, 2, 2));
         inputPanel.setBorder(BorderFactory.createTitledBorder("Detalles de la Orden de Compra"));
-
-        // Campos de entrada con etiquetas y campos de texto
-        inputPanel.add(new JLabel("Proveedor:"));
-        JComboBox<String> cmbProveedor = new JComboBox<>();
-        cmbProveedor.setPreferredSize(new Dimension(80, 25));
-        inputPanel.add(cmbProveedor);
-
-        inputPanel.add(new JLabel("Estado:"));
-        JComboBox<String> cmbProducto = new JComboBox<>();
-        cmbProducto.setPreferredSize(new Dimension(80, 25));
-        inputPanel.add(cmbProducto);
-
-        inputPanel.add(new JLabel("Cantidad:"));
-        JTextField txtCantidad = new JTextField(15);
-        txtCantidad.setPreferredSize(new Dimension(80, 25));
-        inputPanel.add(txtCantidad);
-
-        inputPanel.add(new JLabel("Precio Unitario:"));
-        JTextField txtPrecioUnitario = new JTextField(15);
-        txtPrecioUnitario.setPreferredSize(new Dimension(80, 25));
-        inputPanel.add(txtPrecioUnitario);
-
-        inputPanel.add(new JLabel("Fecha de Orden:"));
-        JTextField txtFechaOrden = new JTextField(15);
-        txtFechaOrden.setPreferredSize(new Dimension(80, 25));
-        inputPanel.add(txtFechaOrden);
-
-        add(inputPanel, BorderLayout.WEST);
-        inputPanel.setPreferredSize(new Dimension(280, 200));
-
-        // Panel de búsqueda y tabla de órdenes de compra
-        JPanel searchPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        searchPanel.add(new JLabel("Buscar Producto:"));
-        txtBuscarProducto = new JTextField(15);
-        searchPanel.add(txtBuscarProducto);
-
 
         // Ingreso de columnas a la tabla
         tablaOrdenes = new DefaultTableModel();
-        tablaOrdenes.addColumn("ID");
-        tablaOrdenes.addColumn("Proveedor");
+        tablaOrdenes.addColumn("Orden Id");
         tablaOrdenes.addColumn("Producto");
         tablaOrdenes.addColumn("Cantidad");
-        tablaOrdenes.addColumn("Precio Unitario");
-        tablaOrdenes.addColumn("Fecha Orden");
+        tablaOrdenes.addColumn("Monto");
+        tablaOrdenes.addColumn("Estado Orden");
+        tablaOrdenes.addColumn("Usuario");
 
         JTable tableOrdenes = new JTable(tablaOrdenes) {
             @Override
@@ -76,46 +40,47 @@ public class OrdenesCompraVista extends JPanel{
         scrollPane.setBorder(BorderFactory.createTitledBorder("Órdenes de Compra"));
 
         JPanel centerPanel = new JPanel(new BorderLayout());
-        centerPanel.add(searchPanel, BorderLayout.NORTH);
         centerPanel.add(scrollPane, BorderLayout.CENTER);
         add(centerPanel, BorderLayout.CENTER);
 
         // Panel inferior para los botones
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
-        JButton btnLimpiar = new JButton("Limpiar");
-        JButton btnGrabar = new JButton("Grabar");
-        JButton btnModificar = new JButton("Modificar");
-        JButton btnEliminar = new JButton("Eliminar");
         JButton btnSalir = new JButton("Salir");
 
         buttonPanel.add(btnSalir);
-        buttonPanel.add(btnLimpiar);
-        buttonPanel.add(btnGrabar);
-        buttonPanel.add(btnModificar);
-        buttonPanel.add(btnEliminar);
 
         btnSalir.addActionListener(e -> System.exit(0));
         add(buttonPanel, BorderLayout.SOUTH);
-
-        // Agregar funcionalidad a los botones (solo diseño, sin lógica)
-        btnLimpiar.addActionListener(e -> {
-            txtCantidad.setText("");
-            txtPrecioUnitario.setText("");
-            txtFechaOrden.setText("");
-            cmbProveedor.setSelectedIndex(0);
-            cmbProducto.setSelectedIndex(0);
-        });
-
-        btnGrabar.addActionListener(e -> {
-            // Aquí iría la lógica para grabar la orden de compra
-        });
-
-        btnModificar.addActionListener(e -> {
-            // Aquí iría la lógica para modificar una orden de compra existente
-        });
-
-        btnEliminar.addActionListener(e -> {
-            // Aquí iría la lógica para eliminar una orden de compra
-        });
+        
+        cargarDatosTabla(connection);
+    }
+    
+    private void cargarDatosTabla(Connection connection){
+        try {
+            tablaOrdenes.setRowCount(0);
+            String query = "SELECT oi.orden_id, p.name as nombre_producto, oi.cantidad, " +
+                            "(select f.monto from proyecto.factura f join proyecto.orden o on f.orden_id = o.id) as monto, " +
+                            "(select e.nombre from proyecto.orden o join proyecto.estado_orden e on o.estado_id = e.id) as estado_orden, " +
+                            "(select u.username from proyecto.orden o join proyecto.usuario u on o.usuario_id = u.id) as usuario " +
+                            "FROM proyecto.orden_item oi " +
+                            "join proyecto.producto p on oi.producto_id = p.id";
+            PreparedStatement stmt = connection.prepareStatement(query);
+            ResultSet rs = stmt.executeQuery();
+            
+            while (rs.next()){
+                tablaOrdenes.addRow(new Object[]{
+                    rs.getInt("orden_id"),
+                    rs.getString("nombre_producto"),
+                    rs.getInt("cantidad"),
+                    rs.getInt("monto"),
+                    rs.getString("estado_orden"),
+                    rs.getString("Usuario")
+                });
+            }
+            rs.close();
+            stmt.close();
+        }catch (SQLException e){
+            JOptionPane.showMessageDialog(this, "Error al cargar datos de la base de datos: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+        }
     }
 }

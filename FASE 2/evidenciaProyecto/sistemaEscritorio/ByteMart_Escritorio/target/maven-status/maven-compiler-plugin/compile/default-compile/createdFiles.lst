@@ -25,8 +25,8 @@ View\CategoriaVista.class
 Controller\OrdenItemController.class
 View\LoginVista$1.class
 Dao\CategoriaDao.class
-View\OrdenesCompraVista$2.class
 Modelo\UsuarioModelo.class
+Dao\OrderDao.class
 Modelo\EstadoOrdenModelo.class
 View\OrdenesCompraVista.class
 View\LoginVista.class

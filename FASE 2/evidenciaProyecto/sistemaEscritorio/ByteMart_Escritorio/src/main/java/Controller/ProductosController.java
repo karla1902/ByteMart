@@ -35,14 +35,14 @@ public class ProductosController {
     }
     
     // Listar productos
-    public List<ProductosModelo> listarProductos() {
-        try {
-            return productoDAO.listarProductos();
-        } catch (SQLException e) {
-            System.err.println("Error al listar los producto: " + e.getMessage());
-            return List.of();
-        }
-    }
+//    public List<ProductosModelo> listarProductos() {
+//        try {
+//            return productoDAO.listarProductos();
+//        } catch (SQLException e) {
+//            System.err.println("Error al listar los producto: " + e.getMessage());
+//            return List.of();
+//        }
+//    }
 
     // Actualizar un producto
     public boolean actualizarProducto(int id, String name, int price, int categoryId, int marcaId, String descripcion, int stock, boolean en_oferta, boolean destacado ) {

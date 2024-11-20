@@ -26,6 +26,7 @@ public class OrdenItemDao {
         }
     }
     
+    
     // Obtener OrdenItem por ID
     public OrdenItemModelo obtenerOrdenItemPorId(int id) throws SQLException {
         String sql = "SELECT * FROM proyecto.orden_item WHERE id = ?";
