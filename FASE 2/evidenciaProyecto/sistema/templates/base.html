@@ -107,6 +107,7 @@
 				<ul class="header-links pull-right">
 					{% if g.user %}
 						<li><a href="/profile"><i class="fa fa-user"></i> Mi perfil</a></li>
+                        <li><a href="/pedidos"><i class="fa fa-truck"></i> Mis pedidos</a></li>
 						{% if 'Administrador' in user_roles or 'Jefe de tienda' in user_roles %}
 							<li><a href="/admin/configuracion"><i class="fa fa-cogs"></i> Configuración del sitio</a></li>
 						{% endif %}

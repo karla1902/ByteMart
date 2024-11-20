@@ -88,6 +88,24 @@ def create_default_admin():
             db.session.commit()
             app.logger.info('Usuario administrador creado con éxito.')
 
+def estados_orden():
+    """
+    Crea los estados de orden predeterminados si no existen.
+    """
+    with app.app_context():  # Asegúrate de usar el contexto de la aplicación
+        estados = ['Pendiente', 'Pagado', 'En Proceso', 'Enviado', 'Entregado', 'Cancelado']
+
+        for estado in estados:
+            # Verificar si el estado ya existe en la base de datos
+            estado_existente = EstadoOrden.query.filter_by(nombre=estado).first()
+            if not estado_existente:
+                # Si no existe, lo creamos
+                nuevo_estado = EstadoOrden(nombre=estado)
+                db.session.add(nuevo_estado)
+
+        # Confirmar los cambios en la base de datos
+        db.session.commit()
+        app.logger.info('Estados de orden creados o ya existentes.')
 
 
 def test_connection():
@@ -309,13 +327,16 @@ class Orden(db.Model):
 
     usuario = db.relationship('Usuario', backref='ordenes_usuario', lazy=True)
     estado = db.relationship('EstadoOrden', backref='ordenes', lazy=True)
+    
+    # Relación con la factura (una factura por orden)
+    factura = db.relationship('Factura', backref='orden_factura', uselist=False)  # Cambiar el backref aquí
 
     def __repr__(self):
         return f'<Orden id={self.id}, usuario_id={self.usuario_id}>'
 
 
 
-# Factura actualizada a modelo de base de datos
+# Modelo de Factura actualizado
 class Factura(db.Model):
     __tablename__ = 'factura'
     __table_args__ = {'extend_existing': True}
@@ -324,7 +345,7 @@ class Factura(db.Model):
     monto = db.Column(db.Integer, nullable=False)
     fecha_creacion = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
 
-    orden = db.relationship('Orden', backref='factura', lazy=True)
+    orden = db.relationship('Orden', backref='factura_inversa', lazy=True)  # Aquí también puedes cambiar el backref
 
     def __repr__(self):
         return f'<Factura id={self.id}, orden_id={self.orden_id}>'
@@ -400,12 +421,6 @@ def index():
 
 
 
-# Rutas de la página
-@app.route('/')
-def home():
-    categorias = Categoria.query.all()
-    return render_template('index.html',categorias=categorias)
-
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     categorias = Categoria.query.all()
@@ -424,7 +439,7 @@ def login():
                 db.session.commit()
             
             flash('Login exitoso', 'success')
-            return redirect(url_for('home'))
+            return redirect(url_for('index'))
         else:
             flash('Usuario o contraseña incorrectos', 'danger')
 
@@ -570,7 +585,7 @@ def profile():
 def logout():
     session.pop('user_id', None)
     flash('Has salido de la sesión', 'info')
-    return redirect(url_for('home'))
+    return redirect(url_for('index'))
 
 @app.route('/product')
 def product():
@@ -1018,6 +1033,7 @@ def ver_carrito():
 @app.route('/checkout', methods=['GET', 'POST'])
 def checkout():
     categorias = Categoria.query.all()
+    
     if request.method == 'POST':
         carrito = Carrito.query.filter_by(usuario_id=session['user_id']).first()
 
@@ -1058,6 +1074,7 @@ def checkout():
     else:  # Manejo del GET para mostrar la vista de checkout
         # Obtener las tarjetas del usuario
         tarjetas = Tarjeta.query.filter_by(usuario_id=session['user_id']).all()
+        usuario = Usuario.query.get(session['user_id'])  # Recuperar el usuario logueado
 
         try:
             response = requests.get('http://localhost:5005/datos_completos')
@@ -1071,6 +1088,14 @@ def checkout():
             total = session.get('checkout_total', 0)
             checkout_items = session.get('checkout_items', [])
 
+            # Enviar los datos del usuario a la plantilla si existen
+            usuario_data = {
+                "nombre": usuario.nombre if usuario else "",
+                "apellido": usuario.apellido if usuario else "",
+                "email": usuario.email if usuario else "",
+                "direccion": usuario.direccion if usuario else "",
+            }
+
             return render_template(
                 'vista_checkout.html',
                 total_price=total,
@@ -1079,7 +1104,8 @@ def checkout():
                 provincias=provincias,
                 comunas=comunas,
                 tarjetas=tarjetas,
-                categorias = categorias  # Pasar las tarjetas a la plantilla
+                categorias=categorias,
+                usuario_data=usuario_data
             )
 
         except requests.exceptions.RequestException as e:
@@ -1088,6 +1114,7 @@ def checkout():
         except ValueError as e:
             print(f"Error al procesar JSON: {e}")
             return "Error al procesar datos. Por favor, inténtelo más tarde.", 500
+
 
 
 
@@ -1388,6 +1415,7 @@ def destacados():
 
 @app.route('/admin/tarjetas')
 def administrar_tarjetas():
+    categorias = Categoria.query.all()
     if 'user_id' not in session:
         flash('Por favor, inicie sesión para acceder a esta página.', 'danger')
         return redirect(url_for('login'))
@@ -1398,12 +1426,12 @@ def administrar_tarjetas():
     # Verifica si el usuario actual es administrador
     if not usuario_actual.is_admin:
         flash('No tienes permisos para acceder a esta página.', 'danger')
-        return redirect(url_for('home'))  # Redirige al home o donde prefieras
+        return redirect(url_for('index'))  # Redirige al  o donde prefieras
 
     # Si es administrador, obtiene todas las tarjetas
     tarjetas = Tarjeta.query.all()
 
-    return render_template('admin_tarjetas.html', tarjetas=tarjetas)
+    return render_template('admin_tarjetas.html', tarjetas=tarjetas, categorias=categorias)
 
 
 
@@ -1559,6 +1587,36 @@ def confirmacion_compra():
         email=email
     )
 
+@app.route('/pedidos')
+def pedidos():
+    categorias = Categoria.query.all()
+    productos = Producto.query.all()  # Obtén todos los productos de la base de datos
+    usuario_id = session.get('user_id')  # Obtén el ID del usuario desde la sesión
+
+    # Obtener todos los pedidos del usuario
+    pedidos = Orden.query.filter_by(usuario_id=usuario_id).all()  # Obtener los pedidos del usuario
+
+    for pedido in pedidos:
+        # Cargar el estado del pedido
+        pedido.estado_orden = EstadoOrden.query.get(pedido.estado_id)
+        
+        # Obtener la tarjeta asociada al usuario (última tarjeta, si es necesario)
+        pedido.tarjeta = Tarjeta.query.filter_by(usuario_id=usuario_id).first()  # Aquí seleccionas la primera tarjeta
+        
+        # Obtener la factura asociada al pedido (solo uno)
+        pedido.factura = Factura.query.filter_by(orden_id=pedido.id).first()  # Correcto para obtener un solo registro
+
+        # Obtener los productos asociados a la orden (a través de OrdenItem)
+        pedido.items = OrdenItem.query.filter_by(orden_id=pedido.id).all()
+
+    return render_template('pedidos.html', categorias=categorias, productos=productos, pedidos=pedidos)
+
+@app.route('/pedido/<int:pedido_id>', methods=['GET'])
+def detalle_pedido(pedido_id):
+    # Lógica para obtener los detalles del pedido
+    pedido = Orden.query.get_or_404(pedido_id)
+    return render_template('detalle_pedido.html', pedido=pedido)
+
 
 
 if __name__ == '__main__':
@@ -1571,6 +1629,8 @@ if __name__ == '__main__':
         crear_roles()
         # Crear el usuario admin por defecto
         create_default_admin()
+
+        estados_orden()
   
     
     app.run(debug=True)
