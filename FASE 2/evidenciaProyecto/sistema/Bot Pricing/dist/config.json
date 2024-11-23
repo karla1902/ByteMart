@@ -1,0 +1,63 @@
+{
+  "retailers": {
+    "pc_factory": {
+      "product_links": [
+        "https://www.pcfactory.cl/producto/34049-amd-cpu-ryzen-3-3200g-am4?origin=PCF",
+	"https://www.pcfactory.cl/producto/39324-amd-cpu-ryzen-5-5600x-am4?origin=PCF",
+	"https://www.pcfactory.cl/producto/39323-amd-cpu-ryzen-7-5800x-am4?origin=PCF",
+	"https://www.pcfactory.cl/producto/51492-amd-cpu-ryzen-7-5700x3d-am4?origin=PCF",
+	"https://www.pcfactory.cl/producto/46284-amd-cpu-ryzen-5-5500-am4?origin=PCF",
+	"https://www.pcfactory.cl/producto/46062-asus-m-b-amd-a520m-k-prime-am4?origin=PCF",
+	"https://www.pcfactory.cl/producto/47870-asus-m-b-amd-b550m-plus-tuf-gaming-wifi-ii-am4?origin=PCF",
+	"https://www.pcfactory.cl/producto/51648-gigabyte-placa-madre-amd-b550m-k-am4?origin=PCF",
+	"https://www.pcfactory.cl/producto/47163-asus-placa-madre-amd-x670-p-prime-am5?origin=PCF",
+	"https://www.pcfactory.cl/producto/51647-gigabyte-placa-madre-amd-b650m-k-g11-am5?origin=PCF",
+	"https://www.pcfactory.cl/producto/50607-adata-ddr4-8gb-3200mhz-value?origin=PCF",
+	"https://www.pcfactory.cl/producto/46612-corsair-ddr4-8gb-3200mhz-vengeance-lpx?origin=PCF",
+	"https://www.pcfactory.cl/producto/40797-corsair-ddr4-8gb-3200mhz-vengeance-pro-rgb?origin=PCF",
+	"https://www.pcfactory.cl/producto/50667-kingston-fury-ddr4-8gb-3200mhz-beast-rgb?origin=PCF",
+	"https://www.pcfactory.cl/producto/42526-kingston-fury-ddr4-8gb-3600mhz-beast?origin=PCF",
+	"https://www.pcfactory.cl/producto/51900-asus-video-nvidia-geforce-gt1030-2gb?origin=PCF",
+	"https://www.pcfactory.cl/producto/50389-asus-video-nvidia-geforce-dual-gtx1650-4gd6?origin=PCF",
+	"https://www.pcfactory.cl/producto/52538-asus-video-nvidia-geforce-rtx4060ti-evo-o8gb?origin=PCF",
+	"https://www.pcfactory.cl/producto/48099-corsair-fuente-de-poder-1000w-80plus-gold-rm1000x-fully-modular?origin=PCF",
+	"https://www.pcfactory.cl/producto/48526-corsair-fuente-de-poder-750w-80plus-bronze-cx750m-semi-modular?origin=PCF",
+	"https://www.pcfactory.cl/producto/51988-corsair-fuente-de-poder-850w-80plus-gold-fully-modular-atx?origin=PCF",
+	"https://www.pcfactory.cl/producto/53025-gigabyte-fuente-de-poder-450w-80plus-bronze-gp?origin=PCF",
+	"https://www.pcfactory.cl/producto/53033-gigabyte-fuente-de-poder-550w-80plus-bronze-gp?origin=PCF"
+      ]
+    },
+    "Bytemart": {
+      "product_links": [
+        "http://127.0.0.1:5000/producto/1"
+      ]
+    },
+    "MyShop": {
+      "product_links": [
+        "https://www.myshop.cl/producto/cpu-sam4-amd-ryzen-3-3200g-40-ghz-4-mb-yd3200c5fhbox-p21648",
+	"https://www.myshop.cl/producto/cpu-sam4-amd-ryzen-5-5600x-100-100000065box-p18590",
+	"https://www.myshop.cl/producto/cpu-sam4-amd-ryzen-7-5800x-100-100000063wof-p12971",
+	"https://www.myshop.cl/producto/cpu-amd-socket-am4-ryzen-7-5700x3d-30-ghz-8-core-scooler-100-100001503wof-p28181",
+	"https://www.myshop.cl/producto/cpu-amd-ryzen-5-5500-100-100000457box-p12965",
+	"https://www.myshop.cl/producto/mb-sam4-amd-asus-prime-a520m-k-2x-ddr4-micro-atx-p23784",
+	"https://www.myshop.cl/producto/mb-sam4-amd-asus-tuf-gaming-b550m-plus-wifi-ii-micro-atx-amd-b550-chipset-usb-c-gen2-25-gigabit-lan-wi-fi-6-bluetooth-tarjeta-grafica-cpu-necesaria-hd-audio-p26733",
+	"https://www.myshop.cl/producto/placa-madre-amd-gigabyte-b550m-k-socket-am4-4x-ddr4-micro-atx-p19073",
+	"https://www.myshop.cl/producto/mb-sam5-amd-asus-prime-x670-p-wifi-4x-ddr5-atx-p21710",
+	"https://www.myshop.cl/producto/mb-sam5-amd-gigabyte-b650m-k-4x-ddr5-micro-atx-p28823",
+	"https://www.myshop.cl/producto/dimm-8-gb-a-data-ad4u32008g22-sgn-1-x-8gb--dimm-ddr4-3200-p12091",
+	"https://www.myshop.cl/producto/dimm-8-gb-corsair-vengeance-lpx-cmk8gx4m1z3200c16-1-x-8gb--dimm-ddr4-3200-p22029",
+	"https://www.myshop.cl/producto/dimm-8-gb-corsair-vengeance-rgb-pro-cmw8gx4m1e3200c16-1-x-8gb--dimm-ddr4-3200-p12173",
+	"https://www.myshop.cl/producto/dimm-8-gb-kingston-fury-beast-rgb-kf432c16bb2a8-1-x-8-gb--dimm-ddr4-3200-p23443",
+	"https://www.myshop.cl/producto/dimm-8-gb-kingston-fury-beast-kf436c17bb8-1-x-8gb--dimm-ddr4-3600-p5698",
+	"https://www.myshop.cl/producto/tarjeta-de-video-asus-gt1030-2gb-p23878",
+	"https://www.myshop.cl/producto/tarjeta-de-video-asus-dual-gtx1650-o4gd6-p-evo-4-gb-gddr6-128-bit-p26614",
+	"https://www.myshop.cl/producto/tarjeta-de-video-asus-dual-rtx4060-o8g-8-gb-gddr6-128-bit-maximo-1-producto-por-cliente-p21705",
+	"https://www.myshop.cl/producto/corsair-rme-series-rm1000e-fuente-de-alimentacion-interna-atx12v-30-eps12v-80-plus-gold-ca-100-240-v-1000-vatios-norteamerica-p22382",
+	"https://www.myshop.cl/producto/fuente-de-poder-750w-corsair-cx-m-series-cx750m-80plus-bronze-estandar-atx-modular-cp-9020222-na-p21117",
+	"https://www.myshop.cl/producto/corsair-memory-power-supply-rm850x-80-plus-gold-full-modul-p27172",
+	"https://www.myshop.cl/producto/fuente-de-poder-650w-gigabyte-gp-p450bar-p28939",
+	"https://www.myshop.cl/producto/fuente-de-poder-550w-gigabyte-gp-p550bar-p28940"
+      ]
+    }
+  }
+}

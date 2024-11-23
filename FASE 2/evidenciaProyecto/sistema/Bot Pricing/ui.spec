@@ -2,10 +2,10 @@
 
 
 a = Analysis(
-    ['ui.pyw'],
+    ['dist\\static\\ui.pyw'],
     pathex=[],
     binaries=[],
-    datas=[],
+    datas=[('dist\\\\static\\\\chromedriver.exe', 'static'), ('dist\\\\config.json', 'dist')],
     hiddenimports=[],
     hookspath=[],
     hooksconfig={},
@@ -35,5 +35,4 @@ exe = EXE(
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
-    icon=['bot.ico'],
 )
