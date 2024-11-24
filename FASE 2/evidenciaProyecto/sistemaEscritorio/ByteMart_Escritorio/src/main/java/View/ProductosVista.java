@@ -97,10 +97,12 @@ public class ProductosVista extends JPanel {
         tablaProductos = new DefaultTableModel();
         tablaProductos.addColumn("Id");
         tablaProductos.addColumn("Nombre");
-        tablaProductos.addColumn("Categoría");
+        tablaProductos.addColumn("Descripción");
+        tablaProductos.addColumn("En Oferta");
         tablaProductos.addColumn("Marca");
         tablaProductos.addColumn("Precio");
         tablaProductos.addColumn("Stock");
+        tablaProductos.addColumn("Categoría");
 
         JTable tableProductos = new JTable(tablaProductos) {
             @Override

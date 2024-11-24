@@ -58,12 +58,13 @@ public class OrdenesCompraVista extends JPanel{
     private void cargarDatosTabla(Connection connection){
         try {
             tablaOrdenes.setRowCount(0);
-            String query = "SELECT oi.orden_id, p.name as nombre_producto, oi.cantidad, " +
-                            "(select f.monto from proyecto.factura f join proyecto.orden o on f.orden_id = o.id) as monto, " +
-                            "(select e.nombre from proyecto.orden o join proyecto.estado_orden e on o.estado_id = e.id) as estado_orden, " +
-                            "(select u.username from proyecto.orden o join proyecto.usuario u on o.usuario_id = u.id) as usuario " +
+            String query = "SELECT oi.orden_id, p.name as nombre_producto, oi.cantidad, f.monto, e.nombre AS estado_orden, u.username AS usuario " +
                             "FROM proyecto.orden_item oi " +
-                            "join proyecto.producto p on oi.producto_id = p.id";
+                            "join proyecto.producto p on oi.producto_id = p.id " +
+                            "join proyecto.orden o on oi.orden_id = o.id " +
+                            "left join proyecto.factura f on f.orden_id = o.id " +
+                            "left join proyecto.estado_orden e on o.estado_id = e.id " +
+                            "left join proyecto.usuario u on o.usuario_id = u.id";
             PreparedStatement stmt = connection.prepareStatement(query);
             ResultSet rs = stmt.executeQuery();
             
