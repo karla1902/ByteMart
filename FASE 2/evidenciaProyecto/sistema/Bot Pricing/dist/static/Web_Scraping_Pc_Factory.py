@@ -18,7 +18,7 @@ def resource_path(relative_path):
     return os.path.join(os.path.abspath("."), relative_path)
 
 # ---------------Configuración del WebDriver-------------------
-chromedriver_path = resource_path("dist/static/chromedriver.exe")
+chromedriver_path = resource_path("chromedriver.exe")
 service = Service(chromedriver_path)  # Usamos el chromedriver_path correcto aquí
 options = webdriver.ChromeOptions()
 options.add_argument("---disable-blink-features=AutomaticControlled")
@@ -33,7 +33,7 @@ driver = webdriver.Chrome(service=service, options=options)  # Cambiamos a usar 
 
 
 # Leer datos del archivo JSON
-with open(r'dist/config.json') as f:
+with open(r'config.json') as f:
     data = json.load(f)
 
 # Conexión a la base de datos

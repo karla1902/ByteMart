@@ -35,7 +35,8 @@ app.geometry(f"{width}x{height}+{x}+{y}")
 # Cargar y configurar la imagen de fondo
 def load_static_image():
     global background_image, background_label
-    image_path = resource_path("dist/static/stars.gif")  # Cambiar a ruta relativa
+    image_path = resource_path("stars.gif")  # Cambiar a ruta relativa
+    print(image_path)
     background_image = Image.open(image_path)
     background_image = background_image.resize((400, 250), Image.LANCZOS)
     background_photo = ImageTk.PhotoImage(background_image)
@@ -68,7 +69,7 @@ def ejecutar_scripts_en_hilo():
         process.communicate()  # Espera a que el proceso termine antes de continuar
 
     # Lista de scripts para ejecutar en secuencia
-    scripts = ["dist/static/Web_Scraping_MyShop.py", "dist/static/Web_Scraping_Pc_Factory.py", "dist/static/Web_Scraping_Bytemart.py"]
+    scripts = ["Web_Scraping_MyShop.py", "Web_Scraping_Pc_Factory.py", "Web_Scraping_Bytemart.py"]
 
     # Ejecutar cada script en secuencia
     for script in scripts:
@@ -103,7 +104,7 @@ def detener_scripts():
             print(f"Error al detener el proceso: {e}")
 
     # Aquí es donde podrías cerrar el driver de Selenium si lo estás utilizando
-    # Ejemplo (si tienes un objeto de Selenium `driver`):
+    # Ejemplo (si tienes un objeto de Selenium driver):
     # if driver:
     #     driver.quit()
 
