@@ -1,6 +1,6 @@
 package View;
-import Controller.CategoriaController;
-import Modelo.CategoriaModelo;
+import Controller.MarcaController;
+import Modelo.MarcaModelo;
 import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
@@ -16,29 +16,29 @@ import java.sql.Statement;
 import java.util.List;
 
 
-public class CategoriaVista extends JPanel{
-    private DefaultTableModel tablaCategorias;
-    private CategoriaModelo categoriaModelo;
-    private CategoriaController categoriaController;
+public class MarcaVista extends JPanel{
+    private DefaultTableModel tablaMarcas;
+    private MarcaModelo marcaModelo;
+    private MarcaController marcaController;
     private JButton btnGuardarCambios;
     private JTextField txtBuscarCategoria;
     private MenuVista menuVista; 
 
-    public CategoriaVista(Connection connection, MenuVista menuVista) {
-        this.categoriaController = new CategoriaController(connection);
+    public MarcaVista(Connection connection, MenuVista menuVista) {
+        this.marcaController = new MarcaController(connection);
         this.menuVista = menuVista;
         setLayout(new BorderLayout());
         
         // Panel superior para los campos de entrada
         JPanel inputPanel = new JPanel(new GridLayout(10, 4, 5, 5));
-        inputPanel.setBorder(BorderFactory.createTitledBorder("Gestión de Categorías"));
+        inputPanel.setBorder(BorderFactory.createTitledBorder("Gestión de Marca"));
 
-        inputPanel.add(new JLabel("Nombre de Categoría:"));
+        inputPanel.add(new JLabel("Nombre de Marca:"));
         JPanel textFieldPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         // Ajusta el tamaño del text box
-        JTextField txtNombreCategoria = new JTextField(15); 
-        txtNombreCategoria.setPreferredSize(new Dimension(80, 20)); 
-        textFieldPanel.add(txtNombreCategoria);
+        JTextField txtNombreMarca = new JTextField(15); 
+        txtNombreMarca.setPreferredSize(new Dimension(80, 20)); 
+        textFieldPanel.add(txtNombreMarca);
         inputPanel.add(textFieldPanel);
         
         add(inputPanel, BorderLayout.WEST);
@@ -59,12 +59,12 @@ public class CategoriaVista extends JPanel{
         });
 
         // Tabla de categorías (a la derecha)
-        tablaCategorias = new DefaultTableModel();
-        tablaCategorias.addColumn("Id");
-        tablaCategorias.addColumn("Nombre");
+        tablaMarcas = new DefaultTableModel();
+        tablaMarcas.addColumn("Id");
+        tablaMarcas.addColumn("Nombre");
         //tableCategorias.setModel(modelCategorias);
         
-        JTable tableCategorias = new JTable(tablaCategorias) {
+        JTable tableCategorias = new JTable(tablaMarcas) {
             @Override
             // Hacer que ninguna celda sea editable
             public boolean isCellEditable(int row, int column) {
@@ -123,33 +123,33 @@ public class CategoriaVista extends JPanel{
             }
         });
         
-        btnLimpiar.addActionListener(e -> txtNombreCategoria.setText(""));
+        btnLimpiar.addActionListener(e -> txtNombreMarca.setText(""));
 
         btnGrabar.addActionListener(e -> {
-            String nombreCategoria = txtNombreCategoria.getText().trim();
+            String nombreMarca = txtNombreMarca.getText().trim();
 
-            if (!nombreCategoria.isEmpty()) {
-                //CategoriaModelo categoriaModelo = new CategoriaModelo(0, nombreCategoria, null); 
+            if (!nombreMarca.isEmpty()) {
+                 //MarcaModelo marcaModelo = new MarcaModelo(0, nombreMarca); 
 
-                if (categoriaController.crearCategoria(categoriaModelo)) {
+                if (marcaController.crearMarca(marcaModelo)) {
                     cargarDatosTabla(connection); 
                     JOptionPane.showMessageDialog(this, "Categoría agregada con éxito.");
                 } else {
-                    JOptionPane.showMessageDialog(this, "Error al agregar categoría.", "Error", JOptionPane.ERROR_MESSAGE);
+                    JOptionPane.showMessageDialog(this, "Error al agregar marca.", "Error", JOptionPane.ERROR_MESSAGE);
                 }
             } else {
-                JOptionPane.showMessageDialog(this, "Todos los campos deben ser llenados antes de crear una categoria.", "Error", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(this, "Todos los campos deben ser llenados antes de crear una marca.", "Error", JOptionPane.ERROR_MESSAGE);
             }
         });
 
         btnModificar.addActionListener(e -> {
             int selectedRow = tableCategorias.getSelectedRow();
             if (selectedRow != -1) {
-                txtNombreCategoria.setText((String) tablaCategorias.getValueAt(selectedRow, 1));
+                txtNombreMarca.setText((String) tablaMarcas.getValueAt(selectedRow, 1));
 
                 btnGuardarCambios.setVisible(true); 
             } else {
-                JOptionPane.showMessageDialog(this, "Selecciona una categoría para modificar.", "Advertencia", JOptionPane.WARNING_MESSAGE);
+                JOptionPane.showMessageDialog(this, "Selecciona una marca para modificar.", "Advertencia", JOptionPane.WARNING_MESSAGE);
             }
         });
 
@@ -159,17 +159,17 @@ public class CategoriaVista extends JPanel{
             int selectedRow = tableCategorias.getSelectedRow(); // Obtener la fila seleccionada
             //validar que se seleccione un item
             if (selectedRow != -1) {
-                int idCategoria = (int) tablaCategorias.getValueAt(selectedRow, 0);
-                String nuevoNombre = txtNombreCategoria.getText().trim();
+                int idCategoria = (int) tablaMarcas.getValueAt(selectedRow, 0);
+                String nuevoNombre = txtNombreMarca.getText().trim();
 
                 if (!nuevoNombre.isEmpty()) {
-                    categoriaController.actualizarCategoria(idCategoria, nuevoNombre);
+                    marcaController.actualizarMarca(idCategoria, nuevoNombre);
 
                     cargarDatosTabla(connection);
-                    JOptionPane.showMessageDialog(this, "Categoría modificada con éxito.");
+                    JOptionPane.showMessageDialog(this, "Marca modificada con éxito.");
                     btnGuardarCambios.setVisible(false);
                 } else {
-                    JOptionPane.showMessageDialog(this, "El nombre de la categoría no puede estar vacío.", "Error", JOptionPane.ERROR_MESSAGE);
+                    JOptionPane.showMessageDialog(this, "El nombre de la marca no puede estar vacío.", "Error", JOptionPane.ERROR_MESSAGE);
                 }
             } else {
                 JOptionPane.showMessageDialog(this, "No se ha seleccionado ninguna categoría para modificar.", "Advertencia", JOptionPane.WARNING_MESSAGE);
@@ -183,21 +183,21 @@ public class CategoriaVista extends JPanel{
         btnEliminar.addActionListener(e -> {
             int selectedRow = tableCategorias.getSelectedRow();
             if (selectedRow != -1) {
-                int idCategoria = (int) tablaCategorias.getValueAt(selectedRow, 0);
-                int confirm = JOptionPane.showConfirmDialog(this, "¿Está seguro de eliminar la categoría?", "Confirmar eliminación", JOptionPane.YES_NO_OPTION);
+                int idMarca = (int) tablaMarcas.getValueAt(selectedRow, 0);
+                int confirm = JOptionPane.showConfirmDialog(this, "¿Está seguro de eliminar la marca?", "Confirmar eliminación", JOptionPane.YES_NO_OPTION);
                 if (confirm == JOptionPane.YES_OPTION) {
-                    boolean eliminado = categoriaController.eliminarCategoria(idCategoria);
+                    boolean eliminado = marcaController.eliminarMarca(idMarca);
 
                     if (eliminado) {
-                        tablaCategorias.removeRow(selectedRow);
-                        JOptionPane.showMessageDialog(this, "Categoría eliminado correctamente.", "Eliminación exitosa", JOptionPane.INFORMATION_MESSAGE);
-                        txtNombreCategoria.setText("");
+                        tablaMarcas.removeRow(selectedRow);
+                        JOptionPane.showMessageDialog(this, "Marca eliminado correctamente.", "Eliminación exitosa", JOptionPane.INFORMATION_MESSAGE);
+                        txtNombreMarca.setText("");
                     } else {
-                        JOptionPane.showMessageDialog(this, "Error: No se pudo eliminar el categoría de la base de datos.", "Error", JOptionPane.ERROR_MESSAGE);
+                        JOptionPane.showMessageDialog(this, "Error: No se pudo eliminar la marca de la base de datos.", "Error", JOptionPane.ERROR_MESSAGE);
                     }
                 }
             } else {
-                JOptionPane.showMessageDialog(this, "Selecciona una categoría para eliminar.", "Advertencia", JOptionPane.WARNING_MESSAGE);
+                JOptionPane.showMessageDialog(this, "Selecciona una marca para eliminar.", "Advertencia", JOptionPane.WARNING_MESSAGE);
             }
         });
         
@@ -205,14 +205,14 @@ public class CategoriaVista extends JPanel{
     }
 
     private void cargarDatosTabla(Connection connection) {
-        tablaCategorias.setRowCount(0);
-        String sql = "SELECT * FROM proyecto.categoria";
+        tablaMarcas.setRowCount(0);
+        String sql = "SELECT * FROM proyecto.marca";
         try (Statement statement = connection.createStatement();
              ResultSet resultSet = statement.executeQuery(sql)) {
             while (resultSet.next()) {
                 int id = resultSet.getInt("id");
                 String name = resultSet.getString("name");
-                tablaCategorias.addRow(new Object[]{id, name});
+                tablaMarcas.addRow(new Object[]{id, name});
             }
         } catch (SQLException e) {
             System.err.println("Error al cargar los datos de la tabla: " + e.getMessage());
@@ -221,13 +221,13 @@ public class CategoriaVista extends JPanel{
 
     private void aplicarFiltro(Connection connection) {
         String palabra = txtBuscarCategoria.getText().trim();
-        tablaCategorias.setRowCount(0);
+        tablaMarcas.setRowCount(0);
         if (palabra.isEmpty()) {
             cargarDatosTabla(connection);
         } else       {
-            List<CategoriaModelo> categorias = categoriaController.filtrarCategorias(palabra);
-            for (CategoriaModelo categoria : categorias) {
-                tablaCategorias.addRow(new Object[]{categoria.getId(), categoria.getName()});
+            List<MarcaModelo> marcas = marcaController.filtrarMarcas(palabra);
+            for (MarcaModelo marca : marcas) {
+                tablaMarcas.addRow(new Object[]{marca.getId(), marca.getName()});
             }
         }
         

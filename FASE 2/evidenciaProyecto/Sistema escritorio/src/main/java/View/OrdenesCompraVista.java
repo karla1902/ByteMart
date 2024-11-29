@@ -12,9 +12,11 @@ import java.sql.SQLException;
 public class OrdenesCompraVista extends JPanel {
     private DefaultTableModel tablaOrdenes;
     private JButton btnActualizarEstado;
+    private MenuVista menuVista; 
 
-    public OrdenesCompraVista(Connection connection) {
+    public OrdenesCompraVista(Connection connection, MenuVista menuVista) {
         setLayout(new BorderLayout());
+        this.menuVista = menuVista;
 
         // Panel superior para los campos de entrada
         JPanel inputPanel = new JPanel(new GridLayout(20, 3, 2, 2));
@@ -59,11 +61,27 @@ public class OrdenesCompraVista extends JPanel {
         btnActualizarEstado = new JButton("Actualizar Estado");
         buttonPanel.add(btnActualizarEstado);
 
-        JButton btnSalir = new JButton("Salir");
-        buttonPanel.add(btnSalir);
+        JButton btnCerrarSesion = new JButton("Cerrar sesión");
+        buttonPanel.add(btnCerrarSesion);
 
-        btnSalir.addActionListener(e -> System.exit(0));
         add(buttonPanel, BorderLayout.SOUTH);
+        
+        btnCerrarSesion.addActionListener(e -> {
+            int confirm = JOptionPane.showConfirmDialog(
+                this,
+                "¿Está seguro de que desea cerrar sesión?",
+                "Confirmar cierre de sesión",
+                JOptionPane.YES_NO_OPTION
+            );
+
+            if (confirm == JOptionPane.YES_OPTION) {
+                SwingUtilities.invokeLater(() -> {
+                    // Cierra la ventana principal
+                    menuVista.dispose(); 
+                    new LoginVista(connection).setVisible(true);
+                });
+            }
+        });
 
         // Funcionalidad del botón de actualizar estado
         btnActualizarEstado.addActionListener(e -> {
@@ -104,7 +122,7 @@ public class OrdenesCompraVista extends JPanel {
 
             while (rs.next()) {
                 tablaOrdenes.addRow(new Object[]{
-                    rs.getInt("orden_id"),
+                    rs.getInt("orden_id"), 
                     rs.getString("nombre_producto"),
                     rs.getInt("cantidad"),
                     rs.getInt("monto"),

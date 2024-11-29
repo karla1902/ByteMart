@@ -61,4 +61,14 @@ public class MarcaController {
             return false;
         }
     }
+    
+    // Buscar marcas
+    public List<MarcaModelo> filtrarMarcas(String palabra) {
+        try {
+            return marcaDAO.buscarMarca(palabra);
+        } catch (SQLException e) {
+            System.err.println("Error al buscar las marcas: " + e.getMessage());
+            return List.of();
+        }
+    }
 }

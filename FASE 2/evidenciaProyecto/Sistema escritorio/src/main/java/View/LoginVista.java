@@ -110,7 +110,7 @@ public class LoginVista extends JFrame {
                "FROM proyecto.usuario u " +
                "JOIN proyecto.usuario_rol ru ON u.id = ru.id " +
                "JOIN proyecto.rol r ON ru.id = r.id " +
-               "WHERE u.username = ? AND u.password = ? AND r.nombre <> 'Cliente'";
+               "WHERE u.username = ? AND u.password = ? AND ru.rol_id <> 4";
 
         try (PreparedStatement ps = connection.prepareStatement(query)) {
             ps.setString(1, username);

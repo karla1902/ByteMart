@@ -25,13 +25,14 @@ public class ProductosVista extends JPanel {
     private CategoriaController categoriaController;
     private JButton btnGuardarCambios;
     private JTextField txtBuscarProducto;
+    private MenuVista menuVista;
 
     private int obtenerProductoporId = -1;
 
-    public ProductosVista(Connection connection) {
+    public ProductosVista(Connection connection, MenuVista menuVista) {
         this.productosController = new ProductosController(connection);
         this.categoriaController = new CategoriaController(connection);
-        
+        this.menuVista = menuVista;
         setLayout(new BorderLayout());
 
         // Panel superior para los campos de entrada
@@ -44,19 +45,19 @@ public class ProductosVista extends JPanel {
         cmbCategoria.setPreferredSize(new Dimension(80, 25));  // Ajustando tamaño del JComboBox
         inputPanel.add(cmbCategoria);
 
-        inputPanel.add(new JLabel("Oferta:"));
-        JComboBox<String> cmbOferta = new JComboBox<>(new String[]{"No", "Sí"});
-        cmbOferta.setPreferredSize(new Dimension(80, 25));  // Ajustando tamaño del JComboBox
-        inputPanel.add(cmbOferta);
+        inputPanel.add(new JLabel("Marca:"));
+        JComboBox<MarcaModelo> cmbMarca = new JComboBox<>();
+        cmbMarca.setPreferredSize(new Dimension(80, 25));  
+        inputPanel.add(cmbMarca);
 
         inputPanel.add(new JLabel("Nombre:"));
-        JTextField txtNombreProducto = new JTextField(15);
-        txtNombreProducto.setPreferredSize(new Dimension(80, 25));  // Ajustando tamaño del JTextField
+        JTextField txtNombreProducto = new JTextField(20);
+        txtNombreProducto.setPreferredSize(new Dimension(80, 45)); 
         inputPanel.add(txtNombreProducto);
 
         inputPanel.add(new JLabel("Descripción:"));
-        JTextField txtDescripcion = new JTextField(15);
-        txtDescripcion.setPreferredSize(new Dimension(80, 25));  // Ajustando tamaño del JTextField
+        JTextField txtDescripcion = new JTextField(20);
+        txtDescripcion.setPreferredSize(new Dimension(80, 45)); 
         inputPanel.add(txtDescripcion);
 
         inputPanel.add(new JLabel("Stock Máximo:"));
@@ -68,20 +69,29 @@ public class ProductosVista extends JPanel {
         JTextField txtPrecio = new JTextField(15);
         txtPrecio.setPreferredSize(new Dimension(80, 25)); 
         inputPanel.add(txtPrecio);
-
-        inputPanel.add(new JLabel("Marca:"));
-        JComboBox<MarcaModelo> cmbMarca = new JComboBox<>();
-        cmbMarca.setPreferredSize(new Dimension(80, 25));  
-        inputPanel.add(cmbMarca);
+        
+        inputPanel.add(new JLabel("Oferta:"));
+        JComboBox<String> cmbOferta = new JComboBox<>(new String[]{"No", "Sí"});
+        cmbOferta.setPreferredSize(new Dimension(80, 25));
+        inputPanel.add(cmbOferta);
 
         inputPanel.add(new JLabel("Destacado:"));
         JComboBox<String> cmbDestacado = new JComboBox<>(new String[]{"No", "Sí"});
         cmbDestacado.setPreferredSize(new Dimension(80, 25)); 
         inputPanel.add(cmbDestacado);
-
+        
+        inputPanel.add(new JLabel("Imagen:"));
+        JButton btnSeleccionarImagen = new JButton("Seleccionar Imagen");
+        inputPanel.add(btnSeleccionarImagen);
+        
+        JLabel lblPreviewImagen = new JLabel();
+        lblPreviewImagen.setPreferredSize(new Dimension(500, 500)); 
+        lblPreviewImagen.setBorder(BorderFactory.createLineBorder(Color.BLACK));
+        inputPanel.add(lblPreviewImagen);
+        
         add(inputPanel, BorderLayout.WEST);
         inputPanel.setPreferredSize(new Dimension(280, 200));
-
+        
         // Panel de búsqueda y tabla de productos
         JPanel searchPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         searchPanel.add(new JLabel("Buscador Producto:"));
@@ -106,9 +116,12 @@ public class ProductosVista extends JPanel {
         tablaProductos.addColumn("Descripción");
         tablaProductos.addColumn("Marca");
         tablaProductos.addColumn("En Oferta");
+        tablaProductos.addColumn("Destacado");
         tablaProductos.addColumn("Precio");
         tablaProductos.addColumn("Stock");
         tablaProductos.addColumn("Categoría");
+        
+       
 
         JTable tableProductos = new JTable(tablaProductos) {
             @Override
@@ -132,18 +145,56 @@ public class ProductosVista extends JPanel {
         JButton btnGrabar = new JButton("Grabar");
         JButton btnModificar = new JButton("Modificar");
         JButton btnEliminar = new JButton("Eliminar");
-        JButton btnSalir = new JButton("Salir");
+        JButton btnCerrarSesion = new JButton("Cerrar sesión");
 
-        buttonPanel.add(btnSalir);
+        buttonPanel.add(btnCerrarSesion);
         buttonPanel.add(btnLimpiar);
         buttonPanel.add(btnGrabar);
         buttonPanel.add(btnModificar);
         buttonPanel.add(btnEliminar);
 
-        btnSalir.addActionListener(e -> System.exit(0));
         add(buttonPanel, BorderLayout.SOUTH);
+        
+        // Ruta seleccionada de la imagen
+        final String[] rutaImagen = {null};
 
+        // Acción del botón para cargar imagen
+        btnSeleccionarImagen.addActionListener(e -> {
+            JFileChooser fileChooser = new JFileChooser();
+            fileChooser.setFileFilter(new javax.swing.filechooser.FileNameExtensionFilter("Imágenes", "jpg", "png", "jpeg"));
+
+            int result = fileChooser.showOpenDialog(this);
+            if (result == JFileChooser.APPROVE_OPTION) {
+                rutaImagen[0] = fileChooser.getSelectedFile().getAbsolutePath();
+                ImageIcon imageIcon = new ImageIcon(new ImageIcon(rutaImagen[0]).getImage().getScaledInstance(200, 200, Image.SCALE_SMOOTH));
+
+                // Ajustar el JLabel a la imagen
+//                lblPreviewImagen.setIcon(imageIcon);
+//                lblPreviewImagen.setPreferredSize(new Dimension(200, 200));
+//                lblPreviewImagen.revalidate(); // Actualiza el tamaño
+//                lblPreviewImagen.repaint();
+            }
+        });
+
+        
         // Agregar funcionalidad a los botones
+        btnCerrarSesion.addActionListener(e -> {
+            int confirm = JOptionPane.showConfirmDialog(
+                this,
+                "¿Está seguro de que desea cerrar sesión?",
+                "Confirmar cierre de sesión",
+                JOptionPane.YES_NO_OPTION
+            );
+
+            if (confirm == JOptionPane.YES_OPTION) {
+                SwingUtilities.invokeLater(() -> {
+                    // Cierra la ventana principal
+                    menuVista.dispose(); 
+                    new LoginVista(connection).setVisible(true);
+                });
+            }
+        });
+
         btnLimpiar.addActionListener(e -> {
             txtNombreProducto.setText("");
             txtDescripcion.setText("");
@@ -169,8 +220,8 @@ public class ProductosVista extends JPanel {
             MarcaModelo marcaSeleccionada = (MarcaModelo) cmbMarca.getSelectedItem();
             int idMarca = marcaSeleccionada != null ? marcaSeleccionada.getId() : -1;
             
-            
-            if (!nombre.isEmpty() && idCategoria != -1 && idMarca != -1) {
+            if (!nombre.isEmpty() || !descripcion.isEmpty() 
+                && precio > 0 && stock > 0 && idCategoria != -1 && idMarca != -1) {
                  
                 java.util.Date fechaCreacionActual = new java.util.Date();
                  // Crear una nueva instancia de ProductosModelo y asignar los valores
@@ -183,12 +234,12 @@ public class ProductosVista extends JPanel {
                     JOptionPane.showMessageDialog(this, "Error al agregar el producto.", "Error", JOptionPane.ERROR_MESSAGE);
                 }
             } else {
-                JOptionPane.showMessageDialog(this, "El nombre del producto no puede estar vacío y se debe seleccionar una categoría.", "Error", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(this, "Los campos del producto no puede estar vacío y se debe seleccionar un producto..", "Error", JOptionPane.ERROR_MESSAGE);
             }
         });
         
 
-       btnModificar.addActionListener(e -> {
+        btnModificar.addActionListener(e -> {
             int selectedRow = tableProductos.getSelectedRow();
             if (selectedRow != -1) {
                 // Cargar los datos del producto seleccionado en los campos de texto
@@ -196,25 +247,30 @@ public class ProductosVista extends JPanel {
                 obtenerProductoporId = (int) model.getValueAt(selectedRow, 0);  
                 txtNombreProducto.setText((String) model.getValueAt(selectedRow, 1));
                 txtDescripcion.setText((String) model.getValueAt(selectedRow, 2));
+                //cmbMarca.setSelectedItem(model.getValueAt(selectedRow, 8));
                 cmbOferta.setSelectedItem(model.getValueAt(selectedRow, 4));
-                txtPrecio.setText(model.getValueAt(selectedRow, 5).toString());
-                txtStockMaximo.setText(model.getValueAt(selectedRow, 6).toString());
-                cmbCategoria.setSelectedItem((String) model.getValueAt(selectedRow, 7));
-                cmbMarca.setSelectedItem(model.getValueAt(selectedRow, 3));
+                cmbDestacado.setSelectedItem(model.getValueAt(selectedRow, 5));
+                txtPrecio.setText(model.getValueAt(selectedRow, 6).toString());
+                txtStockMaximo.setText(model.getValueAt(selectedRow, 7).toString());
+                //cmbCategoria.setSelectedItem((String) model.getValueAt(selectedRow, 3));
                 
-                // Iterar sobre el ComboBox de categorías para seleccionar la correcta
+                
+                // Seleccionar la categoría correcta en el JComboBox
+                String categoriaNombre = (String) model.getValueAt(selectedRow, 8);
                 for (int i = 0; i < cmbCategoria.getItemCount(); i++) {
-                    CategoriaModelo categoria = (CategoriaModelo) cmbCategoria.getItemAt(i);
-                    if (categoria.getName().equals(cmbCategoria)) {
-                        cmbCategoria.setSelectedItem(categoria);
+                    CategoriaModelo categoria = cmbCategoria.getItemAt(i);
+                    if (categoria.getName().equals(categoriaNombre)) { // Compara por nombre
+                        cmbCategoria.setSelectedIndex(i);
                         break;
                     }
                 }
-                
+
+                // Seleccionar la marca correcta en el JComboBox
+                String marcaNombre = (String) model.getValueAt(selectedRow, 3);
                 for (int i = 0; i < cmbMarca.getItemCount(); i++) {
-                    MarcaModelo marca = (MarcaModelo) cmbMarca.getItemAt(i);
-                    if (marca.getName().equals(cmbMarca)) {
-                        cmbMarca.setSelectedItem(marca);
+                    MarcaModelo marca = cmbMarca.getItemAt(i);
+                    if (marca.getName().equals(marcaNombre)) { // Compara por nombre
+                        cmbMarca.setSelectedIndex(i);
                         break;
                     }
                 }
@@ -253,8 +309,10 @@ public class ProductosVista extends JPanel {
                 JOptionPane.showMessageDialog(this, "No se ha seleccionado ningún producto para modificar.", "Advertencia", JOptionPane.WARNING_MESSAGE);
             }
         });
+        
         btnGuardarCambios.setVisible(false); 
-        buttonPanel.add(btnGuardarCambios); 
+        inputPanel.add(Box.createVerticalStrut(20)); 
+        inputPanel.add(btnGuardarCambios); 
 
 
         btnEliminar.addActionListener(e -> {
@@ -276,6 +334,7 @@ public class ProductosVista extends JPanel {
                         cmbCategoria.setSelectedIndex(0);
                         cmbMarca.setSelectedIndex(0);
                         cmbOferta.setSelectedIndex(0);
+                        cmbDestacado.setSelectedIndex(0);
                     } else {
                         JOptionPane.showMessageDialog(this, "Error: No se pudo eliminar el producto de la base de datos.", "Error", JOptionPane.ERROR_MESSAGE);
                     }
@@ -295,7 +354,7 @@ public class ProductosVista extends JPanel {
         try {
             tablaProductos.setRowCount(0);
 
-            String query = "SELECT p.id, p.name, p.descripcion, m.name AS marca, p.stock, p.price, p.en_oferta, c.name AS categoria " +
+            String query = "SELECT p.id, p.name, p.descripcion, m.name AS marca, c.name AS categoria, p.stock, p.price, p.en_oferta, p.destacado " +
                            "FROM proyecto.producto p " +
                            "JOIN proyecto.categoria c ON p.category_id = c.id "+ 
                            "JOIN proyecto.marca m ON p.marca_id = m.id"; 
@@ -309,6 +368,7 @@ public class ProductosVista extends JPanel {
                         rs.getString("descripcion"),
                         rs.getString("marca"),
                         rs.getBoolean("en_oferta") ? "Sí" : "No",
+                        rs.getBoolean("destacado") ? "Sí" : "No",
                         rs.getInt("price"),
                         rs.getInt("stock"),
                         rs.getString("categoria") 

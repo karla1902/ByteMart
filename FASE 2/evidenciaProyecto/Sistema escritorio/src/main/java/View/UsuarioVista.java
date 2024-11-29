@@ -11,10 +11,12 @@ import java.sql.SQLException;
 import javax.swing.table.DefaultTableModel;
 
 public class UsuarioVista extends JPanel {
+    private MenuVista menuVista; 
     private DefaultTableModel tablaUsuarios;
     private UsuarioController usuarioController;
     private JTextField txtUsername;
     private JTextField txtPasswordUsuario;
+    private JTextField txtConfirmPassword;
     private JTextField txtNombre;
     private JTextField txtApellido;
     private JTextField txtEmail;
@@ -23,9 +25,11 @@ public class UsuarioVista extends JPanel {
     private JTable tableUsuarios;
     private JButton btnGuardarCambios;
     private int obtenerUsuarioporId = -1;
+    
 
-    public UsuarioVista(Connection connection) {
+    public UsuarioVista(Connection connection, MenuVista menuVista) {
         this.usuarioController = new UsuarioController(connection);
+        this.menuVista = menuVista;
         setLayout(new BorderLayout());
 
         // Crear el panel de entrada
@@ -41,6 +45,11 @@ public class UsuarioVista extends JPanel {
         txtPasswordUsuario = new JPasswordField();
         txtPasswordUsuario.setPreferredSize(new Dimension(80, 25));
         inputPanel.add(txtPasswordUsuario);
+        
+        inputPanel.add(new JLabel("Confirmar contraseña:"));
+        txtConfirmPassword = new JPasswordField();
+        txtConfirmPassword.setPreferredSize(new Dimension(80, 25));
+        inputPanel.add(txtConfirmPassword);
         
         inputPanel.add(new JLabel("Nombre:"));
         txtNombre = new JTextField();
@@ -87,26 +96,42 @@ public class UsuarioVista extends JPanel {
         add(centerPanel, BorderLayout.CENTER);
 
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
-        JButton btnSalir = new JButton("Salir");
         JButton btnLimpiar = new JButton("Limpiar");
         JButton btnGrabar = new JButton("Grabar");
         JButton btnModificar = new JButton("Modificar");
         JButton btnEliminar = new JButton("Eliminar");
+        JButton btnCerrarSesion = new JButton("Cerrar sesión");
         
-        buttonPanel.add(btnSalir);
+        buttonPanel.add(btnCerrarSesion);
         buttonPanel.add(btnLimpiar);
         buttonPanel.add(btnGrabar);
         buttonPanel.add(btnModificar);
         buttonPanel.add(btnEliminar);
         
-        
-        btnSalir.addActionListener(e -> System.exit(0));
         add(buttonPanel, BorderLayout.SOUTH);
 
         // Funcionalidad a los botones
+        btnCerrarSesion.addActionListener(e -> {
+            int confirm = JOptionPane.showConfirmDialog(
+                this,
+                "¿Está seguro de que desea cerrar sesión?",
+                "Confirmar cierre de sesión",
+                JOptionPane.YES_NO_OPTION
+            );
+
+            if (confirm == JOptionPane.YES_OPTION) {
+                SwingUtilities.invokeLater(() -> {
+                    // Cierra la ventana principal
+                    menuVista.dispose(); 
+                    new LoginVista(connection).setVisible(true);
+                });
+            }
+        });
+        
         btnLimpiar.addActionListener(e -> {
            txtUsername.setText("");
            txtPasswordUsuario.setText("");
+           txtConfirmPassword.setText("");
            txtNombre.setText("");
            txtApellido.setText("");
            txtEmail.setText("");
@@ -117,25 +142,33 @@ public class UsuarioVista extends JPanel {
         btnGrabar.addActionListener(e -> {
            String username = txtUsername.getText().trim();
            String password = txtPasswordUsuario.getText().trim();
+           String confirmPassword = txtConfirmPassword.getText().trim();
            String nombre = txtNombre.getText().trim();
            String apellido = txtApellido.getText().trim(); 
            String email = txtEmail.getText().trim();
            String direccion = txtDireccion.getText().trim();
 
-           Integer idUsuario = usuarioController.crearUsuario(username, password, nombre, apellido, email, direccion, null, null, false);
-
-           if (idUsuario != null) {
-               RolModelo rolSeleccionado = (RolModelo) comboRoles.getSelectedItem();
-               if (rolSeleccionado != null) {
-                   int rolId = rolSeleccionado.getId();
-                   usuarioController.agregarUsuarioRol(idUsuario, rolId);
-                   JOptionPane.showMessageDialog(this, "Usuario creado y rol asignado con éxito.");
-                   cargarDatosTabla(connection);
-               } else {
-                   JOptionPane.showMessageDialog(this, "Error: No se ha seleccionado un rol.");
-               }
+            if (!username.isEmpty() || !password.isEmpty() || !confirmPassword.isEmpty() || !nombre.isEmpty() 
+                    || !apellido.isEmpty() || !email.isEmpty() || !direccion.isEmpty()) {
+                
+                if (password.equals(confirmPassword)){
+                    
+                   Integer idUsuario = usuarioController.crearUsuario(username, password, nombre, apellido, email, direccion, null, null, false);
+                   
+                   RolModelo rolSeleccionado = (RolModelo) comboRoles.getSelectedItem();
+                    if (rolSeleccionado != null) {
+                        int rolId = rolSeleccionado.getId();
+                        usuarioController.agregarUsuarioRol(idUsuario, rolId);
+                        JOptionPane.showMessageDialog(this, "Usuario creado y rol asignado con éxito.");
+                        cargarDatosTabla(connection);
+                    } else {
+                        JOptionPane.showMessageDialog(this, "Error: No se ha seleccionado un rol.");
+                    }
+                } else {
+                    JOptionPane.showMessageDialog(this, "Las contraseñas no coinciden.");
+                }
            } else {
-               JOptionPane.showMessageDialog(this, "Error al crear el usuario.");
+               JOptionPane.showMessageDialog(this, "Todos los campos deben ser llenados antes de crear un usuario.");
            }
         });
         
@@ -144,7 +177,7 @@ public class UsuarioVista extends JPanel {
             if (selectedRow != -1) {
                 // Obtener el ID y los datos del usuario seleccionado
                 DefaultTableModel model = (DefaultTableModel) tableUsuarios.getModel();
-
+                
                 obtenerUsuarioporId = (int) model.getValueAt(selectedRow, 0);
                 txtUsername.setText((String) model.getValueAt(selectedRow, 1)); 
                 txtNombre.setText((String) model.getValueAt(selectedRow, 3));
@@ -154,6 +187,9 @@ public class UsuarioVista extends JPanel {
                 txtDireccion.setText((String) model.getValueAt(selectedRow, 6)); 
                 //comboRoles.setSelectedItem(model.getValueAt(selectedRow, 7));
                 
+                if (txtPasswordUsuario != txtConfirmPassword) {
+                    
+                }
                 // Seleccionar el rol del usuario
                 String rolNombre = (String) model.getValueAt(selectedRow, 7);
                 for (int i = 0; i < comboRoles.getItemCount(); i++) {
@@ -213,7 +249,8 @@ public class UsuarioVista extends JPanel {
         });
         
         btnGuardarCambios.setVisible(false); 
-        buttonPanel.add(btnGuardarCambios); 
+        inputPanel.add(Box.createVerticalStrut(20)); 
+        inputPanel.add(btnGuardarCambios); 
         cargarDatosTabla(connection);
         
         btnEliminar.addActionListener(e -> {

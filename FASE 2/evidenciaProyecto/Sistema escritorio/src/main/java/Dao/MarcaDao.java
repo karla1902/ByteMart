@@ -83,4 +83,24 @@ public class MarcaDao {
             System.err.println("Error al eliminar la marca: " + e.getMessage());
         }
     }
+    
+     //Metodo para filtrar por palabra clave
+    public List<MarcaModelo> buscarMarca(String palabra) throws SQLException {
+        List<MarcaModelo> marcas = new ArrayList<>();
+        String sql = "SELECT * FROM proyecto.marca WHERE name LIKE ?";
+
+        try (PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+            preparedStatement.setString(1, "%" + palabra + "%");
+            try (ResultSet resultSet = preparedStatement.executeQuery()) {
+                while (resultSet.next()) {
+                    int id = resultSet.getInt("id");
+                    String name = resultSet.getString("name");
+                    marcas.add(new MarcaModelo(id, name));
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("Error al aplicar el filtro: " + e.getMessage());
+        }
+        return marcas;
+    }
 }
