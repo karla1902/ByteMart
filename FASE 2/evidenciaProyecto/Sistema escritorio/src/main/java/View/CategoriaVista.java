@@ -129,7 +129,8 @@ public class CategoriaVista extends JPanel{
             String nombreCategoria = txtNombreCategoria.getText().trim();
 
             if (!nombreCategoria.isEmpty()) {
-                //CategoriaModelo categoriaModelo = new CategoriaModelo(0, nombreCategoria, null); 
+                //Se inicializa
+                CategoriaModelo categoriaModelo = new CategoriaModelo(0, nombreCategoria, null); 
 
                 if (categoriaController.crearCategoria(categoriaModelo)) {
                     cargarDatosTabla(connection); 

@@ -1,46 +1,71 @@
 package View;
-import Controller.CategoriaController;
-import Modelo.CategoriaModelo;
+import Controller.TarjetasController;
 import Modelo.TarjetasModelo;
+import Modelo.UsuarioModelo;
 import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.GridLayout;
-import java.awt.event.KeyAdapter;
-import java.awt.event.KeyEvent;
 import javax.swing.*;
 import java.sql.Connection;
+import java.sql.PreparedStatement;
 import javax.swing.table.DefaultTableModel;
 import java.sql.SQLException;
 import java.sql.ResultSet;
 import java.sql.Statement;
-import java.util.List;
 
 
 public class TarjetasVista extends JPanel{
     private DefaultTableModel tablaTarjetas;
     private TarjetasModelo tarjetasModelo;
-    private CategoriaController categoriaController;
+    private TarjetasController tarjetasController;
     private JButton btnGuardarCambios;
-    private JTextField txtBuscarCategoria;
     private MenuVista menuVista; 
 
     public TarjetasVista(Connection connection, MenuVista menuVista) {
-        this.categoriaController = new CategoriaController(connection);
+        this.tarjetasController = new TarjetasController(connection);
         this.menuVista = menuVista;
         setLayout(new BorderLayout());
         
         // Panel superior para los campos de entrada
-        JPanel inputPanel = new JPanel(new GridLayout(10, 4, 5, 5));
+        JPanel inputPanel = new JPanel(new GridLayout(20, 3, 2, 2));
         inputPanel.setBorder(BorderFactory.createTitledBorder("Gestión de Tarjetas"));
 
+        // Usuario
+        inputPanel.add(new JLabel("Usuario:"));
+        JComboBox<UsuarioModelo> cmbUsuario= new JComboBox<>();
+        cmbUsuario.setPreferredSize(new Dimension(80, 25));  // Ajustando tamaño del JComboBox
+        inputPanel.add(cmbUsuario);
+
+        // Número de Tarjeta
         inputPanel.add(new JLabel("Numero Tarjeta:"));
-        JPanel textFieldPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        // Ajusta el tamaño del text box
-        JTextField txtNombreCategoria = new JTextField(15); 
-        txtNombreCategoria.setPreferredSize(new Dimension(80, 20)); 
-        textFieldPanel.add(txtNombreCategoria);
-        inputPanel.add(textFieldPanel);
+        JTextField txtNumeroTarjeta = new JTextField(15);
+        txtNumeroTarjeta.setPreferredSize(new Dimension(80, 25)); 
+        inputPanel.add(txtNumeroTarjeta);
+
+        // Mes de Vencimiento
+        inputPanel.add(new JLabel("Mes Vencimiento:"));
+        JTextField txtMesVencimiento = new JTextField(15);
+        txtNumeroTarjeta.setPreferredSize(new Dimension(80, 25)); 
+        inputPanel.add(txtMesVencimiento);
+
+        // Año de Vencimiento
+        inputPanel.add(new JLabel("Año Vencimiento:"));
+        JTextField txtAnioVencimiento = new JTextField(15);
+        txtAnioVencimiento.setPreferredSize(new Dimension(80, 25)); 
+        inputPanel.add(txtAnioVencimiento);
+
+        // Código de Verificación
+        inputPanel.add(new JLabel("Codigo Verificacion:"));
+        JTextField txtCodVerificacion = new JTextField(15);
+        txtCodVerificacion.setPreferredSize(new Dimension(80, 25)); 
+        inputPanel.add(txtCodVerificacion);
+
+        // Saldo
+        inputPanel.add(new JLabel("Saldo:"));
+        JTextField txtSaldo = new JTextField(15);
+        txtSaldo.setPreferredSize(new Dimension(80, 25)); 
+        inputPanel.add(txtSaldo);
         
         add(inputPanel, BorderLayout.WEST);
         inputPanel.setPreferredSize(new Dimension(200, 200));
@@ -56,7 +81,7 @@ public class TarjetasVista extends JPanel{
         tablaTarjetas.addColumn("Saldo");
 
         
-        JTable tableCategorias = new JTable(tablaTarjetas) {
+        JTable tableTarjetas = new JTable(tablaTarjetas) {
             @Override
             // Hacer que ninguna celda sea editable
             public boolean isCellEditable(int row, int column) {
@@ -64,8 +89,8 @@ public class TarjetasVista extends JPanel{
             }
         };
         
-        JScrollPane scrollPane = new JScrollPane(tableCategorias);
-        tableCategorias.setFillsViewportHeight(true);
+        JScrollPane scrollPane = new JScrollPane(tableTarjetas);
+        tableTarjetas.setFillsViewportHeight(true);
         scrollPane.setBorder(BorderFactory.createTitledBorder("Tarjetas"));
 
 
@@ -115,30 +140,103 @@ public class TarjetasVista extends JPanel{
             }
         });
         
-        btnLimpiar.addActionListener(e -> txtNombreCategoria.setText(""));
+        btnLimpiar.addActionListener(e -> {
+            cmbUsuario.setSelectedIndex(0);
+            txtNumeroTarjeta.setText("");
+            txtMesVencimiento.setText("");
+            txtAnioVencimiento.setText("");
+            txtCodVerificacion.setText("");
+            txtSaldo.setText("");
+                
+        });
 
         btnGrabar.addActionListener(e -> {
-            String nombreCategoria = txtNombreCategoria.getText().trim();
+            UsuarioModelo usuarioSeleccionado = (UsuarioModelo) cmbUsuario.getSelectedItem();
+            int idUsuario = usuarioSeleccionado.getId();
 
-            if (!nombreCategoria.isEmpty()) {
-                CategoriaModelo categoriaModelo = new CategoriaModelo(0, nombreCategoria, null); 
+            String numeroTarjeta = txtNumeroTarjeta.getText().trim();
+            String mesVencimientoStr = txtMesVencimiento.getText().trim();
+            String anioVencimientoStr = txtAnioVencimiento.getText().trim();
+            String codigoVerificacion = txtCodVerificacion.getText().trim();
+            String saldoStr = txtSaldo.getText().trim();
 
-                if (categoriaController.crearCategoria(categoriaModelo)) {
-                    cargarDatosTabla(connection); 
-                    JOptionPane.showMessageDialog(this, "Tarjeta agregada con éxito.");
-                } else {
-                    JOptionPane.showMessageDialog(this, "Error al agregar la tarjeta.", "Error", JOptionPane.ERROR_MESSAGE);
+            if (idUsuario != -1 && !numeroTarjeta.isEmpty() && !mesVencimientoStr.isEmpty() 
+                    && !anioVencimientoStr.isEmpty() && !codigoVerificacion.isEmpty() && !saldoStr.isEmpty()) {
+
+                try {
+                    // Validación de número de tarjeta 16 dígitos
+                    if (numeroTarjeta.length() != 16 || !numeroTarjeta.matches("[0-9]+")) {
+                        JOptionPane.showMessageDialog(this, "El número de tarjeta debe contener exactamente 16 dígitos numéricos.", "Error", JOptionPane.ERROR_MESSAGE);
+                        return;
+                    }
+
+                    // Validación del mes de vencimiento
+                    int mesVencimiento = Integer.parseInt(mesVencimientoStr);
+                    if (mesVencimiento < 1 || mesVencimiento > 12) {
+                        JOptionPane.showMessageDialog(this, "El mes de vencimiento debe estar entre 01 y 12.", "Error", JOptionPane.ERROR_MESSAGE);
+                        return;
+                    }
+
+                    // Validación del año de vencimiento (2 dígitos)
+                    if (anioVencimientoStr.length() != 4 || !anioVencimientoStr.matches("[0-9]+")) {
+                        JOptionPane.showMessageDialog(this, "El año de vencimiento debe tener dos dígitos.", "Error", JOptionPane.ERROR_MESSAGE);
+                        return;
+                    }
+                    int anioVencimiento = Integer.parseInt(anioVencimientoStr);
+
+                    // Validación del código de verificación (3 dígitos)
+                    if (codigoVerificacion.length() != 3 || !codigoVerificacion.matches("[0-9]+")) {
+                        JOptionPane.showMessageDialog(this, "El código de verificación debe tener exactamente 3 dígitos.", "Error", JOptionPane.ERROR_MESSAGE);
+                        return;
+                    }
+
+                    // Validación del saldo
+                    int saldo = Integer.parseInt(saldoStr);
+
+                    System.out.println("ID del usuario seleccionado: " + idUsuario);
+                    
+                    // Crear modelo de tarjeta
+                    TarjetasModelo tarjetaModelo = new TarjetasModelo(0, idUsuario, numeroTarjeta, mesVencimiento, anioVencimiento, codigoVerificacion, saldo);
+
+                    if (tarjetasController.crearTarjeta(tarjetaModelo)) {
+                        cargarDatosTabla(connection); // Refresca la tabla
+                        JOptionPane.showMessageDialog(this, "Tarjeta agregada con éxito.");
+                    } else {
+                        JOptionPane.showMessageDialog(this, "Error al agregar la tarjeta.", "Error", JOptionPane.ERROR_MESSAGE);
+                    }
+                } catch (NumberFormatException ex) {
+                    JOptionPane.showMessageDialog(this, "Por favor, ingrese datos numéricos válidos en los campos correspondientes (mes, año, código, saldo).", "Error", JOptionPane.ERROR_MESSAGE);
                 }
             } else {
-                JOptionPane.showMessageDialog(this, "Todos los campos deben ser llenados antes de crear una categoria.", "Error", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(this, "Todos los campos deben ser llenados antes de agregar una tarjeta.", "Error", JOptionPane.ERROR_MESSAGE);
             }
         });
 
-        btnModificar.addActionListener(e -> {
-            int selectedRow = tableCategorias.getSelectedRow();
-            if (selectedRow != -1) {
-                txtNombreCategoria.setText((String) tablaTarjetas.getValueAt(selectedRow, 1));
 
+        btnModificar.addActionListener(e -> {
+            int selectedRow = tableTarjetas.getSelectedRow();
+            if (selectedRow != -1) {
+                DefaultTableModel model = (DefaultTableModel) tableTarjetas.getModel();
+                
+                txtNumeroTarjeta.setText((String) tablaTarjetas.getValueAt(selectedRow, 2).toString());
+                txtMesVencimiento.setText(tablaTarjetas.getValueAt(selectedRow, 3).toString());
+                txtAnioVencimiento.setText(tablaTarjetas.getValueAt(selectedRow, 4).toString());
+                txtCodVerificacion.setText(tablaTarjetas.getValueAt(selectedRow, 5).toString());
+                txtSaldo.setText(tablaTarjetas.getValueAt(selectedRow, 6).toString());
+                
+                // Seleccionar el usuario correcto en el JComboBox
+                String usuarioNombre = (String) model.getValueAt(selectedRow, 1);
+                //Integer idUsuario = (Integer) model.getValueAt(selectedRow, 1);
+                for (int i = 0; i < cmbUsuario.getItemCount(); i++) {
+                    UsuarioModelo usuario= cmbUsuario.getItemAt(i);
+                    if (usuario.getUsername().equals(usuarioNombre)) { // Compara por nombre
+                        cmbUsuario.setSelectedIndex(i);
+                        break;
+                    }
+                }
+                
+                // Deshabilitar el comboBox de usuario para que no se pueda cambiar
+                cmbUsuario.setEnabled(false);
                 btnGuardarCambios.setVisible(true); 
             } else {
                 JOptionPane.showMessageDialog(this, "Selecciona una tarjeta para modificar.", "Advertencia", JOptionPane.WARNING_MESSAGE);
@@ -148,42 +246,77 @@ public class TarjetasVista extends JPanel{
         // Crear el botón Guardar Cambios
         btnGuardarCambios = new JButton("Guardar Cambios");
         btnGuardarCambios.addActionListener(e -> {
-            int selectedRow = tableCategorias.getSelectedRow(); // Obtener la fila seleccionada
-            //validar que se seleccione un item
+            int selectedRow = tableTarjetas.getSelectedRow(); // Obtener la fila seleccionada
+            // Validar que se seleccione un ítem
             if (selectedRow != -1) {
-                int idCategoria = (int) tablaTarjetas.getValueAt(selectedRow, 0);
-                String nuevoNombre = txtNombreCategoria.getText().trim();
+                try {
+                    // Obtener el ID de la tarjeta desde la tabla (columna 0)
+                    int idTarjeta = (int) tablaTarjetas.getValueAt(selectedRow, 0);
 
-                if (!nuevoNombre.isEmpty()) {
-                    categoriaController.actualizarCategoria(idCategoria, nuevoNombre);
+                    // Obtener los valores de los campos de texto
+                    UsuarioModelo usuarioSeleccionado = (UsuarioModelo) cmbUsuario.getSelectedItem();
+                    int idUsuario= usuarioSeleccionado.getId();
+                    
+                    String nuevoNumeroTarjeta = txtNumeroTarjeta.getText().trim();
+                    String nuevoMesVencimiento = txtMesVencimiento.getText().trim();
+                    String nuevoAnioVencimiento = txtAnioVencimiento.getText().trim();
+                    String nuevoCodigoVerificacion = txtCodVerificacion.getText().trim();
+                    String nuevoSaldo = txtSaldo.getText().trim();
 
-                    cargarDatosTabla(connection);
-                    JOptionPane.showMessageDialog(this, "Tarjeta modificada con éxito.");
-                    btnGuardarCambios.setVisible(false);
-                } else {
-                    JOptionPane.showMessageDialog(this, "Los campos de la tarjeta no puede estar vacío.", "Error", JOptionPane.ERROR_MESSAGE);
+                    // Validar que los campos no estén vacíos
+                    if (idUsuario != -1 && !nuevoNumeroTarjeta.isEmpty() && !nuevoMesVencimiento.isEmpty()
+                            && !nuevoAnioVencimiento.isEmpty() && !nuevoCodigoVerificacion.isEmpty() && !nuevoSaldo.isEmpty()) {
+
+                        // Actualizar la tarjeta a través del controlador
+                        if (tarjetasController.actualizarTarjeta(
+                                idTarjeta,
+                                idUsuario, 
+                                nuevoNumeroTarjeta, 
+                                Integer.parseInt(nuevoMesVencimiento),
+                                Integer.parseInt(nuevoAnioVencimiento),
+                                nuevoCodigoVerificacion, 
+                                Integer.parseInt(nuevoSaldo))
+                            ) {
+                            cargarDatosTabla(connection); 
+                            JOptionPane.showMessageDialog(this, "Tarjeta modificada con éxito.");
+                            cmbUsuario.setEnabled(true);
+                            btnGuardarCambios.setVisible(false); 
+                        } else {
+                            JOptionPane.showMessageDialog(this, "Error al modificar la tarjeta.", "Error", JOptionPane.ERROR_MESSAGE);
+                        }
+                    } else {
+                        JOptionPane.showMessageDialog(this, "Todos los campos deben estar completos antes de guardar los cambios.", "Error", JOptionPane.ERROR_MESSAGE);
+                    }
+                } catch (NumberFormatException ex) {
+                    JOptionPane.showMessageDialog(this, "Los campos numéricos deben contener valores válidos.", "Error", JOptionPane.ERROR_MESSAGE);
                 }
             } else {
                 JOptionPane.showMessageDialog(this, "No se ha seleccionado ninguna tarjeta para modificar.", "Advertencia", JOptionPane.WARNING_MESSAGE);
             }
         });
+
         btnGuardarCambios.setVisible(false);
         inputPanel.add(Box.createVerticalStrut(20)); 
         inputPanel.add(btnGuardarCambios); 
 
 
         btnEliminar.addActionListener(e -> {
-            int selectedRow = tableCategorias.getSelectedRow();
+            int selectedRow = tableTarjetas.getSelectedRow();
             if (selectedRow != -1) {
-                int idCategoria = (int) tablaTarjetas.getValueAt(selectedRow, 0);
+                int idTarjeta = (int) tablaTarjetas.getValueAt(selectedRow, 0);
                 int confirm = JOptionPane.showConfirmDialog(this, "¿Está seguro de eliminar la tarjeta?", "Confirmar eliminación", JOptionPane.YES_NO_OPTION);
                 if (confirm == JOptionPane.YES_OPTION) {
-                    boolean eliminado = categoriaController.eliminarCategoria(idCategoria);
+                    boolean eliminado = tarjetasController.eliminarTarjeta(idTarjeta);
 
                     if (eliminado) {
                         tablaTarjetas.removeRow(selectedRow);
                         JOptionPane.showMessageDialog(this, "Tarjeta eliminada correctamente.", "Eliminación exitosa", JOptionPane.INFORMATION_MESSAGE);
-                        txtNombreCategoria.setText("");
+                        cmbUsuario.setSelectedIndex(0);
+                        txtNumeroTarjeta.setText("");
+                        txtMesVencimiento.setText("");
+                        txtAnioVencimiento.setText("");
+                        txtCodVerificacion.setText("");
+                        txtSaldo.setText("");
                     } else {
                         JOptionPane.showMessageDialog(this, "Error: No se pudo eliminar la tarjeta de la base de datos.", "Error", JOptionPane.ERROR_MESSAGE);
                     }
@@ -194,26 +327,50 @@ public class TarjetasVista extends JPanel{
         });
         
         cargarDatosTabla(connection);
+        cargarCbmUsuario(connection, cmbUsuario);
     }
 
     private void cargarDatosTabla(Connection connection) {
         tablaTarjetas.setRowCount(0);
-        String sql = "SELECT * FROM proyecto.tarjetas";
+        String sql = "SELECT t.id, u.username as usuario, t.numero_tarjeta, t.mes_vencimiento, t.anio_vencimiento, "
+                + "t.codigo_verificacion, t.saldo FROM proyecto.tarjetas t "
+                + " JOIN proyecto.usuario u on u.id = t.usuario_id";
         try (Statement statement = connection.createStatement();
              ResultSet resultSet = statement.executeQuery(sql)) {
             while (resultSet.next()) {
                 int id = resultSet.getInt("id");
-                int usuario_id = resultSet.getInt("usuario_id");
-                int numero_tarjeta = resultSet.getInt("numero_tarjeta");
+                String usuario = resultSet.getString("usuario");
+                String numero_tarjeta = resultSet.getString("numero_tarjeta");
                 int mes_vencimiento = resultSet.getInt("mes_vencimiento");
                 int anio_vencimiento = resultSet.getInt("anio_vencimiento");
-                int codigo_verificacion = resultSet.getInt("codigo_verificacion");
+                String codigo_verificacion = resultSet.getString("codigo_verificacion");
                 int saldo = resultSet.getInt("saldo");
 
-                tablaTarjetas.addRow(new Object[]{id, usuario_id, numero_tarjeta, mes_vencimiento, anio_vencimiento,codigo_verificacion,saldo});
+                tablaTarjetas.addRow(new Object[]{id, usuario, numero_tarjeta, mes_vencimiento, anio_vencimiento,codigo_verificacion,saldo});
             }
         } catch (SQLException e) {
             System.err.println("Error al cargar los datos de la tabla: " + e.getMessage());
+        }
+    }
+    
+    private void cargarCbmUsuario(Connection connection, JComboBox<UsuarioModelo> cmbUsuario) {
+        try {
+            String query = "SELECT id, username FROM proyecto.usuario"; 
+            PreparedStatement stmt = connection.prepareStatement(query);
+            ResultSet rs = stmt.executeQuery();
+
+            while (rs.next()) {
+                int id = rs.getInt("id");
+                String username = rs.getString("username");
+                UsuarioModelo usuario = new UsuarioModelo(id, username, null, null, null, null, null, null, null, false);
+                cmbUsuario.addItem(usuario); 
+            }
+
+            rs.close();
+            stmt.close();
+        } catch (SQLException e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(this, "Error al cargar usuario de la tarjeta de la base de datos: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
         }
     }
 }

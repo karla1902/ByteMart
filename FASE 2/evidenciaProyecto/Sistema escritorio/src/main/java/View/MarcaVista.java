@@ -46,7 +46,7 @@ public class MarcaVista extends JPanel{
         
         //Ubicar buscardor arriba de las tabla
         JPanel searchPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        searchPanel.add(new JLabel("Buscador Categoría:"));
+        searchPanel.add(new JLabel("Buscador Marca:"));
         txtBuscarCategoria = new JTextField(15);
         searchPanel.add(txtBuscarCategoria);
         
@@ -74,11 +74,11 @@ public class MarcaVista extends JPanel{
         
         JScrollPane scrollPane = new JScrollPane(tableCategorias);
         tableCategorias.setFillsViewportHeight(true);
-        scrollPane.setBorder(BorderFactory.createTitledBorder("Categorías"));
+        scrollPane.setBorder(BorderFactory.createTitledBorder("Marcas"));
 
 
         cargarDatosTabla(connection);
-        scrollPane.setBorder(BorderFactory.createTitledBorder("Categorías"));
+        scrollPane.setBorder(BorderFactory.createTitledBorder("Marcas"));
         add(scrollPane, BorderLayout.CENTER);
      
         // Añadir panel de búsqueda y tabla en el centro
@@ -129,11 +129,12 @@ public class MarcaVista extends JPanel{
             String nombreMarca = txtNombreMarca.getText().trim();
 
             if (!nombreMarca.isEmpty()) {
-                 //MarcaModelo marcaModelo = new MarcaModelo(0, nombreMarca); 
+                //Se inicializa
+                MarcaModelo marcaModelo = new MarcaModelo(0, nombreMarca); 
 
                 if (marcaController.crearMarca(marcaModelo)) {
                     cargarDatosTabla(connection); 
-                    JOptionPane.showMessageDialog(this, "Categoría agregada con éxito.");
+                    JOptionPane.showMessageDialog(this, "Marca agregada con éxito.");
                 } else {
                     JOptionPane.showMessageDialog(this, "Error al agregar marca.", "Error", JOptionPane.ERROR_MESSAGE);
                 }
@@ -172,7 +173,7 @@ public class MarcaVista extends JPanel{
                     JOptionPane.showMessageDialog(this, "El nombre de la marca no puede estar vacío.", "Error", JOptionPane.ERROR_MESSAGE);
                 }
             } else {
-                JOptionPane.showMessageDialog(this, "No se ha seleccionado ninguna categoría para modificar.", "Advertencia", JOptionPane.WARNING_MESSAGE);
+                JOptionPane.showMessageDialog(this, "No se ha seleccionado ninguna marca para modificar.", "Advertencia", JOptionPane.WARNING_MESSAGE);
             }
         });
         btnGuardarCambios.setVisible(false);

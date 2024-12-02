@@ -16,40 +16,40 @@ public class TarjetasDao {
 
     // Método para crear una nueva tarjeta
     public void agregarTarjeta(TarjetasModelo tarjeta) throws SQLException {
-        String sql = "INSERT INTO proyecto.tarjeta (name) VALUES (?)";
+        String sql = "INSERT INTO proyecto.tarjetas (usuario_id, numero_tarjeta, mes_vencimiento, anio_vencimiento, codigo_verificacion, saldo) VALUES (?, ?, ?, ?, ?, ?)";
         try (PreparedStatement statement = connection.prepareStatement(sql)) {
-            statement.setInt(1, tarjeta.getNumeroTarjeta());
+            statement.setString(1, tarjeta.getNumeroTarjeta());
             statement.setInt(2, tarjeta.getUsuarioId());  
             statement.setInt(3, tarjeta.getMesVencimiento());  
             statement.setInt(4, tarjeta.getAnioVencimiento());  
-            statement.setInt(5, tarjeta.getCodigoVerificacion());  
+            statement.setString(5, tarjeta.getCodigoVerificacion());  
             statement.setInt(6, tarjeta.getSaldo()); 
             statement.executeUpdate(); 
         } catch (SQLException e) {
-            System.err.println("Error al crear la marca: " + e.getMessage());
+            System.err.println("Error al crear la tarjeta: " + e.getMessage());
         }
     }
 
     // Método para obtener todas las tarjetas
     public List<TarjetasModelo> obtenerTarjeta() throws SQLException {
-        List<TarjetasModelo> marcas = new ArrayList<>();
+        List<TarjetasModelo> tarjetas = new ArrayList<>();
         String sql = "SELECT * FROM proyecto.tarjeta";
         try (Statement statement = connection.createStatement();
              ResultSet resultSet = statement.executeQuery(sql)) {
             while (resultSet.next()) {
-                TarjetasModelo marca = new TarjetasModelo(
+                TarjetasModelo tajeta = new TarjetasModelo(
                     resultSet.getInt("id"),
                     resultSet.getInt("usuario_id"),
-                    resultSet.getInt("numero_tarjeta"),
+                    resultSet.getString("numero_tarjeta"),
                     resultSet.getInt("mes_vencimiento"),   
                     resultSet.getInt("anio_vencimiento"),
-                    resultSet.getInt("codigo_verificacion"),
+                    resultSet.getString("codigo_verificacion"),
                     resultSet.getInt("saldo")
                 );
-                marcas.add(marca);
+                tarjetas.add(tajeta);
             }
         }
-        return marcas;
+        return tarjetas;
     }
 
     // Método para obtener una tarjeta por su ID
@@ -64,10 +64,10 @@ public class TarjetasDao {
                 return new TarjetasModelo(
                     resultSet.getInt("id"),
                     resultSet.getInt("usuario_id"),
-                    resultSet.getInt("numero_tarjeta"),
+                    resultSet.getString("numero_tarjeta"),
                     resultSet.getInt("mes_vencimiento"),   
                     resultSet.getInt("anio_vencimiento"),
-                    resultSet.getInt("codigo_verificacion"),
+                    resultSet.getString("codigo_verificacion"),
                     resultSet.getInt("saldo")
                 );
             } else {
@@ -78,14 +78,15 @@ public class TarjetasDao {
 
     // Método para actualizar una tarjeta
     public void actualizarMarca(TarjetasModelo tarjeta) throws SQLException {
-        String sql = "UPDATE proyecto.tarjeta SET name = ? WHERE id = ?";
+        String sql = "UPDATE tarjetas SET usuario_id = ?, numero_tarjeta = ?, mes_vencimiento = ?, anio_vencimiento = ?, codigo_verificacion = ?, saldo = ? WHERE id = ?";
         try (PreparedStatement statement = connection.prepareStatement(sql)) {
-            statement.setInt(1, tarjeta.getNumeroTarjeta());  
-            statement.setInt(2, tarjeta.getMesVencimiento());  
-            statement.setInt(3, tarjeta.getAnioVencimiento());  
-            statement.setInt(4, tarjeta.getCodigoVerificacion());  
-            statement.setInt(5, tarjeta.getSaldo());  
-            statement.setInt(6, tarjeta.getId());       
+            statement.setInt(1, tarjeta.getUsuarioId());  
+            statement.setString(2, tarjeta.getNumeroTarjeta());  
+            statement.setInt(3, tarjeta.getMesVencimiento());  
+            statement.setInt(4, tarjeta.getAnioVencimiento());  
+            statement.setString(5, tarjeta.getCodigoVerificacion());  
+            statement.setInt(6, tarjeta.getSaldo());  
+            statement.setInt(7, tarjeta.getId());       
             statement.executeUpdate();                
         } catch (SQLException e) {
             System.err.println("Error al actualizar la marca: " + e.getMessage());

@@ -27,11 +27,7 @@ public class ProductoDao {
             statement.setBoolean(8, producto.getDestacado());       
 
             statement.executeUpdate();
-            // Confirmar la transacción
-            connection.commit();
         } catch (SQLException e) {
-            // Revertir la transacción si algo falla
-            connection.rollback();  
             System.err.println("Error al crear producto: " + e.getMessage());
         }
     }

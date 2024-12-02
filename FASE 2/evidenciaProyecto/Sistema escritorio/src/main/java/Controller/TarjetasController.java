@@ -41,7 +41,7 @@ public class TarjetasController {
         }
     }
     
-    public boolean actualizarTarjeta(int id, int usuario_id, int numero_tajeta, int mes_vencimiento, int anio_vencimiento, int codigo_verificacion, int saldo) {
+    public boolean actualizarTarjeta(int id, int usuario_id, String numero_tajeta, int mes_vencimiento, int anio_vencimiento, String codigo_verificacion, int saldo) {
         try {
             TarjetasModelo tarjetaActualizada = new TarjetasModelo(id, usuario_id, numero_tajeta, mes_vencimiento, anio_vencimiento, codigo_verificacion, saldo); 
             tarjetasDao.agregarTarjeta(tarjetaActualizada);
@@ -52,7 +52,7 @@ public class TarjetasController {
         }
     }
 
-    public boolean eliminarMarca(int id) {
+    public boolean eliminarTarjeta(int id) {
         try {
             tarjetasDao.eliminarTarjeta(id);
             return true;

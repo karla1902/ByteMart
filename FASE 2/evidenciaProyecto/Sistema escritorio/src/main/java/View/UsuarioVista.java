@@ -151,11 +151,12 @@ public class UsuarioVista extends JPanel {
             if (!username.isEmpty() || !password.isEmpty() || !confirmPassword.isEmpty() || !nombre.isEmpty() 
                     || !apellido.isEmpty() || !email.isEmpty() || !direccion.isEmpty()) {
                 
+                //Validar que las contraseñas coincidan
                 if (password.equals(confirmPassword)){
                     
                    Integer idUsuario = usuarioController.crearUsuario(username, password, nombre, apellido, email, direccion, null, null, false);
                    
-                   RolModelo rolSeleccionado = (RolModelo) comboRoles.getSelectedItem();
+                    RolModelo rolSeleccionado = (RolModelo) comboRoles.getSelectedItem();
                     if (rolSeleccionado != null) {
                         int rolId = rolSeleccionado.getId();
                         usuarioController.agregarUsuarioRol(idUsuario, rolId);
@@ -181,26 +182,28 @@ public class UsuarioVista extends JPanel {
                 obtenerUsuarioporId = (int) model.getValueAt(selectedRow, 0);
                 txtUsername.setText((String) model.getValueAt(selectedRow, 1)); 
                 txtNombre.setText((String) model.getValueAt(selectedRow, 3));
-                txtPasswordUsuario.setText((String) model.getValueAt(selectedRow, 2));   
+                txtPasswordUsuario.setText((String) model.getValueAt(selectedRow, 2)); 
+                txtConfirmPassword.setText((String) model.getValueAt(selectedRow, 2)); 
                 txtApellido.setText((String) model.getValueAt(selectedRow, 4));  
                 txtEmail.setText((String) model.getValueAt(selectedRow, 5));  
                 txtDireccion.setText((String) model.getValueAt(selectedRow, 6)); 
                 //comboRoles.setSelectedItem(model.getValueAt(selectedRow, 7));
                 
-                if (txtPasswordUsuario != txtConfirmPassword) {
-                    
-                }
-                // Seleccionar el rol del usuario
-                String rolNombre = (String) model.getValueAt(selectedRow, 7);
-                for (int i = 0; i < comboRoles.getItemCount(); i++) {
-                    RolModelo rolModelo = (RolModelo) comboRoles.getItemAt(i);
-                    if (rolModelo.getNombre().equals(rolNombre)) {
-                        comboRoles.setSelectedItem(rolModelo);
-                        break;
+                //Validar que las contraseñas coincidan
+                if (txtPasswordUsuario.equals(txtConfirmPassword)) {
+                    // Seleccionar el rol del usuario
+                    String rolNombre = (String) model.getValueAt(selectedRow, 7);
+                    for (int i = 0; i < comboRoles.getItemCount(); i++) {
+                        RolModelo rolModelo = (RolModelo) comboRoles.getItemAt(i);
+                        if (rolModelo.getNombre().equals(rolNombre)) {
+                            comboRoles.setSelectedItem(rolModelo);
+                            break;
+                        }
                     }
+
+                    btnGuardarCambios.setVisible(true);
                 }
                 
-                btnGuardarCambios.setVisible(true);
             } else {
                 JOptionPane.showMessageDialog(this, "Seleccione un usuario para modificar.", "Advertencia", JOptionPane.WARNING_MESSAGE);
             }

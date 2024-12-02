@@ -42,7 +42,7 @@ public class ProductosVista extends JPanel {
         // Campos de entrada con tus etiquetas y campos especificados
         inputPanel.add(new JLabel("Categoría:"));
         JComboBox<CategoriaModelo> cmbCategoria = new JComboBox<>();
-        cmbCategoria.setPreferredSize(new Dimension(80, 25));  // Ajustando tamaño del JComboBox
+        cmbCategoria.setPreferredSize(new Dimension(80, 25)); 
         inputPanel.add(cmbCategoria);
 
         inputPanel.add(new JLabel("Marca:"));
@@ -80,14 +80,14 @@ public class ProductosVista extends JPanel {
         cmbDestacado.setPreferredSize(new Dimension(80, 25)); 
         inputPanel.add(cmbDestacado);
         
-        inputPanel.add(new JLabel("Imagen:"));
-        JButton btnSeleccionarImagen = new JButton("Seleccionar Imagen");
-        inputPanel.add(btnSeleccionarImagen);
-        
-        JLabel lblPreviewImagen = new JLabel();
-        lblPreviewImagen.setPreferredSize(new Dimension(500, 500)); 
-        lblPreviewImagen.setBorder(BorderFactory.createLineBorder(Color.BLACK));
-        inputPanel.add(lblPreviewImagen);
+//        inputPanel.add(new JLabel("Imagen:"));
+//        JButton btnSeleccionarImagen = new JButton("Seleccionar Imagen");
+//        inputPanel.add(btnSeleccionarImagen);
+//        
+//        JLabel lblPreviewImagen = new JLabel();
+//        lblPreviewImagen.setPreferredSize(new Dimension(500, 500)); 
+//        lblPreviewImagen.setBorder(BorderFactory.createLineBorder(Color.BLACK));
+//        inputPanel.add(lblPreviewImagen);
         
         add(inputPanel, BorderLayout.WEST);
         inputPanel.setPreferredSize(new Dimension(280, 200));
@@ -159,22 +159,22 @@ public class ProductosVista extends JPanel {
         final String[] rutaImagen = {null};
 
         // Acción del botón para cargar imagen
-        btnSeleccionarImagen.addActionListener(e -> {
-            JFileChooser fileChooser = new JFileChooser();
-            fileChooser.setFileFilter(new javax.swing.filechooser.FileNameExtensionFilter("Imágenes", "jpg", "png", "jpeg"));
-
-            int result = fileChooser.showOpenDialog(this);
-            if (result == JFileChooser.APPROVE_OPTION) {
-                rutaImagen[0] = fileChooser.getSelectedFile().getAbsolutePath();
-                ImageIcon imageIcon = new ImageIcon(new ImageIcon(rutaImagen[0]).getImage().getScaledInstance(200, 200, Image.SCALE_SMOOTH));
-
-                // Ajustar el JLabel a la imagen
+//        btnSeleccionarImagen.addActionListener(e -> {
+//            JFileChooser fileChooser = new JFileChooser();
+//            fileChooser.setFileFilter(new javax.swing.filechooser.FileNameExtensionFilter("Imágenes", "jpg", "png", "jpeg"));
+//
+//            int result = fileChooser.showOpenDialog(this);
+//            if (result == JFileChooser.APPROVE_OPTION) {
+//                rutaImagen[0] = fileChooser.getSelectedFile().getAbsolutePath();
+//                ImageIcon imageIcon = new ImageIcon(new ImageIcon(rutaImagen[0]).getImage().getScaledInstance(200, 200, Image.SCALE_SMOOTH));
+//
+//                // Ajustar el JLabel a la imagen
 //                lblPreviewImagen.setIcon(imageIcon);
 //                lblPreviewImagen.setPreferredSize(new Dimension(200, 200));
 //                lblPreviewImagen.revalidate(); // Actualiza el tamaño
 //                lblPreviewImagen.repaint();
-            }
-        });
+//            }
+//        });
 
         
         // Agregar funcionalidad a los botones

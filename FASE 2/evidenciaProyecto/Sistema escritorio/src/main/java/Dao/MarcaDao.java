@@ -19,7 +19,9 @@ public class MarcaDao {
         String sql = "INSERT INTO proyecto.marca (name) VALUES (?)";
         try (PreparedStatement statement = connection.prepareStatement(sql)) {
             statement.setString(1, marca.getName());
+            
             statement.executeUpdate(); 
+            
         } catch (SQLException e) {
             System.err.println("Error al crear la marca: " + e.getMessage());
         }

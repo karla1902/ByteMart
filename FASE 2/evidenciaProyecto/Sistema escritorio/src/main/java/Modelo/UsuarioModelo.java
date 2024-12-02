@@ -60,4 +60,9 @@ public class UsuarioModelo {
 
     public boolean isAdmin() { return isAdmin; }
     public void setAdmin(boolean isAdmin) { this.isAdmin = isAdmin; }
+    
+    @Override
+    public String toString() {
+        return username; 
+    }
 }
