@@ -18,8 +18,8 @@ public class TarjetasDao {
     public void agregarTarjeta(TarjetasModelo tarjeta) throws SQLException {
         String sql = "INSERT INTO proyecto.tarjetas (usuario_id, numero_tarjeta, mes_vencimiento, anio_vencimiento, codigo_verificacion, saldo) VALUES (?, ?, ?, ?, ?, ?)";
         try (PreparedStatement statement = connection.prepareStatement(sql)) {
-            statement.setString(1, tarjeta.getNumeroTarjeta());
-            statement.setInt(2, tarjeta.getUsuarioId());  
+            statement.setInt(1, tarjeta.getUsuarioId());
+            statement.setString(2, tarjeta.getNumeroTarjeta());  
             statement.setInt(3, tarjeta.getMesVencimiento());  
             statement.setInt(4, tarjeta.getAnioVencimiento());  
             statement.setString(5, tarjeta.getCodigoVerificacion());  
@@ -77,16 +77,11 @@ public class TarjetasDao {
     }
 
     // Método para actualizar una tarjeta
-    public void actualizarMarca(TarjetasModelo tarjeta) throws SQLException {
-        String sql = "UPDATE tarjetas SET usuario_id = ?, numero_tarjeta = ?, mes_vencimiento = ?, anio_vencimiento = ?, codigo_verificacion = ?, saldo = ? WHERE id = ?";
+    public void actualizarSaldo(TarjetasModelo tarjeta) throws SQLException {
+        String sql = "UPDATE tarjetas SET saldo = ? WHERE id = ?";
         try (PreparedStatement statement = connection.prepareStatement(sql)) {
-            statement.setInt(1, tarjeta.getUsuarioId());  
-            statement.setString(2, tarjeta.getNumeroTarjeta());  
-            statement.setInt(3, tarjeta.getMesVencimiento());  
-            statement.setInt(4, tarjeta.getAnioVencimiento());  
-            statement.setString(5, tarjeta.getCodigoVerificacion());  
-            statement.setInt(6, tarjeta.getSaldo());  
-            statement.setInt(7, tarjeta.getId());       
+            statement.setInt(1, tarjeta.getSaldo());  
+            statement.setInt(2, tarjeta.getId());       
             statement.executeUpdate();                
         } catch (SQLException e) {
             System.err.println("Error al actualizar la marca: " + e.getMessage());
@@ -95,12 +90,12 @@ public class TarjetasDao {
 
     // Método para eliminar una tarjeta por su ID
     public void eliminarTarjeta(int id) throws SQLException {
-        String sql = "DELETE FROM proyecto.tarjeta WHERE id = ?";
+        String sql = "DELETE FROM proyecto.tarjetas WHERE id = ?";
         try (PreparedStatement statement = connection.prepareStatement(sql)) {
             statement.setInt(1, id);
             statement.executeUpdate();
         } catch (SQLException e) {
-            System.err.println("Error al eliminar la marca: " + e.getMessage());
+            System.err.println("Error al eliminar la tarjeta: " + e.getMessage());
         }
     }
     

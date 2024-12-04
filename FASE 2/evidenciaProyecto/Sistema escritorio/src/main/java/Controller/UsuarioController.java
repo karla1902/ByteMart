@@ -27,8 +27,8 @@ public class UsuarioController {
     }
     
     //obtener 
-    public UsuarioModelo obtenerUsuarioPorId(int id){
-        return usuarioDAO.obtenerUsuarioPorId(id);
+    public UsuarioModelo obtenerUsuarioPorUsername(String username){
+        return usuarioDAO.obtenerUsuarioPorUsername(username);
     }
 
     // Listar usuarios

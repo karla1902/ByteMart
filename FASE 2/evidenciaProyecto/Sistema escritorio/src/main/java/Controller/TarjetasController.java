@@ -41,10 +41,10 @@ public class TarjetasController {
         }
     }
     
-    public boolean actualizarTarjeta(int id, int usuario_id, String numero_tajeta, int mes_vencimiento, int anio_vencimiento, String codigo_verificacion, int saldo) {
+    public boolean actualizarSaldo(int id, int saldo) {
         try {
-            TarjetasModelo tarjetaActualizada = new TarjetasModelo(id, usuario_id, numero_tajeta, mes_vencimiento, anio_vencimiento, codigo_verificacion, saldo); 
-            tarjetasDao.agregarTarjeta(tarjetaActualizada);
+            TarjetasModelo tarjetaActualizada = new TarjetasModelo(id, 0, null, 0, 0, null, saldo); 
+            tarjetasDao.actualizarSaldo(tarjetaActualizada);
             return true;
         } catch (SQLException e) {
             System.err.println("Error al actualizar la tarjeta: " + e.getMessage());

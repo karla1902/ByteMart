@@ -151,6 +151,12 @@ public class UsuarioVista extends JPanel {
             if (!username.isEmpty() || !password.isEmpty() || !confirmPassword.isEmpty() || !nombre.isEmpty() 
                     || !apellido.isEmpty() || !email.isEmpty() || !direccion.isEmpty()) {
                 
+                // Validar si el nombre de usuario ya existe
+                if (usuarioController.obtenerUsuarioPorUsername(username) != null) {
+                    JOptionPane.showMessageDialog(this, "El nombre de usuario ya existe. Por favor, elija otro.");
+                    return;
+                }
+        
                 //Validar que las contraseñas coincidan
                 if (password.equals(confirmPassword)){
                     
@@ -200,7 +206,6 @@ public class UsuarioVista extends JPanel {
                             break;
                         }
                     }
-
                     btnGuardarCambios.setVisible(true);
                 }
                 

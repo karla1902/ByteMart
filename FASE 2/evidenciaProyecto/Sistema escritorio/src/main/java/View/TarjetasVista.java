@@ -152,7 +152,7 @@ public class TarjetasVista extends JPanel{
 
         btnGrabar.addActionListener(e -> {
             UsuarioModelo usuarioSeleccionado = (UsuarioModelo) cmbUsuario.getSelectedItem();
-            int idUsuario = usuarioSeleccionado.getId();
+            int idUsuario = usuarioSeleccionado != null ? usuarioSeleccionado.getId() : -1;
 
             String numeroTarjeta = txtNumeroTarjeta.getText().trim();
             String mesVencimientoStr = txtMesVencimiento.getText().trim();
@@ -218,25 +218,15 @@ public class TarjetasVista extends JPanel{
             if (selectedRow != -1) {
                 DefaultTableModel model = (DefaultTableModel) tableTarjetas.getModel();
                 
-                txtNumeroTarjeta.setText((String) tablaTarjetas.getValueAt(selectedRow, 2).toString());
-                txtMesVencimiento.setText(tablaTarjetas.getValueAt(selectedRow, 3).toString());
-                txtAnioVencimiento.setText(tablaTarjetas.getValueAt(selectedRow, 4).toString());
-                txtCodVerificacion.setText(tablaTarjetas.getValueAt(selectedRow, 5).toString());
                 txtSaldo.setText(tablaTarjetas.getValueAt(selectedRow, 6).toString());
                 
-                // Seleccionar el usuario correcto en el JComboBox
-                String usuarioNombre = (String) model.getValueAt(selectedRow, 1);
-                //Integer idUsuario = (Integer) model.getValueAt(selectedRow, 1);
-                for (int i = 0; i < cmbUsuario.getItemCount(); i++) {
-                    UsuarioModelo usuario= cmbUsuario.getItemAt(i);
-                    if (usuario.getUsername().equals(usuarioNombre)) { // Compara por nombre
-                        cmbUsuario.setSelectedIndex(i);
-                        break;
-                    }
-                }
                 
                 // Deshabilitar el comboBox de usuario para que no se pueda cambiar
                 cmbUsuario.setEnabled(false);
+                txtNumeroTarjeta.setEnabled(false);
+                txtMesVencimiento.setEnabled(false);
+                txtAnioVencimiento.setEnabled(false);
+                txtCodVerificacion.setEnabled(false);
                 btnGuardarCambios.setVisible(true); 
             } else {
                 JOptionPane.showMessageDialog(this, "Selecciona una tarjeta para modificar.", "Advertencia", JOptionPane.WARNING_MESSAGE);
@@ -252,40 +242,16 @@ public class TarjetasVista extends JPanel{
                 try {
                     // Obtener el ID de la tarjeta desde la tabla (columna 0)
                     int idTarjeta = (int) tablaTarjetas.getValueAt(selectedRow, 0);
+                    int nuevoSaldo = Integer.parseInt(txtSaldo.getText().trim());
 
-                    // Obtener los valores de los campos de texto
-                    UsuarioModelo usuarioSeleccionado = (UsuarioModelo) cmbUsuario.getSelectedItem();
-                    int idUsuario= usuarioSeleccionado.getId();
-                    
-                    String nuevoNumeroTarjeta = txtNumeroTarjeta.getText().trim();
-                    String nuevoMesVencimiento = txtMesVencimiento.getText().trim();
-                    String nuevoAnioVencimiento = txtAnioVencimiento.getText().trim();
-                    String nuevoCodigoVerificacion = txtCodVerificacion.getText().trim();
-                    String nuevoSaldo = txtSaldo.getText().trim();
-
-                    // Validar que los campos no estén vacíos
-                    if (idUsuario != -1 && !nuevoNumeroTarjeta.isEmpty() && !nuevoMesVencimiento.isEmpty()
-                            && !nuevoAnioVencimiento.isEmpty() && !nuevoCodigoVerificacion.isEmpty() && !nuevoSaldo.isEmpty()) {
-
-                        // Actualizar la tarjeta a través del controlador
-                        if (tarjetasController.actualizarTarjeta(
-                                idTarjeta,
-                                idUsuario, 
-                                nuevoNumeroTarjeta, 
-                                Integer.parseInt(nuevoMesVencimiento),
-                                Integer.parseInt(nuevoAnioVencimiento),
-                                nuevoCodigoVerificacion, 
-                                Integer.parseInt(nuevoSaldo))
-                            ) {
-                            cargarDatosTabla(connection); 
-                            JOptionPane.showMessageDialog(this, "Tarjeta modificada con éxito.");
-                            cmbUsuario.setEnabled(true);
-                            btnGuardarCambios.setVisible(false); 
-                        } else {
-                            JOptionPane.showMessageDialog(this, "Error al modificar la tarjeta.", "Error", JOptionPane.ERROR_MESSAGE);
-                        }
+                    // Actualizar la tarjeta a través del controlador
+                    if (tarjetasController.actualizarSaldo(idTarjeta, nuevoSaldo)) {
+                        cargarDatosTabla(connection); 
+                        JOptionPane.showMessageDialog(this, "Tarjeta modificada con éxito.");
+                        cmbUsuario.setEnabled(true);
+                        btnGuardarCambios.setVisible(false); 
                     } else {
-                        JOptionPane.showMessageDialog(this, "Todos los campos deben estar completos antes de guardar los cambios.", "Error", JOptionPane.ERROR_MESSAGE);
+                        JOptionPane.showMessageDialog(this, "Error al modificar la tarjeta.", "Error", JOptionPane.ERROR_MESSAGE);
                     }
                 } catch (NumberFormatException ex) {
                     JOptionPane.showMessageDialog(this, "Los campos numéricos deben contener valores válidos.", "Error", JOptionPane.ERROR_MESSAGE);
