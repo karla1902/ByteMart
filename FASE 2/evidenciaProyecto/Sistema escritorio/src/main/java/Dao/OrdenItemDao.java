@@ -1,4 +1,5 @@
 package Dao;
+import Modelo.EstadoOrdenModelo;
 import Modelo.OrdenItemModelo;
 import Modelo.ProductosModelo;
 import java.sql.Connection;
@@ -33,6 +34,18 @@ public class OrdenItemDao {
             }
         }
         return items;
+    }
+    
+    // Método para actualizar una producto
+    public void actualizarEstadoOrden(EstadoOrdenModelo estado) throws SQLException {
+        String sql = "UPDATE proyecto.orden SET estado_id = ? WHERE id = ?";
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setInt(1, estado.getId());
+            statement.setString(2, estado.getNombre()); 
+
+            int rowsUpdated = statement.executeUpdate();
+            System.out.println("Filas actualizadas: " + rowsUpdated); 
+        }
     }
 }
 

@@ -121,11 +121,12 @@ public class OrdenesCompraVista extends JPanel {
             ResultSet rs = stmt.executeQuery();
 
             while (rs.next()) {
+                
                 tablaOrdenes.addRow(new Object[]{
                     rs.getInt("orden_id"), 
                     rs.getString("nombre_producto"),
                     rs.getInt("cantidad"),
-                    rs.getInt("monto"),
+                    rs.getInt("$ monto"),
                     rs.getString("estado_orden"),
                     rs.getString("Usuario")
                 });
@@ -164,13 +165,15 @@ public class OrdenesCompraVista extends JPanel {
 
     private void actualizarEstadoOrden(Connection connection, int ordenId, String nuevoEstado) {
         try {
+            
+            int estadoId = -1;
+            
             // Primero obtenemos el id del estado de la orden
             String queryEstado = "SELECT id FROM proyecto.estado_orden WHERE nombre = ?";
             PreparedStatement stmtEstado = connection.prepareStatement(queryEstado);
             stmtEstado.setString(1, nuevoEstado);
             ResultSet rsEstado = stmtEstado.executeQuery();
-
-            int estadoId = -1;
+            
             if (rsEstado.next()) {
                 estadoId = rsEstado.getInt("id");
             }
