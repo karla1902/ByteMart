@@ -126,7 +126,7 @@ public class OrdenesCompraVista extends JPanel {
                     rs.getInt("orden_id"), 
                     rs.getString("nombre_producto"),
                     rs.getInt("cantidad"),
-                    rs.getInt("$ monto"),
+                    rs.getInt("monto"),
                     rs.getString("estado_orden"),
                     rs.getString("Usuario")
                 });

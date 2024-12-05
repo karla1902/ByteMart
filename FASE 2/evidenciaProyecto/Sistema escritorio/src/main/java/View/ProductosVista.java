@@ -14,6 +14,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.Date;
 import java.util.List;
 import java.util.logging.Level;
@@ -80,14 +81,14 @@ public class ProductosVista extends JPanel {
         cmbDestacado.setPreferredSize(new Dimension(80, 25)); 
         inputPanel.add(cmbDestacado);
         
-//        inputPanel.add(new JLabel("Imagen:"));
-//        JButton btnSeleccionarImagen = new JButton("Seleccionar Imagen");
-//        inputPanel.add(btnSeleccionarImagen);
-//        
-//        JLabel lblPreviewImagen = new JLabel();
-//        lblPreviewImagen.setPreferredSize(new Dimension(500, 500)); 
-//        lblPreviewImagen.setBorder(BorderFactory.createLineBorder(Color.BLACK));
-//        inputPanel.add(lblPreviewImagen);
+        inputPanel.add(new JLabel("Imagen:"));
+        JButton btnSeleccionarImagen = new JButton("Seleccionar Imagen");
+        inputPanel.add(btnSeleccionarImagen);
+        
+        JLabel lblPreviewImagen = new JLabel();
+        lblPreviewImagen.setPreferredSize(new Dimension(500, 500)); 
+        lblPreviewImagen.setBorder(BorderFactory.createLineBorder(Color.BLACK));
+        inputPanel.add(lblPreviewImagen);
         
         add(inputPanel, BorderLayout.WEST);
         inputPanel.setPreferredSize(new Dimension(280, 200));
@@ -159,23 +160,22 @@ public class ProductosVista extends JPanel {
         final String[] rutaImagen = {null};
 
         // Acción del botón para cargar imagen
-//        btnSeleccionarImagen.addActionListener(e -> {
-//            JFileChooser fileChooser = new JFileChooser();
-//            fileChooser.setFileFilter(new javax.swing.filechooser.FileNameExtensionFilter("Imágenes", "jpg", "png", "jpeg"));
-//
-//            int result = fileChooser.showOpenDialog(this);
-//            if (result == JFileChooser.APPROVE_OPTION) {
-//                rutaImagen[0] = fileChooser.getSelectedFile().getAbsolutePath();
-//                ImageIcon imageIcon = new ImageIcon(new ImageIcon(rutaImagen[0]).getImage().getScaledInstance(200, 200, Image.SCALE_SMOOTH));
-//
-//                // Ajustar el JLabel a la imagen
-//                lblPreviewImagen.setIcon(imageIcon);
-//                lblPreviewImagen.setPreferredSize(new Dimension(200, 200));
-//                lblPreviewImagen.revalidate(); // Actualiza el tamaño
-//                lblPreviewImagen.repaint();
-//            }
-//        });
+        btnSeleccionarImagen.addActionListener(e -> {
+            JFileChooser fileChooser = new JFileChooser();
+            fileChooser.setFileFilter(new javax.swing.filechooser.FileNameExtensionFilter("Imágenes", "jpg", "png", "jpeg"));
 
+            int result = fileChooser.showOpenDialog(this);
+            if (result == JFileChooser.APPROVE_OPTION) {
+                rutaImagen[0] = fileChooser.getSelectedFile().getAbsolutePath();
+                ImageIcon imageIcon = new ImageIcon(new ImageIcon(rutaImagen[0]).getImage().getScaledInstance(200, 200, Image.SCALE_SMOOTH));
+
+                // Ajustar el JLabel a la imagen
+                lblPreviewImagen.setIcon(imageIcon);
+                lblPreviewImagen.setPreferredSize(new Dimension(200, 200));
+                lblPreviewImagen.revalidate(); // Actualiza el tamaño
+                lblPreviewImagen.repaint();
+            }
+        });
         
         // Agregar funcionalidad a los botones
         btnCerrarSesion.addActionListener(e -> {
@@ -216,27 +216,73 @@ public class ProductosVista extends JPanel {
 
             CategoriaModelo categoriaSeleccionada = (CategoriaModelo) cmbCategoria.getSelectedItem();
             int idCategoria = categoriaSeleccionada != null ? categoriaSeleccionada.getId() : -1;
-            
+
             MarcaModelo marcaSeleccionada = (MarcaModelo) cmbMarca.getSelectedItem();
             int idMarca = marcaSeleccionada != null ? marcaSeleccionada.getId() : -1;
-            
-            if (!nombre.isEmpty() || !descripcion.isEmpty() 
-                && precio > 0 && stock > 0 && idCategoria != -1 && idMarca != -1) {
-                 
+
+            String rutaImagenGuardada = rutaImagen[0]; // Ruta de la imagen seleccionada
+
+            if (!nombre.isEmpty() && !descripcion.isEmpty() && precio > 0 && stock > 0 && idCategoria != -1 && idMarca != -1) {
                 java.util.Date fechaCreacionActual = new java.util.Date();
-                 // Crear una nueva instancia de ProductosModelo y asignar los valores
+
+                // Crear una nueva instancia de ProductosModelo
                 ProductosModelo productosModelo = new ProductosModelo(0, nombre, precio, idMarca, descripcion, stock, idCategoria, enOferta, destacado, fechaCreacionActual);
 
-                if (productosController.crearProducto(productosModelo)) {
-                    cargarDatosTabla(connection);
-                    JOptionPane.showMessageDialog(this, "Producto agregado con éxito.");
-                } else {
-                    JOptionPane.showMessageDialog(this, "Error al agregar el producto.", "Error", JOptionPane.ERROR_MESSAGE);
+                // Insertar el producto
+                String queryInsertProducto = "INSERT INTO `proyecto`.`producto` (`name`, `price`, `marca_id`, `descripcion`, `stock`, `category_id`, `en_oferta`, `destacado`, `fecha_creacion`) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+
+                try (PreparedStatement stmtProducto = connection.prepareStatement(queryInsertProducto, Statement.RETURN_GENERATED_KEYS)) {
+                    stmtProducto.setString(1, productosModelo.getName());
+                    stmtProducto.setInt(2, productosModelo.getPrice());
+                    stmtProducto.setInt(3, productosModelo.getMarcaId());
+                    stmtProducto.setString(4, productosModelo.getDescripcion());
+                    stmtProducto.setInt(5, productosModelo.getStock());
+                    stmtProducto.setInt(6, productosModelo.getCategoryId());
+                    stmtProducto.setBoolean(7, productosModelo.getEnOferta());
+                    stmtProducto.setBoolean(8, productosModelo.getDestacado());
+                    stmtProducto.setDate(9, new java.sql.Date(productosModelo.getFechaCreacion().getTime()));
+
+                    // Ejecutar la inserción del producto
+                    int filasAfectadas = stmtProducto.executeUpdate();
+
+                    if (filasAfectadas > 0) {
+                        // Obtener el ID del producto recién insertado
+                        try (ResultSet rs = stmtProducto.getGeneratedKeys()) {
+                            if (rs.next()) {
+                                int productoId = rs.getInt(1); // ID del producto recién insertado
+
+                                // Insertar la imagen en la tabla imagen
+                                String queryInsertImagen = "INSERT INTO `proyecto`.`imagen` (`image_url`, `producto_id`) VALUES (?, ?)";
+
+                                try (PreparedStatement stmtImagen = connection.prepareStatement(queryInsertImagen)) {
+                                    stmtImagen.setString(1, rutaImagenGuardada);  // Ruta de la imagen
+                                    stmtImagen.setInt(2, productoId);             // ID del producto
+
+                                    int filasAfectadasImagen = stmtImagen.executeUpdate();
+                                    if (filasAfectadasImagen > 0) {
+                                        cargarDatosTabla(connection); // Recargar los datos
+                                        JOptionPane.showMessageDialog(this, "Producto y imagen agregados con éxito.");
+                                    } else {
+                                        JOptionPane.showMessageDialog(this, "Error al agregar la imagen.", "Error", JOptionPane.ERROR_MESSAGE);
+                                    }
+                                } catch (SQLException ex) {
+                                    ex.printStackTrace();
+                                    JOptionPane.showMessageDialog(this, "Error al insertar la imagen en la base de datos.", "Error", JOptionPane.ERROR_MESSAGE);
+                                }
+                            }
+                        }
+                    } else {
+                        JOptionPane.showMessageDialog(this, "Error al agregar el producto.", "Error", JOptionPane.ERROR_MESSAGE);
+                    }
+                } catch (SQLException ex) {
+                    ex.printStackTrace();
+                    JOptionPane.showMessageDialog(this, "Error al insertar el producto en la base de datos.", "Error", JOptionPane.ERROR_MESSAGE);
                 }
             } else {
-                JOptionPane.showMessageDialog(this, "Los campos del producto no puede estar vacío y se debe seleccionar un producto..", "Error", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(this, "Los campos del producto no pueden estar vacíos y se deben seleccionar todos los campos.", "Error", JOptionPane.ERROR_MESSAGE);
             }
         });
+
         
 
         btnModificar.addActionListener(e -> {

@@ -19,7 +19,7 @@ public class LoginVista extends JFrame {
         this.connection = connection;
 
         // Configurando el JFrame
-        setTitle("Login");
+        setTitle("Inicio Sesión");
         setSize(400, 300);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
@@ -54,7 +54,7 @@ public class LoginVista extends JFrame {
         gbc.anchor = GridBagConstraints.CENTER; 
 
         // Etiqueta "Username"
-        JLabel usernameLabel = new JLabel("Username:");
+        JLabel usernameLabel = new JLabel("Usuario:");
         gbc.gridx = 0;
         gbc.gridy = 0;
         formPanel.add(usernameLabel, gbc);
@@ -65,7 +65,7 @@ public class LoginVista extends JFrame {
         formPanel.add(txtUsuario, gbc);
 
         // Etiqueta "Password"
-        JLabel passwordLabel = new JLabel("Password:");
+        JLabel passwordLabel = new JLabel("Contraseña:");
         gbc.gridx = 0;
         gbc.gridy = 1;
         formPanel.add(passwordLabel, gbc);
@@ -76,7 +76,7 @@ public class LoginVista extends JFrame {
         formPanel.add(txtPassword, gbc);
 
         // Botón de Login
-        JButton loginButton = new JButton("Login");
+        JButton loginButton = new JButton("Iniciar Sesión");
         gbc.gridx = 1;
         gbc.gridy = 2;
         gbc.anchor = GridBagConstraints.CENTER; 
@@ -119,7 +119,7 @@ public class LoginVista extends JFrame {
             ResultSet rs = ps.executeQuery();
 
             if (rs.next()) {
-                JOptionPane.showMessageDialog(this, "¡Login exitoso!", "Bienvenido", JOptionPane.INFORMATION_MESSAGE);
+                JOptionPane.showMessageDialog(this, "¡Inicio de sesion exitoso!", "Bienvenido", JOptionPane.INFORMATION_MESSAGE);
                 this.dispose();  // Cierra la ventana de Login
                 MenuVista menu = new MenuVista(connection);
                 menu.setVisible(true);
