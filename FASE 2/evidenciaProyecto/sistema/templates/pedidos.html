@@ -98,7 +98,7 @@
     <div class="text-center mt-5">
         <img src="{{ url_for('static', filename='img/cartEmpty.png') }}" alt="Carrito vacío" style="max-width: 200px;">
         <p>No tienes pedidos todavía.</p>
-        <a href="{{ url_for('productos') }}" class="btn btn-primary">Explorar Productos</a>
+        <a href="{{ url_for('mostrar_categorias') }}" class="btn btn-primary">Explorar Productos</a>
     </div>
     {% else %}
     {% for pedido in pedidos %}

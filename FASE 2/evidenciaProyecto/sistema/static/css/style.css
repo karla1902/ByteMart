@@ -2737,7 +2737,7 @@ textarea.input {
 	overflow: hidden;
 	width: 768px;
 	max-width: 100%;
-	min-height: 480px;
+	min-height: 580px;
 }
 
 .login-container .form-container {
@@ -3041,3 +3041,33 @@ textarea.input {
 	display: inline-block;
 	margin: 100px auto;
 }
+
+
+.password-container {
+  position: relative;
+  width: 100%;
+  margin-bottom: 15px;
+}
+
+.password-container input {
+  width: 100%;
+  padding: 10px;
+  font-size: 16px;
+  box-sizing: border-box;
+}
+
+.eye-icon {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 18px;
+  cursor: pointer;
+}
+
+/* Mostrar el ícono cuando el input está enfocado */
+.password-container input:focus + .eye-icon {
+  display: block;
+}
+
+

@@ -238,6 +238,7 @@
             <ul class="main-nav nav navbar-nav">
                 <li class=""><a href="/">Inicio</a></li>
                 <li><a href="#">Ofertas Especiales</a></li>
+                <li><a href="{{ url_for('mostrar_categorias') }}">Todas las categorias</a></li>
                 <li class="dropdown">
                     <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">
                         Categorías <span class="caret"></span>
@@ -249,10 +250,6 @@
                         {% endfor %}
                     </ul>
                 </li>
-                <li><a href="{{ url_for('buscar_por_categoria', categoria_id=3) }}">Computadores</a></li>
-                <li><a href="{{ url_for('buscar_por_categoria', categoria_id=4) }}">Celulares</a></li>
-                <li><a href="{{ url_for('buscar_por_categoria', categoria_id=5) }}">Cámaras</a></li>
-                <li><a href="{{ url_for('buscar_por_categoria', categoria_id=6) }}">Accesorios</a></li>
                 <li><a href="{{ url_for('destacados') }}">Destacados</a></li>
             </ul>
             <!-- /NAV -->

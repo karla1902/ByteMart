@@ -1,7 +1,6 @@
 from flask import Flask, abort, render_template, request, jsonify, redirect, url_for, session, flash, g
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
-from flask_bcrypt import Bcrypt
 import logging
 from sqlalchemy import Sequence
 import os
@@ -17,7 +16,8 @@ from flask_cors import CORS
 from sqlalchemy import text
 import locale
 from functools import wraps
-
+from werkzeug.security import generate_password_hash, check_password_hash
+import bcrypt
 
 app = Flask(__name__)
 CORS(app)
@@ -38,12 +38,15 @@ app.config['MAIL_USE_SSL'] = False
 app.config['MAIL_USERNAME'] = 'kar.v.prueba@gmail.com' 
 app.config['MAIL_PASSWORD'] = 'dgnh jefs dgxu dqwx'
 app.config['MAIL_DEFAULT_SENDER'] = 'kar.v.prueba@gmail.com' 
+app.config['SESSION_COOKIE_SECURE'] = True  # Solo permite cookies a través de HTTPS
+app.config['SESSION_COOKIE_HTTPONLY'] = True  # Bloquea acceso a cookies desde JavaScript
+app.config['SESSION_COOKIE_SAMESITE'] = 'Strict'  # Previene el uso de cookies en requests de otros sitios
+
 
 # Inicializar SQLAlchemy y Bcrypt
 mail = Mail(app)
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
-bcrypt = Bcrypt(app)
 
 
 # Configuración del registro
@@ -54,39 +57,36 @@ user_sequence = Sequence('user_id_seq', start=1, increment=1)
 product_sequence = Sequence('product_id_seq', start=1, increment=1)
 category_sequence = Sequence('category_id_seq', start=1, increment=1)
 
-# Funciones
+from werkzeug.security import generate_password_hash
+
 def create_default_admin():
-    # Crear un usuario admin por defecto si no existe
-    with app.app_context():  # Asegúrate de que el contexto de la aplicación esté disponible
-        # Verificar si ya existe el rol de Administrador
+    with app.app_context():
         admin_rol = Rol.query.filter_by(nombre='Administrador').first()
         if not admin_rol:
-            # Si no existe, crearlo
             admin_rol = Rol(nombre='Administrador')
             db.session.add(admin_rol)
             db.session.commit()
-        
-        # Verificar si ya existe el usuario administrador
+
         admin_user = Usuario.query.filter_by(username='admin').first()
         if not admin_user:
-            # Crear el usuario administrador con valores completos
+            # Crear un hash de contraseña con bcrypt
+            hashed_password = bcrypt.hashpw('admin1234'.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+
             admin_user = Usuario(
-                username='admin', 
-                password='admin1234', 
-                nombre='Admin',  # Valor por defecto para nombre
-                apellido='Administrador',  # Valor por defecto para apellido
-                email='email@email.com', 
-                direccion='Dirección de administrador',  # Puedes cambiar o dejar en None si es opcional
+                username='admin',
+                password=hashed_password,
+                nombre='Admin',
+                apellido='Administrador',
+                email='email@email.com',
+                direccion='Dirección de administrador',
                 is_admin=True
             )
 
-            # Asignar el rol de Administrador al usuario
             admin_user.roles = [admin_rol]
-
-            # Guardar en la base de datos
             db.session.add(admin_user)
             db.session.commit()
             app.logger.info('Usuario administrador creado con éxito.')
+
 
 def estados_orden():
     """
@@ -131,7 +131,7 @@ class Usuario(db.Model):
     __table_args__ = {'extend_existing': True}
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(50), unique=True, nullable=False)
-    password = db.Column(db.String(100), nullable=False)
+    password = db.Column(db.String(200), nullable=False)
     nombre = db.Column(db.String(100), nullable=False)
     apellido = db.Column(db.String(100), nullable=False)
     email = db.Column(db.String(120), nullable=False)
@@ -428,10 +428,13 @@ def login():
         username = request.form['username']
         password = request.form['password']
         
+        # Buscar al usuario por nombre de usuario
         user = Usuario.query.filter_by(username=username).first()
         
-        if user and user.password == password:
+        # Verificar la contraseña usando bcrypt
+        if user and bcrypt.checkpw(password.encode('utf-8'), user.password.encode('utf-8')):
             session['user_id'] = user.id
+            
             # Crear un carrito si no existe
             if not Carrito.query.filter_by(usuario_id=user.id).first():
                 nuevo_carrito = Carrito(usuario_id=user.id)
@@ -443,40 +446,65 @@ def login():
         else:
             flash('Usuario o contraseña incorrectos', 'danger')
 
-    
     return render_template('login.html', categorias=categorias)
+
+
+
 
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     if request.method == 'POST':
         username = request.form['username']
-        nombre = request.form['nombre']
-        apellido = request.form['apellido']
-        email = request.form['email']
-        direccion = request.form.get('direccion', None)  # Opcional
         password = request.form['password']
-        # hashed_password = bcrypt.generate_password_hash(password).decode('utf-8')
+        confirm_password = request.form['confirm-password']  # Obtener la confirmación de la contraseña
+        nombre = request.form['nombre']  # Obtener nombre
+        apellido = request.form['apellido']  # Obtener apellido
+        email = request.form['email']  # Obtener email
+        direccion = request.form.get('direccion')  # Obtener dirección (opcional)
 
         # Verificar si el nombre de usuario ya existe
         if Usuario.query.filter_by(username=username).first():
             flash('El nombre de usuario ya existe', 'warning')
-            return render_template('register.html')
+            return render_template('login.html')
 
-        # Verificar si el correo ya existe
-        if Usuario.query.filter_by(email=email).first():
-            flash('El correo electrónico ya está en uso', 'warning')
-            return render_template('register.html')
+        # Verificar que las contraseñas coincidan
+        if password != confirm_password:
+            flash('Las contraseñas no coinciden', 'danger')
+            return render_template('login.html')
 
-        # Crear un nuevo usuario
-        new_user = Usuario(username=username, nombre=nombre, apellido=apellido,
-                           email=email, direccion=direccion, password=password)
-        db.session.add(new_user)
-        db.session.commit()
-        flash('Usuario registrado exitosamente', 'success')
-        return redirect(url_for('login'))
+        try:
+            # Crear un hash de contraseña con bcrypt
+            hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
 
-    return render_template('register.html')
+            # Crear el nuevo usuario con todos los campos
+            new_user = Usuario(
+                username=username, 
+                password=hashed_password, 
+                nombre=nombre, 
+                apellido=apellido, 
+                email=email, 
+                direccion=direccion, 
+                reset_code=None,  # Si tu base de datos tiene estos campos, puedes inicializarlos aquí
+                reset_code_expiration=None, 
+                is_admin=0  # Suponiendo que el valor por defecto sea 0
+            )
+            db.session.add(new_user)
+            db.session.commit()
+
+            flash('Usuario registrado exitosamente', 'success')
+            return redirect(url_for('login'))
+
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Error al registrar usuario: {str(e)}', 'danger')
+            return render_template('login.html')
+
+    return render_template('login.html')
+
+
+
+
 
 
 
@@ -560,6 +588,7 @@ def reset_password_get():
 
 @app.route('/profile', methods=['GET', 'POST'])
 def profile():
+    categorias = Categoria.query.all()
     if 'user_id' not in session:
         return redirect(url_for('login'))  # Redirigir si el usuario no está logueado
 
@@ -577,7 +606,7 @@ def profile():
         flash('Datos actualizados correctamente', 'success')
         return redirect(url_for('profile'))
 
-    return render_template('profile.html', user=user, tarjetas=tarjetas)  # Pasa las tarjetas a la plantilla
+    return render_template('profile.html', user=user, tarjetas=tarjetas,categorias = categorias)  # Pasa las tarjetas a la plantilla
 
 
 
@@ -1397,6 +1426,7 @@ def vaciar_carrito():
 
 @app.route('/destacados')
 def destacados():
+    categorias = Categoria.query.all()
     try:
         response = requests.get('http://localhost:5001/api/productos_destacados')
         response.raise_for_status()
@@ -1406,7 +1436,7 @@ def destacados():
         flash('Error al obtener los productos destacados', 'danger')
         productos_destacados = []
 
-    return render_template('destacados.html', productos=productos_destacados)
+    return render_template('destacados.html', productos=productos_destacados, categorias = categorias)
 
 
 
@@ -1625,13 +1655,18 @@ if __name__ == '__main__':
         db.create_all()
         # Verificar la conexión antes de iniciar el servidor
         test_connection()
-        #crear rol por defecto
+        # Crear rol por defecto
         crear_roles()
         # Crear el usuario admin por defecto
         create_default_admin()
-
+        # Estados de orden
         estados_orden()
-  
-    
-    app.run(debug=True)
+
+    # Iniciar el servidor con soporte para HTTPS
+    app.run(
+        debug=True, 
+        host="0.0.0.0", 
+        port=5000, 
+        ssl_context=("server.crt", "server.key")  # Rutas a los archivos del certificado y clave
+    )
 
