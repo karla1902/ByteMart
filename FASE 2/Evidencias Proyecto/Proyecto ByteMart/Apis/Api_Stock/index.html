@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Stock Bajo</title>
+    <script>
+        async function obtenerStockBajo() {
+            const response = await fetch('http://127.0.0.1:5000/api/stock_bajo');
+            const data = await response.json();
+            document.getElementById('resultados').innerText = JSON.stringify(data, null, 2);
+        }
+    </script>
+</head>
+<body>
+    <h1>Notificación de Stock Bajo</h1>
+    <button onclick="obtenerStockBajo()">Obtener Productos con Stock Bajo</button>
+    <pre id="resultados"></pre>
+</body>
+</html>

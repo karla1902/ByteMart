@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="custom-search-container">
+    <h1 class="custom-search-title">Resultados de la Búsqueda</h1>
+    {% if productos %}
+        <div class="custom-grid-container">
+            {% for producto in productos %}
+            <div class="custom-card">
+                <img class="custom-card-img" src="{{ url_for('static', filename=producto.imagenes[0].image_url.split('static/')[-1]) }}" alt="Imagen de {{ producto.name }}">
+                <div class="custom-card-body">
+                    <h5 class="custom-card-title">{{ producto.name }}</h5>
+                    <h5 style="color: brown;">{{ producto.price }}</h5>
+                    <p class="custom-card-text">{{ producto.descripcion }}</p>
+                    <a href="{{ url_for('detalle_producto', id=producto.id) }}" class="custom-card-btn">Ver Detalles</a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="custom-alert-warning">
+            No se encontraron productos que coincidan con la búsqueda.
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
+

@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+
+{% block content %}
+<style>
+    .categoria-card {
+        background-color: #f8f9fa;
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        padding: 20px;
+        margin: 15px 0;
+        display: flex;
+        align-items: center;
+        transition: transform 0.2s;
+    }
+    
+    .categoria-card:hover {
+        transform: scale(1.02);
+    }
+
+    .categoria-icon {
+        font-size: 40px;
+        margin-right: 15px;
+        color: #007bff; /* Color del ícono */
+    }
+
+    .categoria-name {
+        text-decoration: none;
+        color: #343a40;
+        font-size: 24px;
+    }
+
+    .categoria-name:hover {
+        text-decoration: underline;
+    }
+
+
+
+    h2 {
+        text-align: center;
+        color: #495057; /* Color del título */
+    }
+</style>
+
+<div class="container">
+    <h2>Categorías</h2>
+    {% for categoria in categorias %}
+        <div class="categoria-card">
+            <span class="categoria-icon"><i class="fas fa-list"></i></span>
+            <a href="{{ url_for('categoria_producto', categoria_name=categoria.name) }}" class="categoria-name">{{ categoria.name }}</a>
+        </div>
+    {% endfor %}
+</div>
+
+<!-- Agrega Font Awesome para los íconos -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" integrity="sha384-k6RqeWeci5ZR/Lv4MR0sA0FfDOM24d06J2Xf1U5Q0D0KzFL0NtxzG1J2ezE/t5k" crossorigin="anonymous">
+{% endblock %}

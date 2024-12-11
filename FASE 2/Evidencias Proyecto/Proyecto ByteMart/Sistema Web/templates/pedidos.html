@@ -1,0 +1,166 @@
+{% extends "base.html" %}
+
+{% block content %}
+<style>
+    /* Estilo del contenedor */
+    .container {
+        font-family: 'Poppins', sans-serif;
+        margin-top: 20px;
+        padding: 20px;
+    }
+
+    h2 {
+        text-align: center;
+        color: #3a3a3a;
+        margin-bottom: 20px;
+        font-size: 28px;
+        font-weight: 600;
+    }
+
+    /* Estilo de las tarjetas */
+    .card {
+        background-color: #ffffff;
+        border-radius: 8px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        margin-bottom: 30px;
+        overflow: hidden;
+        transition: all 0.3s ease-in-out;
+    }
+
+    .card:hover {
+        transform: translateY(-5px);
+    }
+
+    .card-header {
+        background-color: #226151;
+        color: #fff;
+        padding: 15px;
+        font-size: 18px;
+        font-weight: 600;
+    }
+
+    .card-body {
+        padding: 15px;
+        color: #555;
+    }
+
+    .card-footer {
+        background-color: #f7f7f7;
+        padding: 10px;
+        text-align: right;
+        border-top: 1px solid #ddd;
+    }
+
+    /* Botones de Bootstrap 3 */
+    .btn-primary {
+        background-color: #47c9a2;
+        color: white;
+        border: none;
+        border-radius: 25px;
+        padding: 10px 20px;
+        font-size: 16px;
+        font-weight: 600;
+        transition: background-color 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .btn-primary:hover {
+        background-color: #3c9d7e;
+        transform: scale(1.05);
+        box-shadow: 0 6px 15px rgba(0, 0, 0, 0.2);
+    }
+
+    /* Estilo del modal */
+    .modal-header {
+        background-color: #47c9a2;
+        color: white;
+        font-weight: 600;
+    }
+
+    .modal-content {
+        border-radius: 10px;
+        box-shadow: 0 6px 15px rgba(0, 0, 0, 0.1);
+    }
+
+    .modal-body {
+        font-size: 16px;
+        line-height: 1.5;
+    }
+
+    .modal-footer {
+        border-top: 1px solid #ddd;
+    }
+</style>
+
+<div class="container">
+    <h2>Mis Pedidos</h2>
+
+    {% if pedidos|length == 0 %}
+    <div class="text-center mt-5">
+        <img src="{{ url_for('static', filename='img/cartEmpty.png') }}" alt="Carrito vacío" style="max-width: 200px;">
+        <p>No tienes pedidos todavía.</p>
+        <a href="{{ url_for('mostrar_categorias') }}" class="btn btn-primary">Explorar Productos</a>
+    </div>
+    {% else %}
+    {% for pedido in pedidos %}
+    <div class="card">
+        <div class="card-header">
+            Pedido #{{ pedido.id }} - {{ pedido.fecha_creacion.strftime('%d/%m/%Y') }}
+        </div>
+        <div class="card-body">
+            <p><strong>Estado:</strong> {{ pedido.estado_orden.nombre }}</p>
+            <p><strong>Tarjeta:</strong> **** {{ pedido.tarjeta.numero_tarjeta[-4:] }}</p>
+            {% if pedido.factura %}
+            <p><strong>Monto:</strong> ${{ pedido.factura.monto }}</p>
+            {% else %}
+            <p><strong>Factura:</strong> No disponible</p>
+            {% endif %}
+        </div>
+        <div class="card-footer">
+            <button class="btn btn-primary" data-toggle="modal" data-target="#detallePedidoModal{{ pedido.id }}">
+                Ver Detalles
+            </button>
+        </div>
+    </div>
+
+    <!-- Modal para los detalles del pedido -->
+    <div class="modal fade" id="detallePedidoModal{{ pedido.id }}" tabindex="-1" role="dialog" aria-labelledby="modalLabel{{ pedido.id }}" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalLabel{{ pedido.id }}">Detalles del Pedido #{{ pedido.id }}</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Cerrar"></button>
+                </div>
+                <div class="modal-body">
+                    <p><strong>Estado:</strong> {{ pedido.estado_orden.nombre }}</p>
+                    <p><strong>Tarjeta:</strong> **** {{ pedido.tarjeta.numero_tarjeta[-4:] }}</p>
+                    {% if pedido.factura %}
+                    <p><strong>Monto:</strong> ${{ pedido.factura.monto }}</p>
+                    {% else %}
+                    <p><strong>Factura:</strong> No disponible</p>
+                    {% endif %}
+                    <hr>
+                    <h6>Productos:</h6>
+                    <ul>
+                        {% for item in pedido.items %}
+                        <li>
+                            {{ item.producto.name }} - 
+                            <strong>Cantidad:</strong> {{ item.cantidad }} - 
+                            <strong>Precio:</strong> ${{ item.producto.price }}
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+    {% endif %}
+</div>
+
+<!-- Bootstrap JS -->
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+{% endblock %}
