@@ -9,6 +9,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import Dao.Conexion;
+import at.favre.lib.crypto.bcrypt.BCrypt;
 
 public class LoginVista extends JFrame {
     private JTextField txtUsuario;
@@ -96,42 +97,55 @@ public class LoginVista extends JFrame {
         setVisible(true);
     }
 
-    // Método para validar el usuario y la contraseña en la base de datos
-    private void validarUsuario() {
-        String username = txtUsuario.getText();
-        String password = new String(txtPassword.getPassword());
+// Método para validar el usuario y la contraseña en la base de datos
+private void validarUsuario() {
+    String username = txtUsuario.getText();
+    String password = new String(txtPassword.getPassword());
 
-        if (username.isEmpty() || password.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Por favor, ingresa el usuario y la contraseña.", "Error", JOptionPane.ERROR_MESSAGE);
-            return;
-        }
+    if (username.isEmpty() || password.isEmpty()) {
+        JOptionPane.showMessageDialog(this, "Por favor, ingresa el usuario y la contraseña.", "Error", JOptionPane.ERROR_MESSAGE);
+        return;
+    }
 
-        String query = "SELECT u.username, u.password " + 
-               "FROM proyecto.usuario u " +
-               "JOIN proyecto.usuario_rol ru ON u.id = ru.id " +
-               "JOIN proyecto.rol r ON ru.id = r.id " +
-               "WHERE u.username = ? AND u.password = ? AND ru.rol_id <> 4";
+    // Consulta para obtener la contraseña encriptada (hash) del usuario
+    String query = "SELECT u.username, u.password " +
+                   "FROM usuario u " +
+                   "JOIN usuario_rol ur ON u.id = ur.usuario_id " +
+                   "JOIN rol r ON ur.rol_id = r.id " +
+                   "WHERE u.username = ? AND r.id <> 4";
 
-        try (PreparedStatement ps = connection.prepareStatement(query)) {
-            ps.setString(1, username);
-            ps.setString(2, password);
+    try (PreparedStatement ps = connection.prepareStatement(query)) {
+        ps.setString(1, username);
 
-            ResultSet rs = ps.executeQuery();
+        ResultSet rs = ps.executeQuery();
 
-            if (rs.next()) {
-                JOptionPane.showMessageDialog(this, "¡Inicio de sesion exitoso!", "Bienvenido", JOptionPane.INFORMATION_MESSAGE);
+        if (rs.next()) {
+            String storedHash = rs.getString("password"); // Obtener el hash de la contraseña almacenada
+
+            // Comparar la contraseña ingresada con el hash almacenado usando la nueva librería de bcrypt
+            BCrypt.Result result = BCrypt.verifyer().verify(password.toCharArray(), storedHash.toCharArray());
+
+            if (result.verified) {
+                JOptionPane.showMessageDialog(this, "¡Inicio de sesión exitoso!", "Bienvenido", JOptionPane.INFORMATION_MESSAGE);
                 this.dispose();  // Cierra la ventana de Login
                 MenuVista menu = new MenuVista(connection);
                 menu.setVisible(true);
             } else {
-                JOptionPane.showMessageDialog(this, "Usuario o contraseña incorrectos.", "Error de autenticación", JOptionPane.ERROR_MESSAGE);
+                // Mostrar el hash de la contraseña en el mensaje de error si la validación falla
+                JOptionPane.showMessageDialog(this, "Usuario o contraseña incorrectos.\nHash almacenado: " + storedHash, "Error de autenticación", JOptionPane.ERROR_MESSAGE);
             }
-
-        } catch (SQLException e) {
-            e.printStackTrace();
-            JOptionPane.showMessageDialog(this, "Error con la conexion de base de datos.", "Error", JOptionPane.ERROR_MESSAGE);
+        } else {
+            JOptionPane.showMessageDialog(this, "Usuario o contraseña incorrectos.", "Error de autenticación", JOptionPane.ERROR_MESSAGE);
         }
+
+    } catch (SQLException e) {
+        e.printStackTrace();
+        JOptionPane.showMessageDialog(this, "Error con la conexión de base de datos.", "Error", JOptionPane.ERROR_MESSAGE);
     }
+}
+
+
+
 
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
