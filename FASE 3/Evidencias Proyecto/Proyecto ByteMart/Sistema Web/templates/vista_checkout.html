@@ -1,0 +1,240 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <!-- BREADCRUMB -->
+    <div id="breadcrumb" class="section">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-12">
+                    <h3 class="breadcrumb-header">Pedido</h3>
+                    <ul class="breadcrumb-tree">
+                        <li><a href="{{ url_for('index') }}">Inicio</a></li>
+                        <li class="active">Pedido</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- /BREADCRUMB -->
+
+    <!-- SECTION -->
+    <div class="section">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-7">
+                    <!-- Billing Details -->
+                    <div class="billing-details">
+                        <div class="section-title">
+                            <h3 class="title">Datos de compra</h3>
+                        </div>
+                        <form action="{{ url_for('process_checkout') }}" method="POST">
+                            <!-- Nombre -->
+                            <div class="form-group">
+                                <input 
+                                    class="input" 
+                                    type="text" 
+                                    name="first-name" 
+                                    placeholder="First Name" 
+                                    value="{{ usuario_data.nombre }}" 
+                                    required
+                                >
+                            </div>
+                            
+                            <!-- Apellido -->
+                            <div class="form-group">
+                                <input 
+                                    class="input" 
+                                    type="text" 
+                                    name="last-name" 
+                                    placeholder="Last Name" 
+                                    value="{{ usuario_data.apellido }}" 
+                                    required
+                                >
+                            </div>
+                            
+                            <!-- Correo Electrónico -->
+                            <div class="form-group">
+                                <input 
+                                    class="input" 
+                                    type="email" 
+                                    name="email" 
+                                    placeholder="Email" 
+                                    value="{{ usuario_data.email }}" 
+                                    required
+                                >
+                            </div>
+                            
+                            <!-- Dirección -->
+                            <div class="form-group">
+                                <input 
+                                    class="input" 
+                                    type="text" 
+                                    name="address" 
+                                    placeholder="Address" 
+                                    value="{{ usuario_data.direccion }}" 
+                                    required
+                                >
+                            </div>
+                            
+                            <!-- Región -->
+                            <div class="form-group">
+                                <select 
+                                    class="input" 
+                                    name="region" 
+                                    id="region" 
+                                    required 
+                                    onchange="loadProvincias()"
+                                >
+                                    <option value="">Seleccione una región</option>
+                                    {% for region in regiones %}
+                                        <option 
+                                            value="{{ region.codigo }}" 
+                                            {% if region.codigo == usuario_data.region_codigo %}selected{% endif %}
+                                        >
+                                            {{ region.nombre }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            
+                            <!-- Provincia -->
+                            <div class="form-group">
+                                <select 
+                                    class="input" 
+                                    name="provincia" 
+                                    id="provincia" 
+                                    required 
+                                    onchange="loadComunass()"
+                                >
+                                    <option value="">Seleccione una provincia</option>
+                                    {% for provincia in provincias if provincia.region_codigo == usuario_data.region_codigo %}
+                                        <option 
+                                            value="{{ provincia.codigo }}" 
+                                            {% if provincia.codigo == usuario_data.provincia_codigo %}selected{% endif %}
+                                        >
+                                            {{ provincia.nombre }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            
+                            <!-- Comuna -->
+                            <div class="form-group">
+                                <select 
+                                    class="input" 
+                                    name="comuna" 
+                                    id="comuna" 
+                                    required
+                                >
+                                    <option value="">Seleccione una comuna</option>
+                                    {% for comuna in comunas if comuna.provincia_codigo == usuario_data.provincia_codigo %}
+                                        <option 
+                                            value="{{ comuna.codigo }}" 
+                                            {% if comuna.codigo == usuario_data.comuna_codigo %}selected{% endif %}
+                                        >
+                                            {{ comuna.nombre }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            
+                            <!-- Teléfono -->
+                            <div class="form-group">
+                                <input 
+                                    class="input" 
+                                    type="tel" 
+                                    name="tel" 
+                                    placeholder="Telephone" 
+                                    value="{{ usuario_data.tel }}" 
+                                    required
+                                >
+                            </div>
+                            
+                            <!-- Notas de Pedido -->
+                            <div class="order-notes">
+                                <textarea 
+                                    class="input" 
+                                    placeholder="Order Notes" 
+                                    name="order_notes"
+                                ></textarea>
+                            </div>
+                            
+                            <!-- Selección de Tarjeta -->
+                            <div class="form-group">
+                                <label for="tarjeta_id">Selecciona tu tarjeta</label>
+                                <select class="input" name="tarjeta_id" id="tarjeta_id" required>
+                                    <option value="">Seleccione una tarjeta</option>
+                                    {% for tarjeta in tarjetas %}
+                                        <option value="{{ tarjeta.id }}" 
+                                            {% if tarjeta.id == usuario_data.tarjeta_id %}selected{% endif %}>
+                                            {{ tarjeta.numero_tarjeta[-4:] }} <!-- Muestra solo los últimos 4 dígitos -->
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            
+                            <!-- Total Compra (oculto) -->
+                            <input type="hidden" name="total_compra" value="{{ total_price }}">
+                        
+                            <!-- Botón de Envío -->
+                            <button type="submit" class="primary-btn order-submit">Realizar Pedido y Pago</button>
+                        </form>
+                        
+                    </div>
+                    <!-- /Billing Details -->
+                </div>
+
+                <!-- Order Details -->
+                <div class="col-md-5 order-details">
+                    <div class="section-title text-center">
+                        <h3 class="title">TU PEDIDO</h3>
+                    </div>
+                    <div class="order-summary">
+                        <div class="order-col">
+                            <div><strong>PRODUCTO</strong></div>
+                            <div><strong>TOTAL</strong></div>
+                        </div>
+                        {% for item in checkout_items %}
+                        <div class="order-col">
+                            <div>
+                                <img src="{{ item.imagen }}" alt="{{ item.nombre }}" style="width: 50px; height: auto;">
+                                {{ item.name }} x{{ item.cantidad }}
+                            </div>
+                            <div>${{ item.precio * item.cantidad }}</div>
+                        </div>
+                        {% endfor %}
+                        <div class="order-col">
+                            <div>Envío</div>
+                            <div><strong>GRATIS</strong></div>
+                        </div>
+                        <div class="order-col">
+                            <div><strong>TOTAL</strong></div>
+                            <div><strong class="order-total">${{ total_price }}</strong></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- /SECTION -->
+
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <script>
+                document.addEventListener('DOMContentLoaded', function() {
+                    {% for category, message in messages %}
+                        Swal.fire({
+                            icon: '{{ 'success' if category == 'success' else 'error' }}',
+                            title: '{{ category.capitalize() }}',
+                            text: '{{ message }}',
+                            showConfirmButton: true,
+                            timer: 3000 // Opcional: cerrar automáticamente después de 3 segundos
+                        });
+                    {% endfor %}
+                });
+            </script>
+        {% endif %}
+    {% endwith %}
+    
+{% endblock %}

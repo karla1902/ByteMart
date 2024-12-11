@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="custom-search-container">
+    <h2 class="custom-search-title">Productos en la categoría: {{ categoria.name }}</h2>
+    <div class="row">
+        {% for producto in productos %}
+        <div class="col-xs-3 mb-4">
+            <div class="custom-card product-card">
+                <a href="{{ url_for('product_detail', product_id=producto.id) }}">
+                    <img src="{{ url_for('static', filename=producto.imagenes[0].image_url.split('static/')[-1]) }}" class="custom-card-img product-image" alt="{{ producto.name }}">
+                </a>
+                <div class="custom-card-body product-card-body">
+                    <h5 class="card-title product-title">
+                        <a href="{{ url_for('product_detail', product_id=producto.id) }}" class="text-decoration-none text-dark">{{ producto.name }}</a>
+                    </h5>
+                    <p class="card-text product-description">{{ producto.descripcion[:60] }}{% if producto.descripcion|length > 60 %}...{% endif %}</p>
+                    <p class="product-price">${{producto.price}} CLP</p>
+                    <a href="{{ url_for('product_detail', product_id=producto.id) }}" class="btn btn-primary product-detail-btn">Ver detalles</a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

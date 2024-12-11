@@ -1,0 +1,192 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        background-color: #f9f9f9;
+        margin: 0;
+        padding: 20px;
+    }
+
+    h1 {
+        color: #333;
+    }
+
+    .cart-container {
+        max-width: 800px; /* Ancho máximo para el carrito */
+        margin: 0 auto; /* Centra el carrito */
+        background-color: white; /* Fondo blanco para la card */
+        border-radius: 8px; /* Bordes redondeados */
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1); /* Sombra para efecto de elevación */
+        padding: 20px; /* Espaciado interno */
+    }
+
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 20px;
+    }
+
+    th, td {
+        padding: 12px;
+        text-align: left;
+        border-bottom: 1px solid #ddd;
+    }
+
+    th {
+        background-color: #226151;
+        color: white;
+    }
+
+    tr:hover {
+        background-color: #f1f1f1;
+    }
+
+    .flash-message {
+        background-color: #f44336; /* Rojo para errores */
+        color: white;
+        padding: 10px;
+        margin-bottom: 20px;
+        border-radius: 5px;
+        font-weight: bold;
+    }
+
+    .success-message {
+        background-color: #226151; /* Verde para éxito */
+        color: white;
+        padding: 10px;
+        margin-bottom: 20px;
+        border-radius: 5px;
+        font-weight: bold;
+    }
+
+    .button-container {
+        display: flex; /* Usamos flexbox para alinear los botones */
+        gap: 10px; /* Espacio entre botones */
+        margin-top: 10px; /* Espacio entre la tabla y los botones */
+        align-items: center; /* Alinea los botones verticalmente */
+    }
+
+    input[type="number"] {
+        width: 50px; /* Ancho fijo para el campo de cantidad */
+        margin-right: 10px; /* Espacio entre el campo y el botón */
+    }
+
+    .btn-custom {
+        background-color: #226151; /* Color de fondo */
+        color: white; /* Color del texto */
+        border: none; /* Sin borde */
+        border-radius: 5px; /* Bordes redondeados */
+        padding: 10px 15px; /* Espaciado interno */
+        text-decoration: none; /* Sin subrayado */
+        transition: background-color 0.3s; /* Transición suave */
+    }
+
+    .btn-custom:hover {
+        background-color: #1f5c4f; /* Color al pasar el mouse */
+    }
+
+    .product-image {
+        width: 50px; /* Ajusta el tamaño de la imagen */
+        height: auto; /* Mantiene la relación de aspecto */
+    }
+
+    .success {
+        color: green;  /* Mensaje de éxito en verde */
+    }
+
+    .error {
+        color: red;    /* Mensaje de error en rojo */
+    }
+
+    /* Estilos para el carrito vacío */
+    .empty-cart {
+        text-align: center; /* Centra el texto e imagen */
+        margin-top: 50px; /* Espaciado superior */
+    }
+
+    .empty-cart-image {
+        max-width: 200px; /* Ancho máximo de la imagen */
+        height: auto; /* Mantiene la relación de aspecto */
+        margin-bottom: 20px; /* Espacio debajo de la imagen */
+    }
+
+    .empty-cart p {
+        font-size: 18px; /* Tamaño de la fuente del mensaje */
+        color: #555; /* Color gris para el mensaje */
+        margin-bottom: 20px; /* Espacio inferior */
+    }
+
+    .empty-cart a.btn-custom {
+        margin-top: 10px; /* Espacio superior para el botón */
+    }
+</style>
+
+
+<body>
+    <div class="cart-container">
+        <h1>Tu carrito de compras!</h1>
+
+        {% with messages = get_flashed_messages(with_categories=True) %}
+        {% if messages %}
+            <ul>
+            {% for category, message in messages %}
+                <li class="{{ category }}">{{ message }}</li>  <!-- Usar la categoría para el estilo -->
+            {% endfor %}
+            </ul>
+        {% endif %}
+        {% endwith %}
+        
+        {% if carrito|length == 0 %}
+        <div class="empty-cart">
+            <img src="{{ url_for('static', filename='img/cartEmpty.png') }}" alt="Carrito vacío" class="empty-cart-image">
+            <p>Tu carrito está vacío, ¡añade productos para empezar!</p>
+            <a href="{{ url_for('index') }}" class="btn-custom">Ir a la tienda</a>
+        </div>
+        {% else %}
+        <table>
+            <tr>
+                <th>Nombre Producto</th>
+                <th>Cantidad</th>
+                <th>Imagen</th>
+                <th>Valor</th>
+                <th></th>
+            </tr>
+            {% for item in carrito %}
+            <tr>
+                <td>{{ item.producto.name }}</td>
+                <td>{{ item.cantidad }}</td>
+                <td>
+                    {% if item.image_url %}
+                        <img src="{{ item.image_url }}" alt="{{ item.producto.nombre }}" class="product-image">
+                    {% endif %}
+                </td>
+                <td>${{ item.producto.price * item.cantidad }}</td>
+                <td>
+                    <!-- Botón "X" para eliminar el producto -->
+                    <form action="{{ url_for('eliminar_item', item_id=item.producto.id) }}" method="POST" style="display:inline;">
+                        <button type="submit" class="btn-custom" style="background-color: red; padding: 5px 10px;">X</button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </table>
+
+        <div class="button-container">
+            <p>Subtotal: ${{ subtotal }}</p>
+            <form action="{{ url_for('vaciar_carrito') }}" method="POST">  <!-- Formulario para vaciar el carrito -->
+                <button type="submit" class="btn-custom">Vaciar Carrito</button>
+            </form>
+            <a href="{{ url_for('index') }}" class="btn-custom">Seguir comprando</a>
+            <form action="{{ url_for('checkout') }}" method="POST" style="display:inline;"> <!-- Formulario para checkout -->
+                <button type="submit" class="btn-custom">Ir a pagar</button>
+            </form>
+        </div>
+        {% endif %}
+    </div>
+</body>
+
+
+{% endblock %}

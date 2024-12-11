@@ -1,0 +1,166 @@
+{% extends "base.html" %}
+
+{% block content %}
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    <div class="alert-container">
+      {% for category, message in messages %}
+        <div class="alert alert-{{ category }}">
+          {{ message }}
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+{% endwith %}
+
+<div class="login-container">
+    <div class="container" id="container">
+        <div class="form-container sign-up-container">
+            <form method="POST" action="/register" onsubmit="return validateForm()" autocomplete="off">
+                <h1>Crear Cuenta</h1>
+                <input type="text" id="username" name="username" placeholder="Nombre de Usuario" required />
+                <input type="text" id="nombre" name="nombre" placeholder="Nombre" required />
+                <input type="text" id="apellido" name="apellido" placeholder="Apellido" required />
+                <input type="email" id="email" name="email" placeholder="Email" required minlength="5" pattern="[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}" title="Por favor ingresa un correo electrónico válido" />
+                <input type="text" id="direccion" name="direccion" placeholder="Dirección (opcional)" />
+                
+                <!-- Contraseña con icono de ojo -->
+                <div class="password-container">
+                    <input type="password" id="password" name="password" placeholder="Contraseña" required minlength="8" />
+                    <span class="eye-icon" id="eye-password" onclick="togglePasswordVisibility('password')">
+                        👁️
+                    </span>
+                </div>
+
+                <!-- Confirmar Contraseña con icono de ojo -->
+                <div class="password-container">
+                    <input type="password" id="confirm-password" name="confirm-password" placeholder="Confirmar Contraseña" required />
+                    <span class="eye-icon" id="eye-confirm-password" onclick="togglePasswordVisibility('confirm-password')">
+                        👁️
+                    </span>
+                </div>
+
+                <button type="submit">Registrar</button>
+            </form>
+        </div>
+
+        <div class="form-container sign-in-container">
+            <form method="POST" action="/login" autocomplete="off">
+                <h1>Iniciar Sesion</h1>
+                <input type="text" id="login-username" name="username" placeholder="Usuario" required />
+                <input type="password" id="login-password" name="password" placeholder="Contraseña" required />
+                <a href="/resetPassword">Olvidaste tu contraseña?</a>
+                <button type="submit">Ingresar</button>
+            </form>
+        </div>
+
+        <div class="overlay-container">
+            <div class="overlay">
+                <div class="overlay-panel overlay-left">
+                    <h1>Bienvenido!</h1>
+                    <p>Para mantenerse conectado con nosotros, inicie sesión con su información personal</p>
+                    <button type="button" class="ghost" id="signIn" onclick="showSignIn()">Iniciar Sesion</button>
+                </div>
+                <div class="overlay-panel overlay-right">
+                    <h1>Hola!</h1>
+                    <p>Si no tienes cuenta, registrate</p>
+                    <button type="button" class="ghost" id="signUp" onclick="showSignUp()">Registrate</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function showSignIn() {
+        document.querySelector('.sign-in-container').style.display = 'block';
+        document.querySelector('.sign-up-container').style.display = 'none';
+    }
+
+    function showSignUp() {
+        document.querySelector('.sign-in-container').style.display = 'none';
+        document.querySelector('.sign-up-container').style.display = 'block';
+    }
+
+    // Iniciar con la vista de inicio de sesión
+    showSignIn();
+
+    // Validación de formulario para asegurarse de que las contraseñas coincidan y cumplan con los requisitos
+    function validateForm() {
+    const password = document.getElementById('password').value;
+    const confirmPassword = document.getElementById('confirm-password').value;
+
+    // Verificar si las contraseñas coinciden
+    if (password !== confirmPassword) {
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'Las contraseñas no coinciden.',
+            showConfirmButton: true
+        });
+        return false;  // Detiene el envío del formulario
+    }
+
+    // Verificar que la contraseña tenga al menos una mayúscula, un número y una longitud mínima de 8 caracteres
+    function validateForm() {
+    const password = document.getElementById('password').value;
+    const confirmPassword = document.getElementById('confirm-password').value;
+
+    // Verificar si las contraseñas coinciden
+    if (password !== confirmPassword) {
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'Las contraseñas no coinciden.',
+            showConfirmButton: true
+        });
+        return false;  // Detiene el envío del formulario
+    }
+
+    // Verificar que la contraseña tenga al menos una mayúscula, un número y una longitud mínima de 8 caracteres
+    const regex = /^(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*.,?])[A-Za-z\d!@#$%^&*.,?]{8,}$/;
+
+    if (!regex.test(password)) {
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'La contraseña debe tener al menos una letra mayúscula y un número, con una longitud mínima de 8 caracteres.',
+            showConfirmButton: true
+        });
+        return false;  // Detiene el envío del formulario
+    }
+
+    return true;  // Permite que se envíe el formulario si las contraseñas coinciden y cumplen con los requisitos
+}
+
+    if (!regex.test(password)) {
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'La contraseña debe tener al menos una letra mayúscula y un número, con una longitud mínima de 8 caracteres.',
+            showConfirmButton: true
+        });
+        return false;  // Detiene el envío del formulario
+    }
+
+    return true;  // Permite que se envíe el formulario si las contraseñas coinciden y cumplen con los requisitos
+}
+
+
+    // Función para alternar la visibilidad de la contraseña
+    function togglePasswordVisibility(fieldId) {
+        const passwordField = document.getElementById(fieldId);
+        const eyeIcon = document.getElementById('eye-' + fieldId);
+
+        // Alternar tipo de campo (mostrar u ocultar contraseña)
+        if (passwordField.type === 'password') {
+            passwordField.type = 'text';  // Mostrar la contraseña
+            eyeIcon.textContent = '🙈';   // Cambiar ícono a "ojo cerrado"
+        } else {
+            passwordField.type = 'password';  // Ocultar la contraseña
+            eyeIcon.textContent = '👁️';      // Cambiar ícono a "ojo abierto"
+        }
+    }
+</script>
+
+{% endblock %}

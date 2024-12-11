@@ -1,0 +1,149 @@
+{% extends "base.html" %}
+{% block content %}
+
+<style>
+    .success {
+        color: green;  /* Mensaje de éxito en verde */
+    }
+    .error {
+        color: red;    /* Mensaje de error en rojo */
+    }
+</style>
+
+<div class="container">
+    <div class="form-group">
+        <h1 class="my-4">Administración de Usuarios</h1>
+        <div class="text-right">
+            <a href="configuracion">
+                <button class="button-3" role="button">Volver</button>
+            </a>
+        </div>
+    </div>
+
+    <!-- Mensajes de éxito o error -->
+    <div class="my-card mb-4" style="padding: 20px; box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1); border-radius: 5px; background-color: #fff;">
+    {% with messages = get_flashed_messages(with_categories=True) %}
+    {% if messages %}
+        <ul>
+        {% for category, message in messages %}
+            <li class="{{ category }}">{{ message }}</li>  <!-- Usar la categoría para el estilo -->
+        {% endfor %}
+        </ul>
+    {% endif %}
+    {% endwith %}
+
+        <!-- Formulario de creación/edición de usuarios -->
+        <form method="POST" action="{{ url_for('gestionar_usuarios') }}">
+            <input type="hidden" name="id" value="{{ usuario.id if usuario else '' }}">
+            
+            <div class="form-group">
+                <label for="nombre">Nombre del usuario</label>
+                <input type="text" class="form-control" id="nombre" name="nombre" value="{{ usuario.nombre if usuario else '' }}" required>
+            </div>
+            <div class="form-group">
+                <label for="apellido">Apellido</label>
+                <input type="text" class="form-control" id="apellido" name="apellido" value="{{ usuario.apellido if usuario else '' }}" required>
+            </div>
+            <div class="form-group">
+                <label for="username">Username</label>
+                <input type="text" class="form-control" id="username" name="username" value="{{ usuario.username if usuario else '' }}" required>
+            </div>
+            <div class="form-group">
+                <label for="password">Contraseña (dejar en blanco para no cambiar)</label>
+                <input type="password" class="form-control" id="password" name="password">
+            </div>
+            <div class="form-group">
+                <label for="email">Email</label>
+                <input type="email" class="form-control" id="email" name="email" value="{{ usuario.email if usuario else '' }}" required>
+            </div>
+            <div class="form-group">
+                <label for="direccion">Dirección</label>
+                <input type="text" class="form-control" id="direccion" name="direccion" value="{{ usuario.direccion if usuario else '' }}">
+            </div>
+            <div class="form-group">
+                <label for="rol">Rol</label>
+                <select class="form-control" id="rol" name="rol_id">
+                    <option value="">Selecciona un rol</option>  <!-- Opción por defecto -->
+                    {% for rol in roles %}
+                        <option value="{{ rol.id }}" {% if rol in usuario.roles %}selected{% endif %}>
+                            {{ rol.nombre }}
+                        </option>
+                    {% endfor %}
+                </select>
+                
+            </div>
+            <div class="text-right">
+                <button type="submit" class="btn-custom" name="action" value="guardar">{{ 'Guardar Usuario' }}</button>
+                <button type="submit" class="btn-custom" name="action" value="actualizar">{{ 'Actualizar Usuario' }}</button>
+            </div>
+            
+        </form>
+    </div>
+    <div class="form-group">
+        <label for="filtro-rol">Filtrar por rol</label>
+        
+        <select class="form-control" id="filtro-rol" name="filtro_rol" onchange="this.form.submit();">
+            <option value="">Todos los roles</option>
+            {% for rol in roles %}
+                <option value="{{ rol.id }}" {% if request.args.get('filtro_rol') == rol.id|string %}selected{% endif %}>
+                    {{ rol.nombre }}
+                </option>
+            {% endfor %}
+        </select>
+        
+    </div>
+    <!-- Listado de usuarios -->
+    <div class="table-responsive">
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th class="text-end">ID</th>
+                    <th class="text-end">Nombre</th>
+                    <th class="text-end">Apellido</th>
+                    <th class="text-end">Email</th>
+                    <th class="text-end">Dirección</th>
+                    <th class="text-end">Rol</th>
+                    <th class="text-end">Administrador</th>
+                    <th class="text-end">Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for usuario in usuarios %}
+                <tr>
+                    <td class="text-end">{{ usuario.id }}</td>
+                    <td class="text-end">{{ usuario.nombre }}</td>
+                    <td class="text-end">{{ usuario.apellido }}</td>
+                    <td class="text-end">{{ usuario.email }}</td>
+                    <td class="text-end">{{ usuario.direccion }}</td>
+                    <td class="text-end">{{ usuario.roles[0].nombre if usuario.roles else 'Sin rol' }}</td> <!-- Mostrar el nombre del rol -->
+                    <td class="text-end">{{ 'Sí' if usuario.is_admin else 'No' }}</td>
+                    <td class="text-end">
+                        <button class="btn btn-warning btn-sm" onclick="fillForm('{{ usuario.id }}', '{{ usuario.nombre }}', '{{ usuario.apellido }}', '{{ usuario.username }}', '{{ usuario.email }}', '{{ usuario.direccion }}', '{{ usuario.is_admin|tojson }}')">Editar</button>
+                    </td>
+                    <td class="text-end">
+                        <form method="POST" action="{{ url_for('eliminar_usuario', id=usuario.id) }}" class="d-inline-block eliminar-form text-right">
+                            <button type="submit" class="btn btn-danger btn-sm">Eliminar</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+function fillForm(id, nombre, apellido, username, email, direccion, is_admin) {
+    document.querySelector('input[name="id"]').value = id;
+    document.getElementById('nombre').value = nombre;
+    document.getElementById('apellido').value = apellido;
+    document.getElementById('username').value = username;
+    document.getElementById('email').value = email;
+    document.getElementById('direccion').value = direccion;
+    document.getElementById('is_admin').checked = is_admin;
+}
+</script>
+
+{% endblock %}
+
+
